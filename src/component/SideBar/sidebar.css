@@ -1,0 +1,59 @@
+.xrg-dashboard-sub-nav {
+    background-color: #050054;
+    color: white;
+    height: 100%;
+    position: fixed;
+    z-index: 2;
+    left: 0;
+    text-align: left;
+    width: 12rem;
+    font-weight: bold;
+    transition: all 0.5s cubic-bezier(0.13, 0.88, 1, 1);
+    -webkit-box-shadow: 4px 1px 16px 1px rgba(212, 212, 212, 1);
+    -moz-box-shadow: 4px 1px 16px 1px rgba(212, 212, 212, 1);
+    box-shadow: 4px 1px 16px 1px rgba(212, 212, 212, 1);
+    -webkit-transition: width 800ms ease;
+    -moz-transition: width 800ms ease;
+    -ms-transition: width 800ms ease;
+    -o-transition: width 800ms ease;
+    transition: width 800ms ease;
+}
+
+.xrg-nav-closed {
+    width: 4rem;
+    
+}
+
+.xrg-dash-logo {
+    height: 2rem;
+    color: white;
+    margin-right: 0.5rem;
+
+}
+
+.xrg-nav-icon {
+    margin-right: 1rem;
+}
+
+.xrg-nav-selected {
+    color: white !important;
+}
+
+.xrg-nav-item{
+
+}
+.xrg-nav-link{
+    color: #c6c2ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+}
+.xrg-nav-close{
+}
+
+.xrg-nav-open{
+
+}
