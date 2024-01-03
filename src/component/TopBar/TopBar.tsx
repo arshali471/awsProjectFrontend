@@ -162,7 +162,7 @@ export default function TopBar({ menuData }: ITopBar) {
 
           {userData?.map((data: any) => {
             return (
-              <NavDropdown.Item className="text-muted" style={{ fontWeight: "500" }} onClick={() => navigate(data)}>{data}</NavDropdown.Item>
+              <NavDropdown.Item className="text-muted" style={{ fontWeight: "500" }} onClick={() => navigate(data)}>{data === "admin" ? "Admin" : data === "addUser" ? "Add User" : "Add Aws Key"}</NavDropdown.Item>
             )
           })}
           <NavDropdown.Divider />

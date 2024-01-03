@@ -49,4 +49,8 @@ export class AdminService {
     static async deleteAwsKey(awsKey: any) {
         return await makeRequest(url.deleteAwsKey + "/" + awsKey, RequestMethods.DELETE)
     }
+
+    static async getAwsRegion() {
+        return await makeRequest(url.getAwsRegion, RequestMethods.GET)
+    }
 }

@@ -10,6 +10,7 @@ const url = {
     deleteUser: "/user/deleteUser",
     deleteAwsKey: "/awsKey/deleteApiKey",
     updateAwsKey: "/awsKey/updateApiKey",
+    getAwsRegion: "/awsKey/getAWSRegions",
 
     instance: {
         getAllInstance: "/aws/getAllInstance"

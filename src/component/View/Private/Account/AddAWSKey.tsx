@@ -1,14 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Card, Container, Form } from "react-bootstrap";
 import { AdminService } from "../../../services/admin.service";
 import toast from "react-hot-toast";
+import Select from "react-select"
 
 export default function AddAWSKey() {
 
     const [data, setData] = useState<any>();
+    const [region, setRegion] = useState<any>();
 
     const handleChangeValue = (e: any) => {
         setData({ ...data, [e.target.name]: e.target.value })
+    }
+
+
+    const getAwsRegion = async () => {
+        await AdminService.getAwsRegion().then((res) => {
+            if (res.status === 200) {
+                setRegion(Object.values(res.data).map((data: any) => {
+                    return {
+                        label: data,
+                        value: data
+                    }
+                }))
+            }
+        })
     }
 
 
@@ -22,6 +38,10 @@ export default function AddAWSKey() {
         })
     }
 
+    useEffect(() => {
+        getAwsRegion();
+    }, [])
+
 
 
 
@@ -33,7 +53,8 @@ export default function AddAWSKey() {
                     <Card.Body>
                         <Form.Group className="mb-3">
                             <Form.Label style={{ fontWeight: "500" }}>Region</Form.Label>
-                            <Form.Control type="text" name="region" onChange={(e: any) => handleChangeValue(e)} />
+                            <Select options={region} onChange={(e: any) => setData({ ...data, region: e.value })} />
+
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label style={{ fontWeight: "500" }}>Access Key Id</Form.Label>

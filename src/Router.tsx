@@ -9,8 +9,7 @@ import { useState } from "react";
 
 function PrivateRouter({ children }: any) {
     const auth = Auth.checkAuth();
-    auth ? <PrivateRoutes /> : <Navigate to="/login" />;
-    return <PrivateRoutes />;
+    return auth ? <PrivateRoutes /> : <Navigate to="/login" />;
 }
 
 
@@ -35,7 +34,7 @@ export default function Router() {
                             })}
                         </Route>
                         <Route path="/login" element={<Login />} />
-                        <Route path="*" element={<Navigate to="/login" />} />
+                        <Route path="/*" element={<Navigate to="/login" />} />
                     </Routes>
                 </SelectedRegionContext.Provider>
             </LoadingContext.Provider>
