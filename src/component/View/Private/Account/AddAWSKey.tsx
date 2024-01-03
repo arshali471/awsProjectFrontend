@@ -31,7 +31,7 @@ export default function AddAWSKey() {
     const handleAWSKeySubmission = async () => {
         await AdminService.createAWSKey(data).then((res) => {
             if (res.status === 200) {
-                toast.success("User Created")
+                toast.success("Key Created")
             }
         }).catch(err => {
             toast.error(err.response.data)

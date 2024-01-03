@@ -28,7 +28,7 @@ export default function AdminIndex() {
 
     return (
         <>
-            <Container>
+            <>
                 <Row>
                     <Col>
                         <h4>Users</h4>
@@ -46,7 +46,7 @@ export default function AdminIndex() {
                         </div>
                     </Col>
                 </Row>
-            </Container>
+            </>
         </>
     )
 }

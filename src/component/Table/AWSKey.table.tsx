@@ -38,7 +38,10 @@ export default function AWSKeyTable({ tableData, reload }: IUsersTable) {
                         <th>Region</th>
                         <th>Enviroment</th>
                         <th>Access Key Id</th>
+                        <th>Created By</th>
+                        <th>Updated By</th>
                         <th>Created At</th>
+                        <th>Updated At</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -51,7 +54,11 @@ export default function AWSKeyTable({ tableData, reload }: IUsersTable) {
                                 <td>{data?.region}</td>
                                 <td>{data?.enviroment}</td>
                                 <td>{data?.accessKeyId}</td>
+                                <td>{data?.createdBy ? data?.createdBy.username : "---" }</td>
+                                <td>{data?.updatedBy ? data?.updatedBy.username : "---"}</td>
+                                <td>{data?.accessKeyId}</td>
                                 <td>{moment(data?.createdAt).format("DD MMM YYYY, hh:mm A")}</td>
+                                <td>{moment(data?.updatedAt).format("DD MMM YYYY, hh:mm A")}</td>
                                 <td>
                                     <FaEdit className="text-primary me-3" onClick={() => setAwsKeyIndex(index)} />
                                     <FaRegTrashAlt className="text-danger" onClick={() => handleDeleteAwsKey(data._id)} />
