@@ -1,12 +1,12 @@
 
-import { Button, Image, Nav, NavDropdown, Navbar } from 'react-bootstrap';
+import { Container, Image, Nav, NavDropdown, Navbar } from 'react-bootstrap';
 import './Topbar.css';
 import IRouter from '../Interface/IRouter';
 import { AdminService } from '../services/admin.service';
 import { useContext, useEffect, useState } from 'react';
 import AsyncSelect from 'react-select/async';
 import { SelectedRegionContext } from '../context/context';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface ITopBar {
   menuData: IRouter[],
@@ -14,11 +14,15 @@ interface ITopBar {
 
 export default function TopBar({ menuData }: ITopBar) {
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const location = useLocation();
+
+
 
   const { selectedRegion, setSelectedRegion }: any = useContext(SelectedRegionContext)
 
   const [keysData, setKeysData] = useState<any>();
+  const [userData, setUserData] = useState<any>();
 
   const getAllAwsKeys = async () => {
     await AdminService.getAllAwsKey().then((res) => {
@@ -32,6 +36,51 @@ export default function TopBar({ menuData }: ITopBar) {
       }
     })
   }
+
+  const manageData = [
+    {
+      path: "addAWSKey",
+      name: "Add AWS Key",
+    },
+    {
+      path: "addUser",
+      name: "Add User",
+    },
+    {
+      path: "admin",
+      name: "Manage Users",
+    },
+  ]
+
+
+
+
+  const getUserData = async () => {
+    try {
+      const res = await AdminService.getUserData();
+      let manageUsers: any = [];
+
+      if (res.status === 200) {
+
+        if (res.data.admin) {
+          manageUsers.push("admin");
+        }
+        if (res.data.addUser) {
+          manageUsers.push("addUser");
+        }
+        if (res.data.addAWSKey) {
+          manageUsers.push("addAWSKey");
+        }
+        setUserData(manageUsers);
+      } else {
+        // Handle other HTTP statuses if needed
+        console.error(`Failed to fetch user data. Status: ${res.status}`);
+      }
+    } catch (error) {
+      // Handle errors during the API call
+      console.error("Error fetching user data:", error);
+    }
+  };
 
 
 
@@ -56,9 +105,11 @@ export default function TopBar({ menuData }: ITopBar) {
     navigate("/login")
   }
 
+  console.log({ userData }, "user")
 
   useEffect(() => {
-    getAllAwsKeys()
+    getAllAwsKeys();
+    getUserData();
   }, [])
 
   const showAllowedMenu = menuData.filter((routes) => routes.navbarShow === true)
@@ -66,6 +117,7 @@ export default function TopBar({ menuData }: ITopBar) {
   return (
     <>
       <Navbar bg="white" expand="lg" className="shadow-sm">
+        {/* <Container> */}
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Brand className="ms-2 fw-bold">
           <Image src='https://www.iff.com/sites/iff-corp/files/iff/iff-logo.png' width={35} />
@@ -76,9 +128,19 @@ export default function TopBar({ menuData }: ITopBar) {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             {
-              showAllowedMenu.map((data: any) => {
+              showAllowedMenu.map((data: any, index: number) => {
+                const isActive = data.path === location.pathname.split("/")[1];
+                console.log(isActive, "active")
                 return (
-                  <Nav.Link className="fw-bold" href={data.path}>{data.name}</Nav.Link>
+                  <span
+                    key={index}
+                    className={`fw-bold me-4 ${isActive ? 'text-primary' : 'text-muted'
+                      }`}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => navigate(data.path)}
+                  >
+                    {data.name}
+                  </span>
                 )
               })
             }
@@ -96,11 +158,17 @@ export default function TopBar({ menuData }: ITopBar) {
             onChange={(e: any) => setSelectedRegion(e)}
           />
         </div>
-        {/* <Button className="me-3" variant='secondary' onClick={handleLogout}>Logout</Button> */}
-        <NavDropdown className="me-3" title={sessionStorage.getItem("username")} id="basic-nav-dropdown">
-          <NavDropdown.Item className="fw-bold" onClick={handleLogout}>Logout</NavDropdown.Item>
+        <NavDropdown style={{ marginRight: 90 }} title={sessionStorage.getItem("username")} id="basic-nav-dropdown">
 
+          {userData?.map((data: any) => {
+            return (
+              <NavDropdown.Item className="text-muted" style={{ fontWeight: "500" }} onClick={() => navigate(data)}>{data}</NavDropdown.Item>
+            )
+          })}
+          <NavDropdown.Divider />
+          <NavDropdown.Item className="fw-bold" onClick={handleLogout}>Logout</NavDropdown.Item>
         </NavDropdown>
+        {/* </Container> */}
       </Navbar >
     </>
   );

@@ -1,20 +1,19 @@
 import { useContext, useEffect, useState } from "react"
-import { AdminService } from "../../../services/admin.service"
 import { LoadingContext, SelectedRegionContext } from "../../../context/context"
-import { Button, Card, Col, Form, InputGroup, Row } from "react-bootstrap";
-import InstanceTable from "../../../Table/Instance.table";
+import { AdminService } from "../../../services/admin.service";
+import { Card, Col, Form, Row } from "react-bootstrap";
 import { CSVLink } from "react-csv";
-import moment from "moment";
 import TablePagination from "../../../Pagination/Table.paginaition";
-import toast from "react-hot-toast";
+import S3Table from "../../../Table/S3.table";
+import moment from "moment";
 import LoaderSpinner from "../../../Spinner/Spinner";
 
-export default function Dashboard() {
-
+export default function S3Index() {
     const { selectedRegion }: any = useContext(SelectedRegionContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
-    const [instanceData, setInstanceData] = useState<any>([]);
+
+    const [s3Data, setS3Data] = useState<any>([]);
     const [filterData, setFilterData] = useState<any>([]);
     const [searchText, setSearchText] = useState<any>();
 
@@ -22,28 +21,25 @@ export default function Dashboard() {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);
 
-    const getAllInstance = async () => {
+
+    const getAllS3Data = async () => {
         setLoading(true)
-        await AdminService.getAllInstance(selectedRegion.value).then((res) => {
+        await AdminService.getAllS3Data(selectedRegion.value).then((res) => {
             if (res.status === 200) {
                 const startIndex = (currentPage - 1) * perPage;
                 const endIndex = startIndex + perPage;
                 const paginatedData = res.data.slice(startIndex, endIndex);
                 setTotalCount(paginatedData.length)
-                setInstanceData(paginatedData)
+                setS3Data(paginatedData)
             }
-        }).catch(err => {
-            console.log(err)
-            toast.error(err.response.data)
         })
         setLoading(false)
     }
 
-
     const handleSearchData = () => {
-        setLoading(true);
+        setLoading(true)
         if (searchText !== '') {
-            const filterData = instanceData && instanceData.filter((instance: any) => {
+            const filterData = s3Data && s3Data.filter((instance: any) => {
                 const instanceValues = Object.values(instance)
                     .map((value: any) => {
                         if (typeof value === 'object') {
@@ -53,55 +49,38 @@ export default function Dashboard() {
                     })
                     .join('');
 
-                const tags = instance.Tags || [];
-                const tagValues = tags.map((tag: any) => tag.Value).join('');
-
-                return tagValues.toLowerCase().includes(searchText.toLowerCase()) ||
-                    instanceValues.toLowerCase().includes(searchText.toLowerCase());
+                return instanceValues && instanceValues?.toLowerCase()?.includes(searchText.toLowerCase());
             });
-
             const startIndex = (currentPage - 1) * perPage;
             const endIndex = startIndex + perPage;
             const paginatedData = filterData.slice(startIndex, endIndex);
-            setTotalCount(paginatedData.length);
+            setTotalCount(paginatedData.length)
             setFilterData(paginatedData);
         } else {
-            setFilterData(instanceData || []);
+            setFilterData(s3Data || []);
         }
-        setLoading(false);
+        setLoading(false)
     };
 
 
-    const InstanceCSVDownload = filterData && filterData?.length > 0
+    const S3CSVDownload = filterData && filterData?.length > 0
         ? filterData?.map((data: any) => {
             return ({
-                InstanceId: data?.InstanceId,
-                "ImageId": data?.ImageId,
-                "InstanceType": data?.InstanceType,
-                "KeyName": data?.KeyName,
-                "LaunchTime": moment(data?.LaunchTime).format("DD MMM YY"),
-                "PrivateIpAddress": data?.PrivateIpAddress,
-                "State": data?.State?.Name,
-                "SubnetId": data?.SubnetId,
-                "VpcId": data?.VpcId,
-                "PlatformDetails": data?.PlatformDetails,
-                "AvailabilityZone": data?.Placement?.AvailabilityZone
+                "Bucket Name": data?.bucketName,
+                "Creation Date": moment(data?.creationDate).format("DD MMM YYYY"),
+                "Location": data?.location,
+                "Size": data?.size,
             })
-        }) : instanceData?.map((data: any) => {
+        }) : s3Data?.map((data: any) => {
             return ({
-                InstanceId: data?.InstanceId,
-                "ImageId": data?.ImageId,
-                "InstanceType": data?.InstanceType,
-                "KeyName": data?.KeyName,
-                "LaunchTime": moment(data?.LaunchTime).format("DD MMM YY"),
-                "PrivateIpAddress": data?.PrivateIpAddress,
-                "State": data?.State?.Name,
-                "SubnetId": data?.SubnetId,
-                "VpcId": data?.VpcId,
-                "PlatformDetails": data?.PlatformDetails,
-                "AvailabilityZone": data?.Placement?.AvailabilityZone
+                "Bucket Name": data?.bucketName,
+                "Creation Date": moment(data?.creationDate).format("DD MMM YYYY"),
+                "Location": data?.location,
+                "Size": data?.size,
             })
         });
+
+
 
     useEffect(() => {
         if (searchText) {
@@ -111,7 +90,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (selectedRegion?.value) {
-            getAllInstance();
+            getAllS3Data();
         }
     }, [selectedRegion?.value])
 
@@ -134,8 +113,8 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                     <CSVLink
-                                        data={InstanceCSVDownload}
-                                        filename={"Instance.csv"}
+                                        data={S3CSVDownload}
+                                        filename={"S3.csv"}
                                         className="btn btn-primary"
                                         target="_blank"
                                     >
@@ -150,13 +129,13 @@ export default function Dashboard() {
                             {searchText && searchText.length > 0 ?
                                 <Card className="shadow-sm">
                                     <Card.Body>
-                                        <InstanceTable tableData={filterData} />
+                                        <S3Table tableData={filterData} />
                                     </Card.Body>
                                 </Card>
                                 :
                                 <Card className="shadow-sm">
                                     <Card.Body>
-                                        <InstanceTable tableData={instanceData} />
+                                        <S3Table tableData={s3Data} />
                                     </Card.Body>
                                 </Card>
                             }

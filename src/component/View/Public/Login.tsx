@@ -3,6 +3,7 @@ import { Button, Card, Container, Form } from "react-bootstrap";
 import { AuthService } from "../../services/auth.service";
 import Auth from "../../Auth/auth";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -20,10 +21,12 @@ export default function Login() {
                 Auth.authenticate();
                 sessionStorage.setItem("authKey", res.data.token);
                 sessionStorage.setItem("username", res.data.username)
-                navigate('/ec2')
+                navigate('/ec2');
+                toast.success("Login Successful")
             }
         }).catch(err => {
             console.log(err)
+            toast.error(err.response.data)
         })
 
     }
