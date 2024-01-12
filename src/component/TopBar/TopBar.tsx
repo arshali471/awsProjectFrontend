@@ -1,5 +1,5 @@
 
-import { Container, Image, Nav, NavDropdown, Navbar } from 'react-bootstrap';
+import { Image, Nav, NavDropdown, Navbar } from 'react-bootstrap';
 import './Topbar.css';
 import IRouter from '../Interface/IRouter';
 import { AdminService } from '../services/admin.service';
@@ -37,20 +37,6 @@ export default function TopBar({ menuData }: ITopBar) {
     })
   }
 
-  const manageData = [
-    {
-      path: "addAWSKey",
-      name: "Add AWS Key",
-    },
-    {
-      path: "addUser",
-      name: "Add User",
-    },
-    {
-      path: "admin",
-      name: "Manage Users",
-    },
-  ]
 
 
 

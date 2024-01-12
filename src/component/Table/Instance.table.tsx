@@ -1,5 +1,5 @@
 import moment from "moment";
-import { Badge, Container, Table } from "react-bootstrap";
+import { Badge, Table } from "react-bootstrap";
 
 interface IInstanceTable {
     tableData: any

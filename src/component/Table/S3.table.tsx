@@ -1,5 +1,5 @@
 import moment from "moment";
-import { Badge, Container, Table } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 
 interface IS3Table {
     tableData: any

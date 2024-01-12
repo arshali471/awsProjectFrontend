@@ -1,6 +1,4 @@
-import { Form, Table } from "react-bootstrap"
-import { FaUserCheck, FaCheckCircle } from "react-icons/fa";
-import { FaUserXmark, FaCircleXmark } from "react-icons/fa6";
+import { Table } from "react-bootstrap"
 import { FaRegTrashAlt } from "react-icons/fa";
 import { AdminService } from "../services/admin.service";
 import toast from "react-hot-toast";

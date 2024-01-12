@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Nav, } from "react-bootstrap";
 import { useNavigate } from 'react-router-dom';
 import './sidebar.css';
@@ -12,11 +12,11 @@ interface ISideBar {
     baseUrl: string
 }
 
-export default function SideBar({ menuData, panelName, baseUrl }: ISideBar) {
+export default function SideBar({ menuData }: ISideBar) {
     let navigate = useNavigate();
     const location = useLocation();
 
-    const [close, setClose] = useState(true);
+    const [close ] = useState(true);
 
 
     const showAllowedMenu = menuData.filter((routes) => routes.navbarShow === true)

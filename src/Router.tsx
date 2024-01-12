@@ -7,7 +7,7 @@ import Login from "./component/View/Public/Login";
 import { LoadingContext, SelectedRegionContext } from "./component/context/context";
 import { useState } from "react";
 
-function PrivateRouter({ children }: any) {
+function PrivateRouter() {
     const auth = Auth.checkAuth();
     return auth ? <PrivateRoutes /> : <Navigate to="/login" />;
 }
