@@ -14,57 +14,32 @@ export default function S3Index() {
 
 
     const [s3Data, setS3Data] = useState<any>([]);
-    const [filterData, setFilterData] = useState<any>([]);
-    const [searchText, setSearchText] = useState<any>();
+    const [paginatedData, setPaginatedData] = useState<any>([]);
+    const [searchText, setSearchText] = useState<string>('');
 
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);
 
 
+
     const getAllS3Data = async () => {
-        setLoading(true)
-        await AdminService.getAllS3Data(selectedRegion.value).then((res) => {
+        setLoading(true);
+        try {
+            const res = await AdminService.getAllS3Data(selectedRegion.value);
             if (res.status === 200) {
-                const startIndex = (currentPage - 1) * perPage;
-                const endIndex = startIndex + perPage;
-                const paginatedData = res.data.slice(startIndex, endIndex);
-                setTotalCount(paginatedData.length)
-                setS3Data(paginatedData)
+                setS3Data(res.data); // Store the full dataset
+                setTotalCount(res.data.length);
             }
-        })
-        setLoading(false)
-    }
-
-    const handleSearchData = () => {
-        setLoading(true)
-        if (searchText !== '') {
-            const filterData = s3Data && s3Data.filter((instance: any) => {
-                const instanceValues = Object.values(instance)
-                    .map((value: any) => {
-                        if (typeof value === 'object') {
-                            return Object.values(value).join('');
-                        }
-                        return String(value);
-                    })
-                    .join('');
-
-                return instanceValues && instanceValues?.toLowerCase()?.includes(searchText.toLowerCase());
-            });
-            const startIndex = (currentPage - 1) * perPage;
-            const endIndex = startIndex + perPage;
-            const paginatedData = filterData.slice(startIndex, endIndex);
-            setTotalCount(paginatedData.length)
-            setFilterData(paginatedData);
-        } else {
-            setFilterData(s3Data || []);
+        } catch (error) {
+            console.error("Error fetching S3 data", error);
         }
-        setLoading(false)
+        setLoading(false);
     };
 
 
-    const S3CSVDownload = filterData && filterData?.length > 0
-        ? filterData?.map((data: any) => {
+    const S3CSVDownload = s3Data && s3Data?.length > 0
+        ? s3Data?.map((data: any) => {
             return ({
                 "Bucket Name": data?.bucketName,
                 "Creation Date": moment(data?.creationDate).format("DD MMM YYYY"),
@@ -83,70 +58,77 @@ export default function S3Index() {
 
 
     useEffect(() => {
+        let filteredData = s3Data;
+
         if (searchText) {
-            handleSearchData();
+            filteredData = s3Data.filter((instance: any) => {
+                const instanceValues = Object.values(instance)
+                    .map(value => (typeof value === 'object' ? Object.values(value).join('') : String(value)))
+                    .join('');
+                return instanceValues.toLowerCase().includes(searchText.toLowerCase());
+            });
         }
-    }, [searchText, currentPage, perPage])
+
+        const startIndex = (currentPage - 1) * perPage;
+        const endIndex = startIndex + perPage;
+        setPaginatedData(filteredData.slice(startIndex, endIndex));
+        setTotalCount(filteredData.length);
+    }, [s3Data, searchText, currentPage, perPage]);
 
     useEffect(() => {
         if (selectedRegion?.value) {
             getAllS3Data();
         }
-    }, [selectedRegion?.value,currentPage, perPage])
-
+    }, [selectedRegion?.value]);
 
     return (
         <>
-            {loading ?
+            {loading ? (
                 <div className="d-flex justify-content-center align-items-center">
                     <LoaderSpinner />
                 </div>
-                :
+            ) : (
                 <div>
                     <Row className="mt-3">
                         <Col>
                             <div className="mt-3 mb-3 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <Form.Group>
-                                        <Form.Control placeholder="Find instance by attribute" onChange={(e: any) => setSearchText(e.target.value)} />
-                                    </Form.Group>
-                                </div>
-                                <div>
-                                    <CSVLink
-                                        data={S3CSVDownload}
-                                        filename={"S3.csv"}
-                                        className="btn btn-primary"
-                                        target="_blank"
-                                    >
-                                        Export to CSV
-                                    </CSVLink>
-                                </div>
+                                <Form.Group>
+                                    <Form.Control
+                                        placeholder="Find instance by attribute"
+                                        onChange={(e) => setSearchText(e.target.value)}
+                                    />
+                                </Form.Group>
+                                <CSVLink
+                                    data={paginatedData}
+                                    filename={"S3.csv"}
+                                    className="btn btn-primary"
+                                    target="_blank"
+                                >
+                                    Export to CSV
+                                </CSVLink>
                             </div>
                         </Col>
                     </Row>
                     <Row className="d-flex justify-content-center align-items-center">
                         <Col>
-                        <Card>
-                            <Card.Body>
-                            <S3Table tableData={searchText && searchText.length > 0 ? filterData : s3Data} />
-                            </Card.Body>
-                        </Card>
-
+                            <Card>
+                                <Card.Body>
+                                    <S3Table tableData={paginatedData} />
+                                </Card.Body>
+                            </Card>
                             <div className="bg-white py-2">
                                 <TablePagination
                                     total={totalCount}
                                     currentPage={currentPage}
                                     perPage={perPage}
-                                    handlePageChange={(e: number) => {
-                                        setCurrentPage(e)
-                                    }}
-                                    setPerPage={(e: number) => { setPerPage(e) }}
+                                    handlePageChange={setCurrentPage}
+                                    setPerPage={setPerPage}
                                 />
                             </div>
                         </Col>
                     </Row>
                 </div>
-            }
+            )}
         </>
     )
 }
