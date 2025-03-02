@@ -80,7 +80,7 @@ export default function Kubernetes() {
                     <div>
                         <Card>
                             <Card.Body>
-                                <EksTable tableData={paginatedData} />
+                                <EksTable tableData={paginatedData} pageNumber={currentPage} pageSize={perPage}/>
                             </Card.Body>
                         </Card>
                         <div className="bg-white py-2">

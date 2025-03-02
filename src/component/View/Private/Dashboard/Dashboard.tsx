@@ -121,7 +121,7 @@ export default function Dashboard() {
 
                     <Card style={{ width: "72rem" }}>
                         <Card.Body>
-                            <InstanceTable tableData={paginatedData} />
+                            <InstanceTable tableData={paginatedData} pageNumber={currentPage} pageSize={perPage} />
                         </Card.Body>
                     </Card>
 

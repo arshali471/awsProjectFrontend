@@ -113,7 +113,7 @@ export default function S3Index() {
                         <Col>
                             <Card>
                                 <Card.Body>
-                                    <S3Table tableData={paginatedData} />
+                                    <S3Table tableData={paginatedData} pageNumber= {currentPage} pageSize= { perPage} />
                                 </Card.Body>
                             </Card>
                             <div className="bg-white py-2">

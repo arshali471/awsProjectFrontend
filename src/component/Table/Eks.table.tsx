@@ -3,9 +3,11 @@ import { Table } from "react-bootstrap";
 
 interface IS3Table {
     tableData: any
+    pageNumber: any
+    pageSize: any
 }
 
-export default function EksTable({ tableData }: IS3Table) {
+export default function EksTable({ tableData, pageNumber, pageSize }: IS3Table) {
     return (
         <Table striped hover responsive>
             <thead>
@@ -21,9 +23,10 @@ export default function EksTable({ tableData }: IS3Table) {
             <tbody>
 
                 {tableData && tableData.length > 0 ? tableData.map((data: any, index: number) => {
+                    const actualIndex = index + 1 + (pageNumber - 1) * pageSize;
                     return (
                         <tr>
-                            <td style = {{fontSize: 12}}>{index + 1}</td>
+                            <td style = {{fontSize: 12}}>{actualIndex}</td>
                             <td style = {{fontSize: 12}}>{data?.name || "--"}</td>
                             <td style = {{fontSize: 12}}>{data?.version || "--"}</td>
                             <td style = {{fontSize: 12}}>{data?.nodes?.length || "--"}</td>

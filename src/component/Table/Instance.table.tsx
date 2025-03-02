@@ -3,9 +3,11 @@ import { Badge, Table } from "react-bootstrap";
 
 interface IInstanceTable {
     tableData: any
+    pageNumber: any
+    pageSize: any
 }
 
-export default function InstanceTable({ tableData }: IInstanceTable) {
+export default function InstanceTable({ tableData, pageNumber, pageSize }: IInstanceTable) {
     return (
         <Table striped hover responsive>
             <thead>
@@ -28,9 +30,10 @@ export default function InstanceTable({ tableData }: IInstanceTable) {
             <tbody>
 
                 {tableData && tableData.length > 0 ? tableData.map((data: any, index: number) => {
+                    const actualIndex = index + 1 + (pageNumber - 1) * pageSize;
                     return (
                         <tr>
-                            <td style = {{fontSize: 12}}>{index + 1}</td>
+                            <td style = {{fontSize: 12}}>{actualIndex}</td>
                             <td style = {{fontSize: 12}}>{data?.InstanceId || "--"}</td>
                             <td style = {{fontSize: 12}}>{data?.Tags?.find((data: any) => data.Key === "Name").Value || "--"}</td>
                             <td style = {{fontSize: 12}}>{data?.ImageId || "--"}</td>
