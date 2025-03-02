@@ -3,10 +3,10 @@ import { LoadingContext, SelectedRegionContext } from "../../../context/context"
 import { AdminService } from "../../../services/admin.service";
 import { Card, Col, Form, Row } from "react-bootstrap";
 import { CSVLink } from "react-csv";
-import TablePagination from "../../../Pagination/Table.paginaition";
 import S3Table from "../../../Table/S3.table";
 import moment from "moment";
 import LoaderSpinner from "../../../Spinner/Spinner";
+import TablePagination from "../../../Pagination/TablePagination";
 
 export default function S3Index() {
     const { selectedRegion }: any = useContext(SelectedRegionContext);
@@ -92,7 +92,7 @@ export default function S3Index() {
         if (selectedRegion?.value) {
             getAllS3Data();
         }
-    }, [selectedRegion?.value])
+    }, [selectedRegion?.value,currentPage, perPage])
 
 
     return (
@@ -102,10 +102,10 @@ export default function S3Index() {
                     <LoaderSpinner />
                 </div>
                 :
-                <div style={{ width: "100%" }}>
+                <div>
                     <Row className="mt-3">
                         <Col>
-                            <div className="mt-5 mb-3 d-flex justify-content-between align-items-center">
+                            <div className="mt-3 mb-3 d-flex justify-content-between align-items-center">
                                 <div>
                                     <Form.Group>
                                         <Form.Control placeholder="Find instance by attribute" onChange={(e: any) => setSearchText(e.target.value)} />
@@ -126,20 +126,13 @@ export default function S3Index() {
                     </Row>
                     <Row className="d-flex justify-content-center align-items-center">
                         <Col>
-                            {searchText && searchText.length > 0 ?
-                                <Card className="shadow-sm">
-                                    <Card.Body>
-                                        <S3Table tableData={filterData} />
-                                    </Card.Body>
-                                </Card>
-                                :
-                                <Card className="shadow-sm">
-                                    <Card.Body>
-                                        <S3Table tableData={s3Data} />
-                                    </Card.Body>
-                                </Card>
-                            }
-                            <div className="bg-white py-2 px-3">
+                        <Card>
+                            <Card.Body>
+                            <S3Table tableData={searchText && searchText.length > 0 ? filterData : s3Data} />
+                            </Card.Body>
+                        </Card>
+
+                            <div className="bg-white py-2">
                                 <TablePagination
                                     total={totalCount}
                                     currentPage={currentPage}

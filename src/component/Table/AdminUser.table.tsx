@@ -2,11 +2,16 @@ import { Form, Table } from "react-bootstrap"
 import { FaRegTrashAlt } from "react-icons/fa";
 import { AdminService } from "../services/admin.service";
 import toast from "react-hot-toast";
+import { useState } from "react";
+import ConfirmationModal from "../modal/Confirmation.modal";
 interface IUsersTable {
     tableData: any,
     reload: any
 }
 export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
+
+    const [showConfirmationModal, setShowConfirmationModal] = useState<any | undefined>(undefined)
+
 
     const handleRoleChange = async (userId: string, payload: any) => {
         await AdminService.updateUser(userId, payload).then(res => {
@@ -25,6 +30,7 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
             if (res.status === 200) {
                 reload();
                 toast.success("User Deletd")
+                setShowConfirmationModal(false)
             }
         }).catch(err => {
             toast.error(err.response.data)
@@ -33,44 +39,53 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
 
 
     return (
-        <Table striped hover responsive>
-            <thead>
-                <tr>
-                    <th>Sr.No</th>
-                    <th>Username</th>
-                    <th>Active</th>
-                    <th>Admin Access</th>
-                    <th>Access AWS Key</th>
-                    <th>Access Add Users</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
+        <>
+            <Table striped hover responsive>
+                <thead>
+                    <tr>
+                        <th style={{ fontSize: 14 }}>Sr.No</th>
+                        <th style={{ fontSize: 14 }}>Username</th>
+                        <th style={{ fontSize: 14 }}>Active</th>
+                        <th style={{ fontSize: 14 }}>Admin Access</th>
+                        <th style={{ fontSize: 14 }}>Access AWS Key</th>
+                        <th style={{ fontSize: 14 }}>Access Add Users</th>
+                        <th style={{ fontSize: 14 }}>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
 
-                {tableData && tableData.length > 0 ? tableData.map((data: any, index: number) => {
-                    return (
-                        <tr style={{ opacity: data.isActive ? 1 : .5 }}>
-                            <td>{index + 1}</td>
-                            <td>{data?.isActive === false ? <del>{data?.username}</del> : <span>{data?.username}</span>}</td>
-                            <td>
-                                <Form.Switch checked={data?.isActive} name="isActive" onChange={(e: any) => handleRoleChange(data._id, { "isActive": e.target.checked })} />
-                            </td>
-                            <td>
-                                <Form.Switch checked={data?.admin} onChange={(e: any) => handleRoleChange(data._id, { "admin": e.target.checked })} />
-                            </td>
-                            <td>
-                                <Form.Switch checked={data?.addAWSKey} onChange={(e: any) => handleRoleChange(data._id, { "addAWSKey": e.target.checked })} />
-                            </td>
-                            <td>
-                                <Form.Switch checked={data?.addUser} onChange={(e: any) => handleRoleChange(data._id, { "addUser": e.target.checked })} />
-                            </td>
-                            <td>
-                                <FaRegTrashAlt className="text-danger" onClick={() => handleDeleteUser(data._id)} />
-                            </td>
-                        </tr>
-                    )
-                }) : "Please select region to get data"}
-            </tbody>
-        </Table >
+                    {tableData && tableData.length > 0 ? tableData.map((data: any, index: number) => {
+                        return (
+                            <tr style={{ opacity: data.isActive ? 1 : .5 }}>
+                                <td style={{ fontSize: 12 }}>{index + 1}</td>
+                                <td style={{ fontSize: 12 }}>{data?.isActive === false ? <del>{data?.username}</del> : <span>{data?.username}</span>}</td>
+                                <td style={{ fontSize: 12 }}>
+                                    <Form.Switch checked={data?.isActive} name="isActive" onChange={(e: any) => handleRoleChange(data._id, { "isActive": e.target.checked })} />
+                                </td>
+                                <td style={{ fontSize: 12 }}>
+                                    <Form.Switch checked={data?.admin} onChange={(e: any) => handleRoleChange(data._id, { "admin": e.target.checked })} />
+                                </td>
+                                <td style={{ fontSize: 12 }}>
+                                    <Form.Switch checked={data?.addAWSKey} onChange={(e: any) => handleRoleChange(data._id, { "addAWSKey": e.target.checked })} />
+                                </td>
+                                <td style={{ fontSize: 12 }}>
+                                    <Form.Switch checked={data?.addUser} onChange={(e: any) => handleRoleChange(data._id, { "addUser": e.target.checked })} />
+                                </td>
+                                <td style={{ fontSize: 12 }}>
+                                    <FaRegTrashAlt className="text-danger" onClick={() => setShowConfirmationModal(data._id)} />
+                                </td>
+                            </tr>
+                        )
+                    }) : "Please select region to get data"}
+                </tbody>
+            </Table >
+
+            <ConfirmationModal
+                show={showConfirmationModal}
+                handleClose={() => setShowConfirmationModal(undefined)}
+                label="Are your sure you want to delete this User."
+                onClick={handleDeleteUser}
+            />
+        </>
     )
 }

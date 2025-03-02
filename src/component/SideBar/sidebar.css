@@ -1,59 +1,74 @@
-.xrg-dashboard-sub-nav {
-    background-color: #050054;
-    color: white;
-    height: 100%;
-    position: fixed;
-    z-index: 2;
-    left: 0;
-    text-align: left;
-    width: 12rem;
-    font-weight: bold;
-    transition: all 0.5s cubic-bezier(0.13, 0.88, 1, 1);
-    -webkit-box-shadow: 4px 1px 16px 1px rgba(212, 212, 212, 1);
-    -moz-box-shadow: 4px 1px 16px 1px rgba(212, 212, 212, 1);
-    box-shadow: 4px 1px 16px 1px rgba(212, 212, 212, 1);
-    -webkit-transition: width 800ms ease;
-    -moz-transition: width 800ms ease;
-    -ms-transition: width 800ms ease;
-    -o-transition: width 800ms ease;
-    transition: width 800ms ease;
+/* Sidebar.css */
+
+.sidebar-bg {
+    background: linear-gradient(135deg, #0d1b35, #1a2a54), #0d1b35; 
 }
 
-.xrg-nav-closed {
-    width: 4rem;
-    
+
+
+.custom-accordion .accordion-header {
+    background-color: transparent !important; 
+    border: none;
 }
 
-.xrg-dash-logo {
-    height: 2rem;
-    color: white;
-    margin-right: 0.5rem;
+ .custom-accordion .accordion-button {
+    background-color: transparent !important; 
+    color: #fff; 
+    border: none; 
+    box-shadow: none; 
+} 
 
+.custom-accordion .accordion-button:not(.collapsed) {
+    background-color: transparent !important; 
+    color: #fff; 
+    border: none;
 }
 
-.xrg-nav-icon {
-    margin-right: 1rem;
+.custom-accordion .accordion-button:focus {
+    box-shadow: none; 
 }
 
-.xrg-nav-selected {
-    color: white !important;
+
+
+.custom-accordion .accordion-item {
+    background-color: transparent;
+    border: none;
 }
 
-.xrg-nav-item{
-
-}
-.xrg-nav-link{
-    color: #c6c2ff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-    cursor: pointer;
-}
-.xrg-nav-close{
+.custom-accordion .accordion-body {
+    background-color: transparent;
+    color: #fff;
+    padding: 0;
 }
 
-.xrg-nav-open{
-
+.custom-accordion .accordion-header {
+    background-color: transparent;
+    border: none;
 }
+
+.custom-accordion .nav-link {
+    color: #fff; 
+}
+
+.custom-accordion .nav-link.active {
+    width: 100%;
+    background-color: #1a2a54; 
+    color: #fff;
+    border-radius: 8px;
+}
+
+ .nav-link.inactive {
+    color: #fff; 
+}
+
+.accordion-button:focus {
+    z-index: 3;
+    outline: 0;
+    box-shadow: none;
+    border: none;
+}
+
+.bnknav-cursor-disabled {
+    cursor: "not-allowed";
+}
+

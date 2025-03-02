@@ -11,7 +11,7 @@ const url = {
     deleteAwsKey: "/awsKey/deleteApiKey",
     updateAwsKey: "/awsKey/updateApiKey",
     getAwsRegion: "/awsKey/getAWSRegions",
-
+    getEksCluster:"/aws/getEksCluster",
     instance: {
         getAllInstance: "/aws/getAllInstance"
     }

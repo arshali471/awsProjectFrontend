@@ -6,6 +6,7 @@ import IRouter from "./component/Interface/IRouter";
 import Login from "./component/View/Public/Login";
 import { LoadingContext, SelectedRegionContext } from "./component/context/context";
 import { useState } from "react";
+import IIFFRouter, { iffRoutes } from "./component/routes/iff.routes";
 
 function PrivateRouter() {
     const auth = Auth.checkAuth();
@@ -22,7 +23,7 @@ export default function Router() {
         <>
             <LoadingContext.Provider value={{ loading, setLoading }}>
                 <SelectedRegionContext.Provider value={{ selectedRegion, setSelectedRegion }}>
-                    <Routes>
+                    {/* <Routes>
                         <Route element={<PrivateRouter />}>
                             {mainRoutes.map((data: IRouter) => {
                                 return (
@@ -35,7 +36,33 @@ export default function Router() {
                         </Route>
                         <Route path="/login" element={<Login />} />
                         <Route path="/*" element={<Navigate to="/login" />} />
-                    </Routes>
+                    </Routes> */}
+
+                        <Routes>
+                            <Route path="/" element={<PrivateRouter />}>
+                                {iffRoutes.map((data: IIFFRouter) => {
+                                    return data.children ? (
+                                        <Route key={data.path} path={data.path}>
+                                            {data.children.map((subData: IIFFRouter) => (
+                                                <Route
+                                                    key={subData.path}
+                                                    path={subData.path}
+                                                    element={subData.element}
+                                                />
+                                            ))}
+                                        </Route>
+                                    ) : (
+                                        <Route
+                                            key={data.path}
+                                            path={data.path}
+                                            element={data.element}
+                                        />
+                                    )
+                                })}
+                            </Route>
+                            <Route path="/login" element={<Login />} />
+                            <Route path="*" element={<Navigate to="/login" />} />
+                        </Routes>
                 </SelectedRegionContext.Provider>
             </LoadingContext.Provider>
         </>

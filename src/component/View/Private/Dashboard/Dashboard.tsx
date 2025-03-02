@@ -1,13 +1,13 @@
 import { useContext, useEffect, useState } from "react"
 import { AdminService } from "../../../services/admin.service"
 import { LoadingContext, SelectedRegionContext } from "../../../context/context"
-import { Card, Col, Form, Row } from "react-bootstrap";
+import { Card, Col, Container, Form, Row } from "react-bootstrap";
 import InstanceTable from "../../../Table/Instance.table";
 import { CSVLink } from "react-csv";
 import moment from "moment";
-import TablePagination from "../../../Pagination/Table.paginaition";
 import toast from "react-hot-toast";
 import LoaderSpinner from "../../../Spinner/Spinner";
+import TablePagination from "../../../Pagination/TablePagination";
 
 export default function Dashboard() {
 
@@ -113,54 +113,47 @@ export default function Dashboard() {
         if (selectedRegion?.value) {
             getAllInstance();
         }
-    }, [selectedRegion?.value])
+    }, [selectedRegion?.value, currentPage, perPage])
 
 
     return (
         <>
-            {loading ?
-                <div className="d-flex justify-content-center align-items-center">
-                    <LoaderSpinner />
-                </div>
-                :
-                <div style={{ width: "100%" }}>
-                    <Row className="mt-3">
-                        <Col>
-                            <div className="mt-5 mb-3 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <Form.Group>
-                                        <Form.Control placeholder="Find instance by attribute" onChange={(e: any) => setSearchText(e.target.value)} />
-                                    </Form.Group>
+            <Container>
+                {loading ?
+                    <div className="d-flex justify-content-center align-items-center">
+                        <LoaderSpinner />
+                    </div>
+                    :
+                    <div>
+                        <Row>
+                            <Col>
+                                <div className="mt-3 mb-3 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <Form.Group>
+                                            <Form.Control style={{ width: 300 }} placeholder="Find instance by attribute" onChange={(e: any) => setSearchText(e.target.value)} />
+                                        </Form.Group>
+                                    </div>
+                                    <div>
+                                        <CSVLink
+                                            data={InstanceCSVDownload}
+                                            filename={"Instance.csv"}
+                                            className="btn btn-primary"
+                                            target="_blank"
+                                        >
+                                            Export to CSV
+                                        </CSVLink>
+                                    </div>
                                 </div>
-                                <div>
-                                    <CSVLink
-                                        data={InstanceCSVDownload}
-                                        filename={"Instance.csv"}
-                                        className="btn btn-primary"
-                                        target="_blank"
-                                    >
-                                        Export to CSV
-                                    </CSVLink>
-                                </div>
-                            </div>
-                        </Col>
-                    </Row>
-                    <Row className="d-flex justify-content-center align-items-center">
-                        <Col>
-                            {searchText && searchText.length > 0 ?
-                                <Card className="shadow-sm">
-                                    <Card.Body>
-                                        <InstanceTable tableData={filterData} />
-                                    </Card.Body>
-                                </Card>
-                                :
-                                <Card className="shadow-sm">
-                                    <Card.Body>
-                                        <InstanceTable tableData={instanceData} />
-                                    </Card.Body>
-                                </Card>
-                            }
-                            <div className="bg-white py-2 px-3">
+                            </Col>
+                        </Row>
+
+                        <div>
+                            <Card style={{ width: "72rem" }}>
+                                <Card.Body>
+                                    <InstanceTable tableData={searchText && searchText.length > 0 ? filterData : instanceData} />
+                                </Card.Body>
+                            </Card>
+                            <div className="bg-white py-2">
                                 <TablePagination
                                     total={totalCount}
                                     currentPage={currentPage}
@@ -171,10 +164,10 @@ export default function Dashboard() {
                                     setPerPage={(e: number) => { setPerPage(e) }}
                                 />
                             </div>
-                        </Col>
-                    </Row>
-                </div>
-            }
+                        </div>
+                    </div>
+                }
+            </Container>
         </>
     )
 }

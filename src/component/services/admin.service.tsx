@@ -20,6 +20,10 @@ export class AdminService {
         return await makeRequest(url.instance.getAllInstance + "/" + keyId, RequestMethods.GET)
     }
 
+    static async getEksCluster(keyId: any) {
+        return await makeRequest(url.getEksCluster + "/" + keyId, RequestMethods.GET)
+    }
+
 
     static async getAllS3Data(keyId: any) {
         return await makeRequest(url.getAllS3Data + "/" + keyId, RequestMethods.GET)

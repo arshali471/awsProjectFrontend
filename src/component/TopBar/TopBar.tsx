@@ -7,7 +7,7 @@ import { useContext, useEffect, useState } from 'react';
 import AsyncSelect from 'react-select/async';
 import { SelectedRegionContext } from '../context/context';
 import { useLocation, useNavigate } from 'react-router-dom';
-
+import LogoImage from "../../assets/IFF.png"
 interface ITopBar {
   menuData: IRouter[],
 }
@@ -22,7 +22,6 @@ export default function TopBar({ menuData }: ITopBar) {
   const { selectedRegion, setSelectedRegion }: any = useContext(SelectedRegionContext)
 
   const [keysData, setKeysData] = useState<any>();
-  const [userData, setUserData] = useState<any>();
 
   const getAllAwsKeys = async () => {
     await AdminService.getAllAwsKey().then((res) => {
@@ -41,32 +40,7 @@ export default function TopBar({ menuData }: ITopBar) {
 
 
 
-  const getUserData = async () => {
-    try {
-      const res = await AdminService.getUserData();
-      let manageUsers: any = [];
 
-      if (res.status === 200) {
-
-        if (res.data.admin) {
-          manageUsers.push("admin");
-        }
-        if (res.data.addUser) {
-          manageUsers.push("addUser");
-        }
-        if (res.data.addAWSKey) {
-          manageUsers.push("addAWSKey");
-        }
-        setUserData(manageUsers);
-      } else {
-        // Handle other HTTP statuses if needed
-        console.error(`Failed to fetch user data. Status: ${res.status}`);
-      }
-    } catch (error) {
-      // Handle errors during the API call
-      console.error("Error fetching user data:", error);
-    }
-  };
 
 
 
@@ -85,77 +59,33 @@ export default function TopBar({ menuData }: ITopBar) {
     }, 1000);
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("authKey");
-    sessionStorage.removeItem("username");
-    navigate("/login")
-  }
 
-  console.log({ userData }, "user")
 
   useEffect(() => {
     getAllAwsKeys();
-    getUserData();
   }, [])
 
-  const showAllowedMenu = menuData.filter((routes) => routes.navbarShow === true)
 
   return (
     <>
-      <Navbar bg="white" expand="lg" className="shadow-sm">
-        {/* <Container> */}
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Brand className="ms-2 fw-bold">
-          <Image src='https://www.iff.com/sites/iff-corp/files/iff/iff-logo.png' width={35} />
-          <span className="ms-2">
-            Cloud Inventory
-          </span>
-        </Navbar.Brand>
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
-            {
-              showAllowedMenu.map((data: any, index: number) => {
-                const isActive = data.path === location.pathname.split("/")[1];
-                console.log(isActive, "active")
-                return (
-                  <span
-                    key={index}
-                    className={`fw-bold me-4 ${isActive ? 'text-primary' : 'text-muted'
-                      }`}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => navigate(data.path)}
-                  >
-                    {data.name}
-                  </span>
-                )
-              })
-            }
-          </Nav>
-        </Navbar.Collapse>
-        <div className="me-4" style={{ width: "20rem" }}>
-          <AsyncSelect
-            value={selectedRegion}
-            placeholder="Search Region....."
-            className="w-100 me-4"
-            cacheOptions
-            loadOptions={loadOptions}
-            defaultOptions={keysData}
-            isClearable={true}
-            onChange={(e: any) => setSelectedRegion(e)}
-          />
+      <div  className="shadow-sm p-2 d-flex align-items-center w-100">
+        <h6>Welcome {sessionStorage.getItem("username")}</h6>
+        <div className="d-flex ms-auto align-items-center me-3" style={{ gap: "1rem" }}>
+          <div style={{ width: "20rem" }}>
+            <AsyncSelect
+              value={selectedRegion}
+              placeholder="Search Region..."
+              className="w-100"
+              cacheOptions
+              loadOptions={loadOptions}
+              defaultOptions={keysData}
+              isClearable={true}
+              onChange={(e: any) => setSelectedRegion(e)}
+            />
+          </div>
         </div>
-        <NavDropdown style={{ marginRight: 90 }} title={sessionStorage.getItem("username")} id="basic-nav-dropdown">
+      </div>
 
-          {userData?.map((data: any) => {
-            return (
-              <NavDropdown.Item className="text-muted" style={{ fontWeight: "500" }} onClick={() => navigate(data)}>{data === "admin" ? "Admin" : data === "addUser" ? "Add User" : "Add Aws Key"}</NavDropdown.Item>
-            )
-          })}
-          <NavDropdown.Divider />
-          <NavDropdown.Item className="fw-bold" onClick={handleLogout}>Logout</NavDropdown.Item>
-        </NavDropdown>
-        {/* </Container> */}
-      </Navbar >
     </>
   );
 }
