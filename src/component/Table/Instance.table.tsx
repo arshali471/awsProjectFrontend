@@ -1,56 +1,120 @@
+import React from "react";
+import { useTable, useSortBy } from "react-table";
+import { Resizable } from "react-resizable";
 import moment from "moment";
-import { Badge, Table } from "react-bootstrap";
+import { Table, Badge } from "react-bootstrap";
+import "react-resizable/css/styles.css"; // Required for column resizing styles
 
 interface IInstanceTable {
-    tableData: any
-    pageNumber: any
-    pageSize: any
+    tableData: any[];
+    pageNumber: number;
+    pageSize: number;
 }
 
-export default function InstanceTable({ tableData, pageNumber, pageSize }: IInstanceTable) {
+const ResizableColumn = (props: any) => {
+    const { resizeHandler, isResizing, column } = props;
     return (
-        <Table striped hover responsive>
+        <div className={`resizable ${isResizing ? "resizing" : ""}`}>
+            {props.children}
+            <div className="resize-handle" onMouseDown={resizeHandler}></div>
+        </div>
+    );
+};
+
+export default function InstanceTable({ tableData, pageNumber, pageSize }: IInstanceTable) {
+    const columns = React.useMemo(
+        () => [
+            { Header: "Sr.No", accessor: "serialNo", sortType: "number" },
+            { Header: "Instance ID", accessor: "instanceId" },
+            { Header: "Instance Name", accessor: "instanceName" },
+            { Header: "Image ID", accessor: "imageId" },
+            { Header: "Instance Type", accessor: "instanceType" },
+            { Header: "Key Name", accessor: "keyName" },
+            { 
+                Header: "Launch Time", 
+                accessor: "launchTime", 
+                sortType: (rowA, rowB) => new Date(rowA.values.launchTime).getTime() - new Date(rowB.values.launchTime).getTime()
+            },
+            { Header: "Private IP Address", accessor: "privateIpAddress" },
+            { 
+                Header: "State", 
+                accessor: "state", 
+                sortType: (rowA, rowB) => rowA.values.state.props.children.localeCompare(rowB.values.state.props.children)
+            },
+            { Header: "Subnet ID", accessor: "subnetId" },
+            { Header: "VPC ID", accessor: "vpcId" },
+            { Header: "Platform Details", accessor: "platformDetails" },
+            { Header: "Availability Zone", accessor: "availabilityZone" },
+        ],
+        []
+    );
+
+    const data = React.useMemo(() => {
+        return tableData.map((data, index) => ({
+            serialNo: index + 1 + (pageNumber - 1) * pageSize,
+            instanceId: data?.InstanceId || "--",
+            instanceName: data?.Tags?.find((tag: any) => tag.Key === "Name")?.Value || "--",
+            imageId: data?.ImageId || "--",
+            instanceType: data?.InstanceType || "--",
+            keyName: data?.KeyName || "--",
+            launchTime: data?.LaunchTime ? moment(data?.LaunchTime).format("D MMM YYYY") : "--",
+            privateIpAddress: data?.PrivateIpAddress || "--",
+            state: data?.State?.Name ? (
+                <Badge bg={data?.State?.Name === "stopped" ? "danger" : "success"}>{data?.State?.Name}</Badge>
+            ) : "--",
+            subnetId: data?.SubnetId || "--",
+            vpcId: data?.VpcId || "--",
+            platformDetails: data?.PlatformDetails || "--",
+            availabilityZone: data?.Placement?.AvailabilityZone || "--",
+        }));
+    }, [tableData, pageNumber, pageSize]);
+
+    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
+        { columns, data },
+        useSortBy
+    );
+
+    return (
+        <Table striped hover responsive {...getTableProps()}>
             <thead>
-                <tr>
-                    <th style = {{fontSize: 14}}>Sr.No</th>
-                    <th style = {{fontSize: 14}}>Instance ID</th>
-                    <th style = {{fontSize: 14}}>Instance Name</th>
-                    <th style = {{fontSize: 14}}>Image ID</th>
-                    <th style = {{fontSize: 14}}>Instance Type</th>
-                    <th style = {{fontSize: 14}}>Key Name</th>
-                    <th style = {{fontSize: 14}}>Launch Time</th>
-                    <th style = {{fontSize: 14}}>Private IP Address</th>
-                    <th style = {{fontSize: 14}}>State</th>
-                    <th style = {{fontSize: 14}}>Subnet ID</th>
-                    <th style = {{fontSize: 14}}>VPC ID</th>
-                    <th style = {{fontSize: 14}}>Platform Details</th>
-                    <th style = {{fontSize: 14}}>Availability Zone</th>
-                </tr>
+                {headerGroups.map(headerGroup => (
+                    <tr {...headerGroup.getHeaderGroupProps()}>
+                        {headerGroup.headers.map(column => (
+                            <th
+                                {...column.getHeaderProps(column.getSortByToggleProps())}
+                                className="sortable-header"
+                                style={{ fontSize: 14, cursor: "pointer" }}
+                            >
+                                {column.render("Header")}
+                                {column.isSorted ? (column.isSortedDesc ? " 🔽" : " 🔼") : ""}
+                                <ResizableColumn column={column} />
+                            </th>
+                        ))}
+                    </tr>
+                ))}
             </thead>
-            <tbody>
-
-                {tableData && tableData.length > 0 ? tableData.map((data: any, index: number) => {
-                    const actualIndex = index + 1 + (pageNumber - 1) * pageSize;
-                    return (
-                        <tr>
-                            <td style = {{fontSize: 12}}>{actualIndex}</td>
-                            <td style = {{fontSize: 12}}>{data?.InstanceId || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.Tags?.find((data: any) => data.Key === "Name").Value || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.ImageId || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.InstanceType || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.KeyName || "--"}</td>
-                            <td style = {{fontSize: 12}}>{moment(data?.LaunchTime).format("DD MMM YY") || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.PrivateIpAddress || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.State?.Name === "stopped" ? <Badge bg="danger">{data?.State?.Name}</Badge> : <Badge bg="success">{data?.State?.Name}</Badge>}</td>
-                            <td style = {{fontSize: 12}}>{data?.SubnetId || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.VpcId || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.PlatformDetails || "--"}</td>
-                            <td style = {{fontSize: 12}}>{data?.Placement?.AvailabilityZone || "--"}</td>
-
-                        </tr>
-                    )
-                }) : "Please select region to get data"}
+            <tbody {...getTableBodyProps()}>
+                {rows.length > 0 ? (
+                    rows.map(row => {
+                        prepareRow(row);
+                        return (
+                            <tr {...row.getRowProps()}>
+                                {row.cells.map(cell => (
+                                    <td {...cell.getCellProps()} style={{ fontSize: 12 }}>
+                                        {cell.render("Cell")}
+                                    </td>
+                                ))}
+                            </tr>
+                        );
+                    })
+                ) : (
+                    <tr>
+                        <td colSpan={13} style={{ textAlign: "center", fontSize: 14 }}>
+                            Please select a region to get data
+                        </td>
+                    </tr>
+                )}
             </tbody>
         </Table>
-    )
+    );
 }

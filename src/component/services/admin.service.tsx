@@ -29,6 +29,14 @@ export class AdminService {
         return await makeRequest(url.getAllS3Data + "/" + keyId, RequestMethods.GET)
     }
 
+    static async getAllRDSData(keyId: any) {
+        return await makeRequest(url.getAllRDSData + "/" + keyId, RequestMethods.GET)
+    }
+
+    static async getAllVolumesData(keyId: any) {
+        return await makeRequest(url.instance.getAllVolumesData + "/" + keyId, RequestMethods.GET)
+    }
+
     static async createUser(payload: any) {
         return await makeRequest(url.createUser, RequestMethods.POST, payload)
     }

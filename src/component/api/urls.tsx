@@ -12,8 +12,10 @@ const url = {
     updateAwsKey: "/awsKey/updateApiKey",
     getAwsRegion: "/awsKey/getAWSRegions",
     getEksCluster:"/aws/getEksCluster",
+    getAllRDSData: "/aws/getRdsInstance",
     instance: {
-        getAllInstance: "/aws/getAllInstance"
+        getAllInstance: "/aws/getAllInstance",
+        getAllVolumesData: "/aws/getVolumes"
     }
 
 };

@@ -19,6 +19,7 @@ export default function Dashboard() {
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);
+    const [downloadFilteredData, setDownlaodFilteredData] = useState<any>([]);
 
     const getAllInstance = async () => {
         if (!selectedRegion?.value) return;
@@ -41,6 +42,7 @@ export default function Dashboard() {
         const startIndex = (currentPage - 1) * perPage;
         const endIndex = startIndex + perPage;
         const paginated = data.slice(startIndex, endIndex);
+        setDownlaodFilteredData(data);
         setPaginatedData(paginated);
         setTotalCount(data.length);
     };
@@ -67,19 +69,61 @@ export default function Dashboard() {
         updatePagination(filteredData);
     };
 
-    const instanceCSVData = paginatedData.map((data: any) => ({
+    // const instanceCSVData = downloadFilteredData.map((data: any) => ({
+    //     InstanceId: data?.InstanceId,
+    //     ImageId: data?.ImageId,
+    //     InstanceType: data?.InstanceType,
+    //     KeyName: data?.KeyName,
+    //     LaunchTime: moment(data?.LaunchTime).format("DD MMM YY"),
+    //     PrivateIpAddress: data?.PrivateIpAddress,
+    //     State: data?.State?.Name,
+    //     SubnetId: data?.SubnetId,
+    //     VpcId: data?.VpcId,
+    //     PlatformDetails: data?.PlatformDetails,
+    //     AvailabilityZone: data?.Placement?.AvailabilityZone,
+    // }));
+
+    const instanceCSVData = downloadFilteredData.map((data: any) => ({
+        InstanceName: data?.Tags?.find((tag: any) => tag.Key === "Name")?.Value || "N/A",
         InstanceId: data?.InstanceId,
-        ImageId: data?.ImageId,
         InstanceType: data?.InstanceType,
+        State: data?.State?.Name,
+        ImageId: data?.ImageId,
         KeyName: data?.KeyName,
         LaunchTime: moment(data?.LaunchTime).format("DD MMM YY"),
         PrivateIpAddress: data?.PrivateIpAddress,
-        State: data?.State?.Name,
+        PlatformDetails: data?.PlatformDetails,
         SubnetId: data?.SubnetId,
         VpcId: data?.VpcId,
-        PlatformDetails: data?.PlatformDetails,
         AvailabilityZone: data?.Placement?.AvailabilityZone,
+
+        // Newly added fields
+        Architecture: data?.Architecture,
+        RootDeviceType: data?.RootDeviceType,
+        RootDeviceName: data?.RootDeviceName,
+        SecurityGroups: data?.SecurityGroups?.map((group: any) => group?.GroupName).join(", "),
+        EbsOptimized: data?.EbsOptimized,
+        CpuCoreCount: data?.CpuOptions?.CoreCount,
+        ThreadsPerCore: data?.CpuOptions?.ThreadsPerCore,
+
+        // Extracting Volume ID
+        VolumeId: data?.BlockDeviceMappings?.map((block: any) => block?.Ebs?.VolumeId).join(", "),
+
+        // Extracting useful tags
+        OperatingSystem: data?.Tags?.find((tag: any) => tag.Key === "Operating_System")?.Value || "N/A",
+        Environment: data?.Tags?.find((tag: any) => tag.Key === "Environment")?.Value || "N/A",
+        Application: data?.Tags?.find((tag: any) => tag.Key === "Application")?.Value || "N/A",
+        ITLTOwner: data?.Tags?.find((tag: any) => tag.Key === "ITLT_Owner")?.Value || "N/A",
+        BusinessOwner: data?.Tags?.find((tag: any) => tag.Key === "Business_Owner")?.Value || "N/A",
+        CostCenter: data?.Tags?.find((tag: any) => tag.Key === "Cost_Center")?.Value || "N/A",
+        RetentionDays: data?.Tags?.find((tag: any) => tag.Key === "Retention")?.Value || "N/A",
+        ShutDownSchedule: data?.Tags?.find((tag: any) => tag.Key === "Shut_Down")?.Value || "N/A",
+        StartUpSchedule: data?.Tags?.find((tag: any) => tag.Key === "Start_Up")?.Value || "N/A",
     }));
+    
+
+    
+
 
     useEffect(() => {
         getAllInstance();
@@ -103,7 +147,7 @@ export default function Dashboard() {
                                 <Form.Group>
                                     <Form.Control
                                         style={{ width: 300 }}
-                                        placeholder="Find instance by attribute"
+                                        placeholder="Find by attribute"
                                         onChange={(e) => setSearchText(e.target.value)}
                                     />
                                 </Form.Group>

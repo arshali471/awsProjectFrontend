@@ -8,9 +8,14 @@ import AddAWSKey from "../View/Private/Account/AddAWSKey"
 import { IoKeySharp, IoSettings } from "react-icons/io5";
 import { RiAdminFill } from "react-icons/ri";
 import { FaUsersGear } from "react-icons/fa6";
-import { SiAmazonec2, SiAmazoneks, SiAmazons3 } from "react-icons/si";
+import { SiAmazonec2, SiAmazoneks, SiAmazons3, SiAmazondynamodb } from "react-icons/si";
 import { SiAwsorganizations } from "react-icons/si";
 import Kubernetes from "../View/Private/Kubernetes/Kubernetes"
+import { SiAmazonrds } from "react-icons/si";
+import RDSIndex from "../View/Private/RDS/RDS.index"
+import VolumesIndex from "../View/Private/Volumes/Volumes"
+
+
 export default interface IIFFRouter {
     path: string
     navbarShow: Boolean
@@ -36,6 +41,13 @@ export const iffRoutes: IIFFRouter[] = [
                 icon: SiAmazonec2
             },
             {
+                path: "Volumes",
+                navbarShow: true,
+                element: <VolumesIndex />,
+                name: "Volumes",
+                icon: SiAmazondynamodb
+            },
+            {
                 path: "s3",
                 navbarShow: true,
                 element: <S3Index />,
@@ -48,6 +60,13 @@ export const iffRoutes: IIFFRouter[] = [
                 element: <Kubernetes />,
                 name: "Kubernetes",
                 icon: SiAmazoneks
+            },
+            {
+                path: "rds",
+                navbarShow: true,
+                element: <RDSIndex />,
+                name: "RDS",
+                icon: SiAmazonrds
             },
         ],
     },

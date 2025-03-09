@@ -3,33 +3,32 @@ import { LoadingContext, SelectedRegionContext } from "../../../context/context"
 import { AdminService } from "../../../services/admin.service";
 import { Card, Col, Form, Row } from "react-bootstrap";
 import { CSVLink } from "react-csv";
-import S3Table from "../../../Table/S3.table";
-import moment from "moment";
 import LoaderSpinner from "../../../Spinner/Spinner";
 import TablePagination from "../../../Pagination/TablePagination";
+import RDSTable from "../../../Table/RDS.table";
 
-export default function S3Index() {
+export default function RDSIndex() {
     const { selectedRegion }: any = useContext(SelectedRegionContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
 
-    const [s3Data, setS3Data] = useState<any>([]);
+    const [rdsData, setrdsData] = useState<any>([]);
     const [paginatedData, setPaginatedData] = useState<any>([]);
     const [searchText, setSearchText] = useState<string>('');
 
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);
-    const [downloadFilteredData, setDownlaodFilteredData] = useState<any>([]);
+    const [ downloadFilteredData, setDownlaodFilteredData ] = useState<any>([]);
 
 
 
-    const getAllS3Data = async () => {
+    const getAllRDSData = async () => {
         setLoading(true);
         try {
-            const res = await AdminService.getAllS3Data(selectedRegion.value);
+            const res = await AdminService.getAllRDSData(selectedRegion.value);
             if (res.status === 200) {
-                setS3Data(res.data); // Store the full dataset
+                setrdsData(res.data); // Store the full dataset
                 setTotalCount(res.data.length);
             }
         } catch (error) {
@@ -39,47 +38,64 @@ export default function S3Index() {
     };
 
 
-    const S3CSVDownload = s3Data && s3Data?.length > 0
-        ? s3Data?.map((data: any) => {
+    const S3CSVDownload = rdsData && rdsData?.length > 0
+        ? rdsData?.map((data: any) => {
+            return (
+                {
+                    "instanceId": data?.instanceId,
+                    "status": data?.status,
+                    "engine": data?.engine,
+                    "engineVersion": data?.engineVersion,
+                    "storage": data?.storage,
+                    "instanceClass": data?.instanceClass,
+                    "vpcId": data?.vpcId,
+                    "subnetGroup": data?.subnetGroup,
+                    "availabilityZone": data?.availabilityZone,
+                    "createdAt": data?.createdAt,
+                    "endpoint": data?.endpoint,
+                    "securityGroups": data?.securityGroups
+                }
+            )
+        }) : rdsData?.map((data: any) => {
             return ({
-                "Bucket Name": data?.bucketName,
-                "Creation Date": moment(data?.creationDate).format("DD MMM YYYY"),
-                "Location": data?.location,
-                "Size": data?.size,
+                "instanceId": data?.instanceId,
+                "status": data?.status,
+                "engine": data?.engine,
+                "engineVersion": data?.engineVersion,
+                "storage": data?.storage,
+                "instanceClass": data?.instanceClass,
+                "vpcId": data?.vpcId,
+                "subnetGroup": data?.subnetGroup,
+                "availabilityZone": data?.availabilityZone,
+                "createdAt": data?.createdAt,
+                "endpoint": data?.endpoint,
+                "securityGroups": data?.securityGroups
             })
-        }) : s3Data?.map((data: any) => {
-            return ({
-                "Bucket Name": data?.bucketName,
-                "Creation Date": moment(data?.creationDate).format("DD MMM YYYY"),
-                "Location": data?.location,
-                "Size": data?.size,
-            })
-        });
-
+        })
 
 
     useEffect(() => {
-        let filteredData = s3Data;
+            let filteredData = rdsData;
 
-        if (searchText) {
-            filteredData = s3Data.filter((instance: any) => {
-                const instanceValues = Object.values(instance)
-                    .map(value => (typeof value === 'object' ? Object.values(value).join('') : String(value)))
-                    .join('');
-                return instanceValues.toLowerCase().includes(searchText.toLowerCase());
-            });
-        }
+            if (searchText) {
+                filteredData = rdsData.filter((instance: any) => {
+                    const instanceValues = Object.values(instance)
+                        .map(value => (typeof value === 'object' ? Object.values(value).join('') : String(value)))
+                        .join('');
+                    return instanceValues.toLowerCase().includes(searchText.toLowerCase());
+                });
+            }
 
-        const startIndex = (currentPage - 1) * perPage;
-        const endIndex = startIndex + perPage;
-        setPaginatedData(filteredData.slice(startIndex, endIndex));
-        setTotalCount(filteredData.length);
-        setDownlaodFilteredData(filteredData);
-    }, [s3Data, searchText, currentPage, perPage]);
+            const startIndex = (currentPage - 1) * perPage;
+            const endIndex = startIndex + perPage;
+            setDownlaodFilteredData(filteredData);
+            setPaginatedData(filteredData.slice(startIndex, endIndex));
+            setTotalCount(filteredData.length);
+        }, [rdsData, searchText, currentPage, perPage]);
 
     useEffect(() => {
         if (selectedRegion?.value) {
-            getAllS3Data();
+            getAllRDSData();
         }
     }, [selectedRegion?.value]);
 
@@ -102,7 +118,7 @@ export default function S3Index() {
                                 </Form.Group>
                                 <CSVLink
                                     data={downloadFilteredData}
-                                    filename={"S3.csv"}
+                                    filename={"RDS.csv"}
                                     className="btn btn-primary"
                                     target="_blank"
                                 >
@@ -115,7 +131,7 @@ export default function S3Index() {
                         <Col>
                             <Card>
                                 <Card.Body>
-                                    <S3Table tableData={paginatedData} pageNumber= {currentPage} pageSize= { perPage} />
+                                    <RDSTable tableData={paginatedData} pageNumber={currentPage} pageSize={perPage} />
                                 </Card.Body>
                             </Card>
                             <div className="bg-white py-2">

@@ -1,15 +1,17 @@
 import React from "react";
 import { useTable, useSortBy } from "react-table";
 import { Resizable } from "react-resizable";
-import { Table } from "react-bootstrap";
+import moment from "moment";
+import { Badge, Table } from "react-bootstrap";
 import "react-resizable/css/styles.css"; // Required for column resizing styles
 
-interface IEksTable {
+interface IVolumesTable {
     tableData: any[];
     pageNumber: number;
     pageSize: number;
 }
 
+// Resizable Column Component
 const ResizableColumn = (props: any) => {
     const { resizeHandler, isResizing, column } = props;
     return (
@@ -20,19 +22,22 @@ const ResizableColumn = (props: any) => {
     );
 };
 
-export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable) {
+export default function VolumesTable({ tableData, pageNumber, pageSize }: IVolumesTable) {
     const columns = React.useMemo(
         () => [
-            { Header: "Sr.No", accessor: "serialNo", sortType: "number" },
-            { Header: "Cluster Name", accessor: "name" },
-            { Header: "Version", accessor: "version" },
-            { Header: "Node", accessor: "nodes", sortType: "number" },
-            { Header: "Provider", accessor: "provider" },
-            {
-                Header: "Status",
-                accessor: "status",
-                sortType: (rowA, rowB) => rowA.values.status.localeCompare(rowB.values.status)
-            }
+            { Header: "Sr.No", accessor: "serialNo" },
+            { Header: "Volume ID", accessor: "volumeId" },
+            { Header: "State", accessor: "state" },
+            { Header: "Size (GB)", accessor: "size" },
+            { Header: "Volume Type", accessor: "volumeType" },
+            { Header: "IOPS", accessor: "iops" },
+            { Header: "Throughput", accessor: "throughput" },
+            { Header: "Snapshot ID", accessor: "snapshotId" },
+            { Header: "Availability Zone", accessor: "availabilityZone" },
+            { Header: "Encrypted", accessor: "encrypted" },
+            { Header: "Created At", accessor: "createdAt" },
+            { Header: "Attached Instances", accessor: "attachedInstances" },
+            { Header: "Attached Status", accessor: "attachedVolumeStatus" }
         ],
         []
     );
@@ -40,15 +45,20 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
     const data = React.useMemo(() => {
         return tableData.map((data, index) => ({
             serialNo: index + 1 + (pageNumber - 1) * pageSize,
-            name: data?.name || "--",
-            version: data?.version || "--",
-            nodes: data?.nodes?.length || "--",
-            provider: data?.provider || "--",
-            status: (
-                <span className={data?.status === "ACTIVE" ? "text-success" : "text-danger"}>
-                    {data?.status || "--"}
-                </span>
-            )
+            volumeId: data.volumeId || "--",
+            state: data.state || "--",
+            size: data.size || "--",
+            volumeType: data.volumeType || "--",
+            iops: data.iops || "--",
+            throughput: data.throughput || "--",
+            snapshotId: data.snapshotId || "--",
+            availabilityZone: data.availabilityZone || "--",
+            encrypted: data.encrypted || "--",
+            createdAt: data.createdAt ? moment(data.createdAt).format("DD MMM YY") : "--",
+            attachedInstances: data.attachedInstances?.length > 0 ? data.attachedInstances.join(", ") : "--",
+            attachedVolumeStatus: data.attachedInstances?.length > 0 ? (
+                <Badge bg={ "success" }>Attached</Badge>
+            ) : <Badge bg={"danger"}>UnAttached</Badge>
         }));
     }, [tableData, pageNumber, pageSize]);
 
@@ -92,8 +102,8 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
                     })
                 ) : (
                     <tr>
-                        <td colSpan={6} style={{ textAlign: "center", fontSize: 14 }}>
-                            No data found
+                        <td colSpan={14} style={{ textAlign: "center", fontSize: 14 }}>
+                            Please select a region to get data
                         </td>
                     </tr>
                 )}

@@ -1,51 +1,67 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { LoadingContext, SelectedRegionContext } from '../../../context/context';
-import { AdminService } from '../../../services/admin.service';
-import toast from 'react-hot-toast';
-import LoaderSpinner from '../../../Spinner/Spinner';
-import { Card, Col, Form, Row } from 'react-bootstrap';
-import TablePagination from '../../../Pagination/TablePagination';
-import EksTable from '../../../Table/Eks.table';
-import { CSVLink } from 'react-csv';
+import { useContext, useEffect, useState } from "react"
+import { LoadingContext, SelectedRegionContext } from "../../../context/context"
+import { AdminService } from "../../../services/admin.service";
+import { Card, Col, Form, Row } from "react-bootstrap";
+import { CSVLink } from "react-csv";
+import S3Table from "../../../Table/S3.table";
+import moment from "moment";
+import LoaderSpinner from "../../../Spinner/Spinner";
+import TablePagination from "../../../Pagination/TablePagination";
+import { get } from "http";
+import VolumesTable from "../../../Table/Volumes.table";
 
-export default function Kubernetes() {
+export default function VolumesIndex() {
     const { selectedRegion }: any = useContext(SelectedRegionContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
-    const [eksData, setEksData] = useState<any>([]);
+
+    const [Volumes, setVolumes] = useState<any>([]);
     const [paginatedData, setPaginatedData] = useState<any>([]);
     const [searchText, setSearchText] = useState<string>('');
+
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);
     const [downloadFilteredData, setDownlaodFilteredData] = useState<any>([]);
 
-    const getEksCluster = async () => {
+
+
+    const getVolumes = async () => {
         setLoading(true);
         try {
-            const res = await AdminService.getEksCluster(selectedRegion.value);
+            const res = await AdminService.getAllVolumesData(selectedRegion.value);
             if (res.status === 200) {
-                setEksData(res.data);
+                setVolumes(res.data); // Store the full dataset
                 setTotalCount(res.data.length);
             }
         } catch (error) {
-            console.error("Error fetching EKS data", error);
-            toast.error(error.response?.data || "Failed to fetch EKS clusters");
+            console.error("Error fetching Volumes data", error);
         }
         setLoading(false);
     };
 
-    useEffect(() => {
-        if (selectedRegion?.value) {
-            getEksCluster();
-        }
-    }, [selectedRegion?.value]);
+    const volumesData = Volumes.map((data, index) => ({
+        volumeId: data.volumeId,
+        state: data.state,
+        size: data.size,
+        volumeType: data.volumeType,
+        iops: data.iops,
+        throughput: data.throughput,
+        snapshotId: data.snapshotId,
+        availabilityZone: data.availabilityZone,
+        encrypted: data.encrypted,
+        createdAt: data.createdAt,
+        attachedInstances: data.attachedInstances,
+        attachedVolumeStatus: data.attachedInstances?.length > 0 ? "Attached" : "UnAttached"
+    }));
+
+
 
     useEffect(() => {
-        let filteredData = eksData;
+        let filteredData = volumesData;
 
         if (searchText) {
-            filteredData = eksData.filter((instance: any) => {
+            filteredData = volumesData.filter((instance: any) => {
                 const instanceValues = Object.values(instance)
                     .map(value => (typeof value === 'object' ? Object.values(value).join('') : String(value)))
                     .join('');
@@ -58,7 +74,13 @@ export default function Kubernetes() {
         setPaginatedData(filteredData.slice(startIndex, endIndex));
         setTotalCount(filteredData.length);
         setDownlaodFilteredData(filteredData);
-    }, [eksData, searchText, currentPage, perPage]);
+    }, [Volumes, searchText, currentPage, perPage]);
+
+    useEffect(() => {
+        if (selectedRegion?.value) {
+            getVolumes();
+        }
+    }, [selectedRegion?.value]);
 
     return (
         <>
@@ -79,7 +101,7 @@ export default function Kubernetes() {
                                 </Form.Group>
                                 <CSVLink
                                     data={downloadFilteredData}
-                                    filename={"EKS.csv"}
+                                    filename={"Volumes.csv"}
                                     className="btn btn-primary"
                                     target="_blank"
                                 >
@@ -88,36 +110,27 @@ export default function Kubernetes() {
                             </div>
                         </Col>
                     </Row>
-                    {/* <Row className="mt-3">
+                    <Row className="d-flex justify-content-center align-items-center">
                         <Col>
-                            <div className="mt-3 mb-3 d-flex justify-content-between align-items-center">
-                                <Form.Group>
-                                    <Form.Control
-                                        placeholder="Search..."
-                                        onChange={(e) => setSearchText(e.target.value)}
-                                    />
-                                </Form.Group>
+                            <Card>
+                                <Card.Body>
+                                    <VolumesTable tableData={paginatedData} pageNumber={1} pageSize={10} />
+
+                                </Card.Body>
+                            </Card>
+                            <div className="bg-white py-2">
+                                <TablePagination
+                                    total={totalCount}
+                                    currentPage={currentPage}
+                                    perPage={perPage}
+                                    handlePageChange={setCurrentPage}
+                                    setPerPage={setPerPage}
+                                />
                             </div>
                         </Col>
-                    </Row> */}
-                    <div>
-                        <Card>
-                            <Card.Body>
-                                <EksTable tableData={paginatedData} pageNumber={currentPage} pageSize={perPage} />
-                            </Card.Body>
-                        </Card>
-                        <div className="bg-white py-2">
-                            <TablePagination
-                                total={totalCount}
-                                currentPage={currentPage}
-                                perPage={perPage}
-                                handlePageChange={setCurrentPage}
-                                setPerPage={setPerPage}
-                            />
-                        </div>
-                    </div>
+                    </Row>
                 </div>
             )}
         </>
-    );
+    )
 }
