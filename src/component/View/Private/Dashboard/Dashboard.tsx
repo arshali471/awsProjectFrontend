@@ -8,6 +8,8 @@ import moment from "moment";
 import toast from "react-hot-toast";
 import LoaderSpinner from "../../../Spinner/Spinner";
 import TablePagination from "../../../Pagination/TablePagination";
+import Select from "react-select";
+import DatePicker from "react-datepicker";
 
 export default function Dashboard() {
     const { selectedRegion }: any = useContext(SelectedRegionContext);
@@ -21,15 +23,22 @@ export default function Dashboard() {
     const [perPage, setPerPage] = useState<number>(10);
     const [downloadFilteredData, setDownlaodFilteredData] = useState<any>([]);
 
+    const [selectedType, setSelectedType] = useState<any>();
+    const [startDate, setStartDate] = useState(new Date());
+
     const getAllInstance = async () => {
         if (!selectedRegion?.value) return;
 
         setLoading(true);
         try {
-            const res = await AdminService.getAllInstance(selectedRegion.value);
+            const res = await AdminService.getAllInstance(
+                selectedRegion.value, 
+                selectedType?.value, 
+                selectedType?.value === 'db' ? moment(startDate).subtract(1, "day").format("YYYY-MM-DD") : undefined
+            );
             if (res.status === 200) {
-                setInstanceData(res.data);
-                updatePagination(res.data);
+                setInstanceData(res.data.data);
+                updatePagination(res.data.data);
             }
         } catch (err: any) {
             console.log(err);
@@ -41,8 +50,8 @@ export default function Dashboard() {
     const updatePagination = (data: any[]) => {
         const startIndex = (currentPage - 1) * perPage;
         const endIndex = startIndex + perPage;
-        const paginated = data.slice(startIndex, endIndex);
         setDownlaodFilteredData(data);
+        const paginated = data && data?.slice(startIndex, endIndex);
         setPaginatedData(paginated);
         setTotalCount(data.length);
     };
@@ -125,9 +134,30 @@ export default function Dashboard() {
     
 
 
+
+    const data = [
+        {
+            label: "Fetch Live Data",
+            value: "api"
+        },
+        {
+            label: "Fetch From Database",
+            value: "db"
+        },
+        {
+            label: "Cloud to Database",
+            value: "api-save-db"
+        },
+    ]
+
+
     useEffect(() => {
         getAllInstance();
-    }, [selectedRegion?.value]);
+    }, [selectedRegion?.value, selectedType?.value !== "db" && selectedType?.value, selectedType?.value === 'db' ? startDate : null]);
+
+    useEffect(() => {
+        setSelectedType(data[0]);
+    }, []);
 
     useEffect(() => {
         handleSearchData();
@@ -151,14 +181,34 @@ export default function Dashboard() {
                                         onChange={(e) => setSearchText(e.target.value)}
                                     />
                                 </Form.Group>
-                                <CSVLink
-                                    data={instanceCSVData}
-                                    filename="Instance.csv"
-                                    className="btn btn-primary"
-                                    target="_blank"
-                                >
-                                    Export to CSV
-                                </CSVLink>
+                                <div className="d-flex gap-2">
+                                    <div style={{ width: 200 }}>
+                                        <Select
+                                            options={data}
+                                            value={selectedType}
+                                            onChange={(e) => setSelectedType(e)}
+                                            className="w-100"
+                                            isSearchable={true}
+                                        />
+                                    </div>
+
+                                    {selectedType?.value === "db" && (
+                                        <DatePicker
+                                            selected={startDate}
+                                            onChange={(date: any) => setStartDate(date)}
+                                            className="w-100 form-control"
+                                        />
+                                    )}
+
+                                    <CSVLink
+                                        data={instanceCSVData}
+                                        filename="Instance.csv"
+                                        className="btn btn-primary"
+                                        target="_blank"
+                                    >
+                                        Export to CSV
+                                    </CSVLink>
+                                </div>
                             </div>
                         </Col>
                     </Row>

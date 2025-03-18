@@ -1,4 +1,5 @@
-import makeRequest from "../api/makeRequest";
+import moment from "moment";
+import makeRequest, { makeParams } from "../api/makeRequest";
 import { RequestMethods } from "../api/requestMethode";
 import url from "../api/urls";
 
@@ -16,8 +17,18 @@ export class AdminService {
     }
 
 
-    static async getAllInstance(keyId: any) {
-        return await makeRequest(url.instance.getAllInstance + "/" + keyId, RequestMethods.GET)
+    static async getAllInstance(keyId: any, query: any, date: any) {
+        const params = makeParams([
+            {
+                index: "query",
+                value: query
+            },
+            {
+                index: "date",
+                value: date
+            }
+        ])
+        return await makeRequest(url.instance.getAllInstance + "/" + keyId + params, RequestMethods.GET)
     }
 
     static async getEksCluster(keyId: any) {
