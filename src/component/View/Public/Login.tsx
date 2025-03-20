@@ -21,7 +21,7 @@ export default function Login() {
                 Auth.authenticate();
                 sessionStorage.setItem("authKey", res.data.token);
                 sessionStorage.setItem("username", res.data.username)
-                navigate('/platform/ec2');
+                navigate('/dashboard');
                 toast.success("Login Successful")
             }
         }).catch(err => {

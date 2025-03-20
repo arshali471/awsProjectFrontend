@@ -79,6 +79,7 @@ export default function S3Index() {
 
     useEffect(() => {
         if (selectedRegion?.value) {
+            setSearchText("")
             getAllS3Data();
         }
     }, [selectedRegion?.value]);

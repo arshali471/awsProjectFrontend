@@ -95,6 +95,7 @@ export default function RDSIndex() {
 
     useEffect(() => {
         if (selectedRegion?.value) {
+            setSearchText("")
             getAllRDSData();
         }
     }, [selectedRegion?.value]);

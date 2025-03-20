@@ -12,6 +12,7 @@ import Select from "react-select";
 import DatePicker from "react-datepicker";
 
 export default function Dashboard() {
+
     const { selectedRegion }: any = useContext(SelectedRegionContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
@@ -32,9 +33,9 @@ export default function Dashboard() {
         setLoading(true);
         try {
             const res = await AdminService.getAllInstance(
-                selectedRegion.value, 
-                selectedType?.value, 
-                selectedType?.value === 'db' ? moment(startDate).subtract(1, "day").format("YYYY-MM-DD") : undefined
+                selectedRegion.value,
+                selectedType?.value,
+                selectedType?.value === 'db' ? moment(startDate).utc().format() : undefined
             );
             if (res.status === 200) {
                 setInstanceData(res.data.data);
@@ -78,20 +79,6 @@ export default function Dashboard() {
         updatePagination(filteredData);
     };
 
-    // const instanceCSVData = downloadFilteredData.map((data: any) => ({
-    //     InstanceId: data?.InstanceId,
-    //     ImageId: data?.ImageId,
-    //     InstanceType: data?.InstanceType,
-    //     KeyName: data?.KeyName,
-    //     LaunchTime: moment(data?.LaunchTime).format("DD MMM YY"),
-    //     PrivateIpAddress: data?.PrivateIpAddress,
-    //     State: data?.State?.Name,
-    //     SubnetId: data?.SubnetId,
-    //     VpcId: data?.VpcId,
-    //     PlatformDetails: data?.PlatformDetails,
-    //     AvailabilityZone: data?.Placement?.AvailabilityZone,
-    // }));
-
     const instanceCSVData = downloadFilteredData.map((data: any) => ({
         InstanceName: data?.Tags?.find((tag: any) => tag.Key === "Name")?.Value || "N/A",
         InstanceId: data?.InstanceId,
@@ -129,9 +116,9 @@ export default function Dashboard() {
         ShutDownSchedule: data?.Tags?.find((tag: any) => tag.Key === "Shut_Down")?.Value || "N/A",
         StartUpSchedule: data?.Tags?.find((tag: any) => tag.Key === "Start_Up")?.Value || "N/A",
     }));
-    
 
-    
+
+
 
 
 
@@ -152,6 +139,7 @@ export default function Dashboard() {
 
 
     useEffect(() => {
+        setSearchText("");
         getAllInstance();
     }, [selectedRegion?.value, selectedType?.value !== "db" && selectedType?.value, selectedType?.value === 'db' ? startDate : null]);
 

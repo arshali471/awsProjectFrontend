@@ -37,6 +37,7 @@ export default function Kubernetes() {
 
     useEffect(() => {
         if (selectedRegion?.value) {
+            setSearchText("")
             getEksCluster();
         }
     }, [selectedRegion?.value]);

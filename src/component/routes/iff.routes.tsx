@@ -14,7 +14,8 @@ import Kubernetes from "../View/Private/Kubernetes/Kubernetes"
 import { SiAmazonrds } from "react-icons/si";
 import RDSIndex from "../View/Private/RDS/RDS.index"
 import VolumesIndex from "../View/Private/Volumes/Volumes"
-
+import { RxDashboard } from "react-icons/rx";
+import IffDashboard from "../View/Private/IffDashboard/IffDashboard"
 
 export default interface IIFFRouter {
     path: string
@@ -27,6 +28,13 @@ export default interface IIFFRouter {
 
 
 export const iffRoutes: IIFFRouter[] = [
+    // {
+    //     path: "dashboard",
+    //     navbarShow: true,
+    //     name: "Dashboard",
+    //     icon: RxDashboard,
+    //     element: <IffDashboard />
+    // },
     {
         path: "platform",
         navbarShow: true,

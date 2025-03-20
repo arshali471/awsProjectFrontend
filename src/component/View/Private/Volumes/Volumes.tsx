@@ -78,6 +78,7 @@ export default function VolumesIndex() {
 
     useEffect(() => {
         if (selectedRegion?.value) {
+            setSearchText("");
             getVolumes();
         }
     }, [selectedRegion?.value]);
