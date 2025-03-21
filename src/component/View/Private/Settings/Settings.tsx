@@ -38,7 +38,21 @@ export default function Settings() {
           {/* User Dropdown */}
           <Dropdown align="end">
             <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-              <RxAvatar size={30} />
+            <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "12px",
+                }}
+              >
+               {sessionStorage.getItem("username")?.substring(0, 2).toUpperCase()}
+              </div>
             </Dropdown.Toggle>
 
             <Dropdown.Menu className="dropdown-bottom-left">
@@ -46,8 +60,8 @@ export default function Settings() {
                 <div className="d-flex align-items-center">
                   <div
                     style={{
-                      width: 20,
-                      height: 20,
+                      width: 25,
+                      height: 25,
                       borderRadius: "50%",
                       backgroundColor: "#007bff",
                       color: "white",
@@ -57,7 +71,7 @@ export default function Settings() {
                       fontSize: "12px",
                     }}
                   >
-                    {sessionStorage.getItem("username")?.charAt(0).toUpperCase()}
+                   {sessionStorage.getItem("username")?.substring(0, 2).toUpperCase()}
                   </div>
                   <span className="ms-2">{sessionStorage.getItem("username")}</span>
                 </div>

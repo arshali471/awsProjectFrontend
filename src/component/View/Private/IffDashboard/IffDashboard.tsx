@@ -13,6 +13,7 @@ import EksInvImage from "../../../../assets/eks_invntory.png";
 import ReportImage from "../../../../assets/report.png";
 import CostImage from "../../../../assets/cost.png";
 import TicktImage from "../../../../assets/ticketing.png";
+import { HiOutlineLogout } from "react-icons/hi";
 
 
 const apps = [
@@ -34,6 +35,13 @@ export default function IffDashboard() {
   const handleNavigate = (url: string) => {
     window.open(url, "_blank");
   };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("authKey");
+    sessionStorage.removeItem("username");
+    navigate("/login")
+  }
+
 
 
   return (
@@ -59,7 +67,21 @@ export default function IffDashboard() {
 
           <Dropdown align="end">
             <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-              <RxAvatar size={30} />
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "12px",
+                }}
+              >
+               {sessionStorage.getItem("username")?.substring(0, 2).toUpperCase()}
+              </div>
             </Dropdown.Toggle>
 
             <Dropdown.Menu className="dropdown-bottom-left">
@@ -67,8 +89,8 @@ export default function IffDashboard() {
                 <div className="d-flex align-items-center">
                   <div
                     style={{
-                      width: 20,
-                      height: 20,
+                      width: 25,
+                      height: 25,
                       borderRadius: "50%",
                       backgroundColor: "#007bff",
                       color: "white",
@@ -78,7 +100,7 @@ export default function IffDashboard() {
                       fontSize: "12px",
                     }}
                   >
-                    {sessionStorage.getItem("username")?.charAt(0).toUpperCase()}
+                   {sessionStorage.getItem("username")?.substring(0, 2).toUpperCase()}
                   </div>
                   <span className="ms-2">
                     {sessionStorage.getItem("username")}
@@ -86,15 +108,23 @@ export default function IffDashboard() {
                 </div>
               </Dropdown.Item>
               <Dropdown.Divider />
-              <Dropdown.Item className = "d-flex align-items-center gap-2" onClick={() => navigate("/settings")}>
-              <IoSettingsSharp />
+              <Dropdown.Item className="d-flex align-items-center gap-2" onClick={() => navigate("/settings")}>
+                <IoSettingsSharp />
                 <span>Settings</span>
               </Dropdown.Item>
+              <Dropdown.Divider />
+              <Dropdown.Item
+                className="d-flex align-items-center gap-2 text-danger"
+                onClick={handleLogout}
+              >
+                <HiOutlineLogout />
+                <span>Logout</span>
+              </Dropdown.Item>
             </Dropdown.Menu>
-        </Dropdown>
+          </Dropdown>
 
-      </Container>
-    </Navbar >
+        </Container>
+      </Navbar >
       <Container className="p-4 mt-5">
         <Row className="mb-3">
           <Col>
