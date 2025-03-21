@@ -4,6 +4,9 @@ import { AdminService } from "../services/admin.service";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import ConfirmationModal from "../modal/Confirmation.modal";
+import { TbPasswordFingerprint } from "react-icons/tb";
+import ChangePaswordModal from "../modal/ChangePassword.modal";
+
 interface IUsersTable {
     tableData: any,
     reload: any
@@ -11,6 +14,8 @@ interface IUsersTable {
 export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
 
     const [showConfirmationModal, setShowConfirmationModal] = useState<any | undefined>(undefined)
+
+    const [showChangePasswordModal, setShowChangePasswordModal] = useState<any>(undefined)
 
 
     const handleRoleChange = async (userId: string, payload: any) => {
@@ -72,6 +77,7 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
                                     <Form.Switch checked={data?.addUser} onChange={(e: any) => handleRoleChange(data._id, { "addUser": e.target.checked })} />
                                 </td>
                                 <td style={{ fontSize: 12 }}>
+                                    <TbPasswordFingerprint className="text-primary me-3" size={18} onClick={() => setShowChangePasswordModal(data._id)} />
                                     <FaRegTrashAlt className="text-danger" onClick={() => setShowConfirmationModal(data._id)} />
                                 </td>
                             </tr>
@@ -85,6 +91,11 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
                 handleClose={() => setShowConfirmationModal(undefined)}
                 label="Are your sure you want to delete this User."
                 onClick={handleDeleteUser}
+            />
+
+            <ChangePaswordModal 
+            show = {showChangePasswordModal}
+            handleClose={() => setShowChangePasswordModal(undefined)}
             />
         </>
     )

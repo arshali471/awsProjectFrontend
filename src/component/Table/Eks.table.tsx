@@ -1,8 +1,10 @@
 import React from "react";
 import { useTable, useSortBy } from "react-table";
 import { Resizable } from "react-resizable";
-import { Table } from "react-bootstrap";
+import { Button, Table } from "react-bootstrap";
 import "react-resizable/css/styles.css"; // Required for column resizing styles
+import { MdOutlineContentCopy } from "react-icons/md";
+import toast from "react-hot-toast";
 
 interface IEksTable {
     tableData: any[];
@@ -32,10 +34,29 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
                 Header: "Status",
                 accessor: "status",
                 sortType: (rowA, rowB) => rowA.values.status.localeCompare(rowB.values.status)
-            }
+            },
+            { Header: "Token", accessor: "token" },
+            { Header: "Connect", accessor: "connect" },
+
         ],
         []
     );
+
+    const copyToClipboard = (text: any) => {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                toast.success("Copied to clipboard!");
+            })
+            .catch((err) => {
+                toast.error("Failed to copy:", err);
+            });
+    };
+
+
+    const handleNavigate = (url: string) => {
+        window.open(url, "_blank");
+      };
+
 
     const data = React.useMemo(() => {
         return tableData.map((data, index) => ({
@@ -48,7 +69,9 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
                 <span className={data?.status === "ACTIVE" ? "text-success" : "text-danger"}>
                     {data?.status || "--"}
                 </span>
-            )
+            ),
+            token: data?.token ? <MdOutlineContentCopy className="text-success" style={{ cursor: "pointer" }} onClick={() => copyToClipboard(data.token)} /> : "--",
+            connect: data?.connectUrl ? <span style = {{cursor: "pointer"}} className ="text-decoration-underline text-primary" onClick={() => handleNavigate(data?.connectUrl)}>Connect</span>: "--",
         }));
     }, [tableData, pageNumber, pageSize]);
 
@@ -92,7 +115,7 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
                     })
                 ) : (
                     <tr>
-                        <td colSpan={6} style={{ textAlign: "center", fontSize: 14 }}>
+                        <td colSpan={8} style={{ textAlign: "center", fontSize: 14 }}>
                             No data found
                         </td>
                     </tr>

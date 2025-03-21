@@ -6,15 +6,23 @@ import { RxAvatar } from "react-icons/rx";
 import CustomToggle from "../../../helpers/CustomToggle";
 import { IoSettingsSharp } from "react-icons/io5";
 
+import DevopsImage from "../../../../assets/devops.png";
+import EksImage from "../../../../assets/eks.png";
+import EksInvImage from "../../../../assets/eks_invntory.png";
+
+import ReportImage from "../../../../assets/report.png";
+import CostImage from "../../../../assets/cost.png";
+import TicktImage from "../../../../assets/ticketing.png";
+
 
 const apps = [
   { url: "/platform/ec2", name: "IFF Inventory", icon: ImageData },
-  { url: "/platform/eks", name: "EKS Inventory", icon: ImageData },
-  { url: "/platform/ec2", name: "EKS-monitoring", icon: ImageData },
-  { url: "/platform/ec2", name: "Report", icon: ImageData },
-  { url: "/platform/ec2", name: "Ticketing", icon: ImageData },
-  { url: "/platform/ec2", name: "Cost", icon: ImageData },
-  { url: "/platform/ec2", name: "Devops", icon: ImageData },
+  { url: "/platform/eks", name: "EKS Inventory", icon: EksInvImage },
+  { url: "/platform/ec2", name: "EKS-monitoring", icon: EksImage },
+  { url: "/platform/ec2", name: "Report", icon: ReportImage },
+  { url: "/platform/ec2", name: "Ticketing", icon: TicktImage },
+  { url: "/platform/ec2", name: "Cost", icon: CostImage },
+  { url: "/platform/ec2", name: "Devops", icon: DevopsImage },
 ];
 
 export default function IffDashboard() {

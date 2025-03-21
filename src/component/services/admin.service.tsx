@@ -76,4 +76,12 @@ export class AdminService {
     static async getAwsRegion() {
         return await makeRequest(url.getAwsRegion, RequestMethods.GET)
     }
+
+    static async changeUserPassword(payload:any) {
+        return await makeRequest(url.changeUserPassword, RequestMethods.PUT, payload)
+    }
+
+    static async changeUserPasswordByAdmin(userId:any, payload:any) {
+        return await makeRequest(url.changePasswordByAdmin + "/" + userId, RequestMethods.PUT, payload)
+    }
 }

@@ -1,0 +1,7 @@
+.custom-table th, .custom-table td {
+    text-align: left;
+    padding: 10px;
+    vertical-align: middle;
+    border-bottom: 1px solid #dee2e6;
+    white-space: nowrap;
+}

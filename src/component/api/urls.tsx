@@ -13,6 +13,8 @@ const url = {
     getAwsRegion: "/awsKey/getAWSRegions",
     getEksCluster:"/aws/getEksCluster",
     getAllRDSData: "/aws/getRdsInstance",
+    changeUserPassword:"/user/changePassword",
+    changePasswordByAdmin:"/user/changePasswordByAdmin",
     instance: {
         getAllInstance: "/aws/getAllInstance",
         getAllVolumesData: "/aws/getVolumes"

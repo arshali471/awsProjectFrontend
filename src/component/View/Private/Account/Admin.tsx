@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { Card, Col, Row } from "react-bootstrap";
+import { Card, Col, Container, Row } from "react-bootstrap";
 import { AdminService } from "../../../services/admin.service";
 import AdminUsersTable from "../../../Table/AdminUser.table";
 import AWSKeyTable from "../../../Table/AWSKey.table";
 import { TbError404Off } from "react-icons/tb";
+import { IoArrowBackCircleSharp } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 export default function AdminIndex() {
+
+    const navigate = useNavigate();
 
     const [users, setUsers] = useState<any>();
     const [awsKeyData, setAwsKeyData] = useState<any>();
@@ -55,37 +59,42 @@ export default function AdminIndex() {
 
     return (
         <>
-            {isAllowed ?
-                <div>
-                    <Row>
-                        <Col>
-                            <h4>Users</h4>
-                            <Card>
-                                <Card.Body>
-                                    <AdminUsersTable tableData={users} reload={getAllUsers} />
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    </Row>
-                    <hr />
-                    <Row className="mt-4">
-                        <Col>
-                            <h4>AWS Key</h4>
-                            <Card>
-                                <Card.Body>
-                                    <AWSKeyTable tableData={awsKeyData} reload={getAllAWSKey} />
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    </Row>
-                </div> :
-                <div className="d-flex justify-content-center align-items-center">
-                    <div className="d-flex flex-column justify-content-center align-items-center">
-                        <TbError404Off size={100} className="text-secondary" />
-                        <p className ="text-muted">You're not allowed, Please contact to the admin.</p>
+            <Container className="p-4 mt-5">
+                {isAllowed ?
+                    <div>
+                        <Row>
+                            <Col>
+                                <h4>
+                                    <IoArrowBackCircleSharp className = "me-2 mb-1" onClick={() =>navigate(-1)} />
+                                    Users
+                                </h4>
+                                <Card>
+                                    <Card.Body>
+                                        <AdminUsersTable tableData={users} reload={getAllUsers} />
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
+                        <hr />
+                        <Row className="mt-4">
+                            <Col>
+                                <h4>AWS Key</h4>
+                                <Card>
+                                    <Card.Body>
+                                        <AWSKeyTable tableData={awsKeyData} reload={getAllAWSKey} />
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </div> :
+                    <div className="d-flex justify-content-center align-items-center">
+                        <div className="d-flex flex-column justify-content-center align-items-center">
+                            <TbError404Off size={100} className="text-secondary" />
+                            <p className="text-muted">You're not allowed, Please contact to the admin.</p>
+                        </div>
                     </div>
-                </div>
-            }
+                }
+            </Container>
         </>
     )
 }

@@ -79,33 +79,40 @@ export const iffRoutes: IIFFRouter[] = [
         ],
     },
 
-    {
-        path: "settings",
-        navbarShow: true,
-        name: "Settings",
-        icon: IoSettings,
-        children: [
-            {
-                path: "admin",
-                navbarShow: false,
-                element: <AdminIndex />,
-                name: "Admin",
-                icon: RiAdminFill
-            },
-            {
-                path: "addUser",
-                navbarShow: false,
-                element: <AddUser />,
-                name: "Add Users",
-                icon: FaUsersGear
-            },
-            {
-                path: "addAWSKey",
-                navbarShow: false,
-                element: <AddAWSKey />,
-                name: "Add AWS Key",
-                icon: IoKeySharp
-            },
-        ],
-    },
+    // {
+    //     path: "settings",
+    //     navbarShow: false,
+    //     name: "Settings",
+    //     icon: IoSettings,
+    //     children: [
+    //         {
+    //             path: "admin",
+    //             navbarShow: false,
+    //             element: <AdminIndex />,
+    //             name: "Admin",
+    //             icon: RiAdminFill
+    //         },
+    //         {
+    //             path: "addUser",
+    //             navbarShow: false,
+    //             element: <AddUser />,
+    //             name: "Add Users",
+    //             icon: FaUsersGear
+    //         },
+    //         {
+    //             path: "addAWSKey",
+    //             navbarShow: false,
+    //             element: <AddAWSKey />,
+    //             name: "Add AWS Key",
+    //             icon: IoKeySharp
+    //         },
+    //         {
+    //             path: "change-password",
+    //             navbarShow: false,
+    //             element: <AddAWSKey />,
+    //             name: "Add AWS Key",
+    //             icon: IoKeySharp
+    //         },
+    //     ],
+    // },
 ]

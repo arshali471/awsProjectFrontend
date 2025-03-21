@@ -19,7 +19,7 @@ export default function RDSIndex() {
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);
-    const [ downloadFilteredData, setDownlaodFilteredData ] = useState<any>([]);
+    const [downloadFilteredData, setDownlaodFilteredData] = useState<any>([]);
 
 
 
@@ -75,23 +75,23 @@ export default function RDSIndex() {
 
 
     useEffect(() => {
-            let filteredData = rdsData;
+        let filteredData = rdsData;
 
-            if (searchText) {
-                filteredData = rdsData.filter((instance: any) => {
-                    const instanceValues = Object.values(instance)
-                        .map(value => (typeof value === 'object' ? Object.values(value).join('') : String(value)))
-                        .join('');
-                    return instanceValues.toLowerCase().includes(searchText.toLowerCase());
-                });
-            }
+        if (searchText) {
+            filteredData = rdsData.filter((instance: any) => {
+                const instanceValues = Object.values(instance)
+                    .map(value => (typeof value === 'object' ? Object.values(value).join('') : String(value)))
+                    .join('');
+                return instanceValues.toLowerCase().includes(searchText.toLowerCase());
+            });
+        }
 
-            const startIndex = (currentPage - 1) * perPage;
-            const endIndex = startIndex + perPage;
-            setDownlaodFilteredData(filteredData);
-            setPaginatedData(filteredData.slice(startIndex, endIndex));
-            setTotalCount(filteredData.length);
-        }, [rdsData, searchText, currentPage, perPage]);
+        const startIndex = (currentPage - 1) * perPage;
+        const endIndex = startIndex + perPage;
+        setDownlaodFilteredData(filteredData);
+        setPaginatedData(filteredData.slice(startIndex, endIndex));
+        setTotalCount(filteredData.length);
+    }, [rdsData, searchText, currentPage, perPage]);
 
     useEffect(() => {
         if (selectedRegion?.value) {
@@ -113,6 +113,7 @@ export default function RDSIndex() {
                             <div className="mt-3 mb-3 d-flex justify-content-between align-items-center">
                                 <Form.Group>
                                     <Form.Control
+                                      style = {{width: 300}}
                                         placeholder="Find by attribute"
                                         onChange={(e) => setSearchText(e.target.value)}
                                     />

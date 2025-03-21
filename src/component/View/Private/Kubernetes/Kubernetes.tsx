@@ -74,6 +74,7 @@ export default function Kubernetes() {
                             <div className="mt-3 mb-3 d-flex justify-content-between align-items-center">
                                 <Form.Group>
                                     <Form.Control
+                                 style = {{width: 300}}
                                         placeholder="Find by attribute"
                                         onChange={(e) => setSearchText(e.target.value)}
                                     />

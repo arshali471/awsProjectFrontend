@@ -11,116 +11,22 @@ import TablePagination from "../../../Pagination/TablePagination";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 
-export default function Dashboard() {
 
+
+export default function Dashboard() {
     const { selectedRegion }: any = useContext(SelectedRegionContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
-    const [instanceData, setInstanceData] = useState<any>([]);
-    const [paginatedData, setPaginatedData] = useState<any>([]);
+    const [instanceData, setInstanceData] = useState<any[]>([]);
+    const [paginatedData, setPaginatedData] = useState<any[]>([]);
     const [searchText, setSearchText] = useState<string>("");
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);
-    const [downloadFilteredData, setDownlaodFilteredData] = useState<any>([]);
+    const [downloadFilteredData, setDownloadFilteredData] = useState<any[]>([]);
 
     const [selectedType, setSelectedType] = useState<any>();
     const [startDate, setStartDate] = useState(new Date());
-
-    const getAllInstance = async () => {
-        if (!selectedRegion?.value) return;
-
-        setLoading(true);
-        try {
-            const res = await AdminService.getAllInstance(
-                selectedRegion.value,
-                selectedType?.value,
-                selectedType?.value === 'db' ? moment(startDate).utc().format() : undefined
-            );
-            if (res.status === 200) {
-                setInstanceData(res.data.data);
-                updatePagination(res.data.data);
-            }
-        } catch (err: any) {
-            console.log(err);
-            toast.error(err.response?.data || "Failed to fetch data");
-        }
-        setLoading(false);
-    };
-
-    const updatePagination = (data: any[]) => {
-        const startIndex = (currentPage - 1) * perPage;
-        const endIndex = startIndex + perPage;
-        setDownlaodFilteredData(data);
-        const paginated = data && data?.slice(startIndex, endIndex);
-        setPaginatedData(paginated);
-        setTotalCount(data.length);
-    };
-
-    const handleSearchData = () => {
-        if (!searchText.trim()) {
-            updatePagination(instanceData);
-            return;
-        }
-
-        const filteredData = instanceData.filter((instance: any) => {
-            const instanceValues = Object.values(instance)
-                .map((value: any) => (typeof value === "object" ? Object.values(value).join("") : String(value)))
-                .join("");
-
-            const tagValues = (instance.Tags || []).map((tag: any) => tag.Value).join("");
-
-            return (
-                instanceValues.toLowerCase().includes(searchText.toLowerCase()) ||
-                tagValues.toLowerCase().includes(searchText.toLowerCase())
-            );
-        });
-
-        updatePagination(filteredData);
-    };
-
-    const instanceCSVData = downloadFilteredData.map((data: any) => ({
-        InstanceName: data?.Tags?.find((tag: any) => tag.Key === "Name")?.Value || "N/A",
-        InstanceId: data?.InstanceId,
-        InstanceType: data?.InstanceType,
-        State: data?.State?.Name,
-        ImageId: data?.ImageId,
-        KeyName: data?.KeyName,
-        LaunchTime: moment(data?.LaunchTime).format("DD MMM YY"),
-        PrivateIpAddress: data?.PrivateIpAddress,
-        PlatformDetails: data?.PlatformDetails,
-        SubnetId: data?.SubnetId,
-        VpcId: data?.VpcId,
-        AvailabilityZone: data?.Placement?.AvailabilityZone,
-
-        // Newly added fields
-        Architecture: data?.Architecture,
-        RootDeviceType: data?.RootDeviceType,
-        RootDeviceName: data?.RootDeviceName,
-        SecurityGroups: data?.SecurityGroups?.map((group: any) => group?.GroupName).join(", "),
-        EbsOptimized: data?.EbsOptimized,
-        CpuCoreCount: data?.CpuOptions?.CoreCount,
-        ThreadsPerCore: data?.CpuOptions?.ThreadsPerCore,
-
-        // Extracting Volume ID
-        VolumeId: data?.BlockDeviceMappings?.map((block: any) => block?.Ebs?.VolumeId).join(", "),
-
-        // Extracting useful tags
-        OperatingSystem: data?.Tags?.find((tag: any) => tag.Key === "Operating_System")?.Value || "N/A",
-        Environment: data?.Tags?.find((tag: any) => tag.Key === "Environment")?.Value || "N/A",
-        Application: data?.Tags?.find((tag: any) => tag.Key === "Application")?.Value || "N/A",
-        ITLTOwner: data?.Tags?.find((tag: any) => tag.Key === "ITLT_Owner")?.Value || "N/A",
-        BusinessOwner: data?.Tags?.find((tag: any) => tag.Key === "Business_Owner")?.Value || "N/A",
-        CostCenter: data?.Tags?.find((tag: any) => tag.Key === "Cost_Center")?.Value || "N/A",
-        RetentionDays: data?.Tags?.find((tag: any) => tag.Key === "Retention")?.Value || "N/A",
-        ShutDownSchedule: data?.Tags?.find((tag: any) => tag.Key === "Shut_Down")?.Value || "N/A",
-        StartUpSchedule: data?.Tags?.find((tag: any) => tag.Key === "Start_Up")?.Value || "N/A",
-    }));
-
-
-
-
-
 
     const data = [
         {
@@ -137,35 +43,76 @@ export default function Dashboard() {
         },
     ]
 
+    const getAllInstance = async () => {
+        if (!selectedRegion?.value) return;
+        setLoading(true);
+        try {
+            const res = await AdminService.getAllInstance(
+                selectedRegion.value,
+                selectedType?.value,
+                selectedType?.value === "db" ? moment(startDate).utc().format() : undefined
+            );
+            if (res.status === 200 && Array.isArray(res.data.data)) {
+                setInstanceData(res.data.data);
+                setTotalCount(res.data.data.length);
+            } else {
+                setInstanceData([]); // Ensure it's always an array
+                setTotalCount(0);
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data || "Failed to fetch data");
+            setInstanceData([]);
+            setTotalCount(0);
+        }
+        setLoading(false);
+    };
 
     useEffect(() => {
-        setSearchText("");
-        getAllInstance();
+        let filteredData = instanceData;
+
+        if (searchText) {
+            filteredData = instanceData.filter((instance: any) => {
+                const instanceValues = Object.values(instance)
+                    .map(value => (typeof value === "object" ? JSON.stringify(value) : String(value)))
+                    .join("");
+                return instanceValues.toLowerCase().includes(searchText.toLowerCase());
+            });
+        }
+
+        const startIndex = (currentPage - 1) * perPage;
+        setPaginatedData(filteredData.slice(startIndex, startIndex + perPage));
+        setTotalCount(filteredData.length);
+        setDownloadFilteredData(filteredData);
+    }, [instanceData, searchText, currentPage, perPage]);
+
+    useEffect(() => {
+        if (selectedRegion?.value) {
+            setSearchText("");
+            getAllInstance();
+        }
     }, [selectedRegion?.value, selectedType?.value !== "db" && selectedType?.value, selectedType?.value === 'db' ? startDate : null]);
 
     useEffect(() => {
         setSelectedType(data[0]);
     }, []);
 
-    useEffect(() => {
-        handleSearchData();
-    }, [searchText, currentPage, perPage, instanceData]);
-
     return (
-        <Container>
+        <>
             {loading ? (
                 <div className="d-flex justify-content-center align-items-center">
                     <LoaderSpinner />
                 </div>
             ) : (
-                <div>
-                    <Row>
+                <Container>
+                    <Row className="mt-3">
                         <Col>
                             <div className="mt-3 mb-3 d-flex justify-content-between align-items-center">
                                 <Form.Group>
                                     <Form.Control
-                                        style={{ width: 300 }}
-                                        placeholder="Find by attribute"
+                                        // className="w-100"
+                                        style = {{width: 300}}
+                                        placeholder="Find by attribute..."
+                                        value={searchText}
                                         onChange={(e) => setSearchText(e.target.value)}
                                     />
                                 </Form.Group>
@@ -185,39 +132,50 @@ export default function Dashboard() {
                                             selected={startDate}
                                             onChange={(date: any) => setStartDate(date)}
                                             className="w-100 form-control"
+                                            showTimeSelect
+                                            dateFormat="MMMM d, yyyy h:mm aa"
                                         />
                                     )}
 
-                                    <CSVLink
-                                        data={instanceCSVData}
-                                        filename="Instance.csv"
-                                        className="btn btn-primary"
-                                        target="_blank"
-                                    >
-                                        Export to CSV
-                                    </CSVLink>
+                                    {downloadFilteredData.length > 0 ? (
+                                        <CSVLink
+                                            data={downloadFilteredData}
+                                            headers={Object.keys(downloadFilteredData[0] || {})} // Ensure headers are valid
+                                            filename={"Instances.csv"}
+                                            className="btn btn-primary"
+                                        >
+                                            Export to CSV
+                                        </CSVLink>
+                                    ) : (
+                                        <button className="btn btn-secondary" disabled>
+                                            No Data to Export
+                                        </button>
+                                    )}
                                 </div>
+
                             </div>
                         </Col>
                     </Row>
-
-                    <Card style={{ width: "72rem" }}>
-                        <Card.Body>
-                            <InstanceTable tableData={paginatedData} pageNumber={currentPage} pageSize={perPage} />
-                        </Card.Body>
-                    </Card>
-
-                    <div className="bg-white py-2">
-                        <TablePagination
-                            total={totalCount}
-                            currentPage={currentPage}
-                            perPage={perPage}
-                            handlePageChange={setCurrentPage}
-                            setPerPage={setPerPage}
-                        />
-                    </div>
-                </div>
+                    <Row className="d-flex justify-content-center align-items-center">
+                        <Col>
+                            <Card>
+                                <Card.Body>
+                                    <InstanceTable tableData={paginatedData} pageNumber={1} pageSize={10} />
+                                </Card.Body>
+                            </Card>
+                            <div className="bg-white py-2">
+                                <TablePagination
+                                    total={totalCount}
+                                    currentPage={currentPage}
+                                    perPage={perPage}
+                                    handlePageChange={setCurrentPage}
+                                    setPerPage={setPerPage}
+                                />
+                            </div>
+                        </Col>
+                    </Row>
+                </Container>
             )}
-        </Container>
+        </>
     );
 }

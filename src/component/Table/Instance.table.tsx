@@ -50,7 +50,7 @@ export default function InstanceTable({ tableData, pageNumber, pageSize }: IInst
     );
 
     const data = React.useMemo(() => {
-        return tableData.map((data, index) => ({
+        return tableData?.map((data, index) => ({
             serialNo: index + 1 + (pageNumber - 1) * pageSize,
             instanceId: data?.InstanceId || "--",
             instanceName: data?.Tags?.find((tag: any) => tag.Key === "Name")?.Value || "--",
