@@ -78,6 +78,7 @@ export default function IffDashboard() {
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: "12px",
+                  cursor: "pointer",
                 }}
               >
                {sessionStorage.getItem("username")?.substring(0, 2).toUpperCase()}

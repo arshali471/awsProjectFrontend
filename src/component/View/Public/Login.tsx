@@ -4,6 +4,7 @@ import { AuthService } from "../../services/auth.service";
 import Auth from "../../Auth/auth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import iffLogo from "../../../assets/IFF.png";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -33,24 +34,28 @@ export default function Login() {
 
 
     return (
-        <Container>
+        <div className="d-flex justify-content-center align-items-center flex-column" style={{ height: "100vh" }}>
             <Card className="mt-5" style={{ width: "30rem", margin: "0 auto" }}>
-                <h4 className="text-center mt-3">Login</h4>
+                <h4 className="text-center mt-3 d-flex justify-content-center align-items-center gap-2">
+                    <img src={iffLogo} width="35" height="20" alt="IFF Logo" />
+                    Login
+                </h4>
+
                 <Card.Body>
                     <Form.Group className="mb-3" controlId="formBasicEmail">
-                        <Form.Label>Username</Form.Label>
+                        <Form.Label className="fw-bold">Username</Form.Label>
                         <Form.Control type="email" placeholder="Username" name="username" onChange={(e: any) => handleChange(e)} />
                     </Form.Group>
 
                     <Form.Group className="mb-3" controlId="formBasicPassword">
-                        <Form.Label>Password</Form.Label>
+                        <Form.Label className="fw-bold">Password</Form.Label>
                         <Form.Control type="password" placeholder="Password" name="password" onChange={(e: any) => handleChange(e)} />
                     </Form.Group>
-                    <Button className=" w-50 d-flex justify-content-center align-items-center" style={{ margin: "0 auto" }} variant="primary" type="submit" onClick={handleLoginSubmmission}>
+                    <Button className=" w-50 d-flex justify-content-center align-items-center" style={{ margin: "0 auto", backgroundColor: "#007ec6" }} variant="primary" type="submit" onClick={handleLoginSubmmission}>
                         Login
                     </Button>
                 </Card.Body>
             </Card>
-        </Container>
+        </div>
     )
 }
