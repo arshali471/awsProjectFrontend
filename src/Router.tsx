@@ -14,6 +14,8 @@ import AddUser from "./component/View/Private/Account/AddUser";
 import AddAWSKey from "./component/View/Private/Account/AddAWSKey";
 import SettingIndex from "./component/View/Private/Settings/Setting.index";
 import ChangePassword from "./component/View/Private/ChangePassword/ChangePassword";
+import Devops from "./component/View/Private/Devops/Devops";
+import DevopsIndex from "./component/View/Private/Devops/Devops.index";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
@@ -42,6 +44,18 @@ export default function Router() {
                             </PrivateRouter>
                         }
                     />
+
+                    <Route
+                        path="/devops"
+                        element={
+                            <PrivateRouter>
+                                <Devops />
+                            </PrivateRouter>
+                        }
+
+                    >
+                        <Route index element={<DevopsIndex />} />
+                    </Route>
 
                     {/* Protected settings routes */}
                     <Route

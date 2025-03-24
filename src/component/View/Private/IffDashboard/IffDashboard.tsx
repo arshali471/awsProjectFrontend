@@ -19,11 +19,11 @@ import { HiOutlineLogout } from "react-icons/hi";
 const apps = [
   { url: "/platform/ec2", name: "IFF Inventory", icon: ImageData },
   { url: "/platform/eks", name: "EKS Inventory", icon: EksInvImage },
-  { url: "/platform/ec2", name: "EKS-monitoring", icon: EksImage },
-  { url: "/platform/ec2", name: "Report", icon: ReportImage },
+  { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage },
+  { url: "https://app.powerbi.com/groups/me/reports/df62f352-c99d-45a2-bd91-8c81aab7dff9/8bcc73231b0292ec0810?ctid=a2a9bf31-fc44-425c-a6d2-3ae9379573ea&openReportSource=ReportInvitation&experience=power-bi&bookmarkGuid=fa287e5ead9a1908e0a6", name: "Report", icon: ReportImage },
   { url: "/platform/ec2", name: "Ticketing", icon: TicktImage },
   { url: "/platform/ec2", name: "Cost", icon: CostImage },
-  { url: "/platform/ec2", name: "Devops", icon: DevopsImage },
+  { url: "/devops", name: "Devops", icon: DevopsImage },
 ];
 
 export default function IffDashboard() {
