@@ -12,6 +12,7 @@ import AdminImage from "../../../../assets/admin.png"
 import UserImage from "../../../../assets/UsersAdd.png"
 import PasswordImage from "../../../../assets/password.png"
 import AwsImage from "../../../../assets/awsKey.png"
+import EksTokenImage from "../../../../assets/ekstoken.png"
 
 export default function SettingIndex() {
     const navigate = useNavigate();
@@ -24,6 +25,7 @@ export default function SettingIndex() {
         { url: "/settings/admin", name: "Admin", icon: AdminImage },
         { url: "/settings/addUser", name: "Add Users", icon: UserImage },
         { url: "/settings/addAWSKey", name: "Add AWS Key", icon: AwsImage },
+        { url: "/settings/addEKSToken", name: "Add EKS Token", icon: EksTokenImage },
         { url: "/settings/change-password", name: "Change Password", icon: PasswordImage },
     ];
 

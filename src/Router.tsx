@@ -16,6 +16,7 @@ import SettingIndex from "./component/View/Private/Settings/Setting.index";
 import ChangePassword from "./component/View/Private/ChangePassword/ChangePassword";
 import Devops from "./component/View/Private/Devops/Devops";
 import DevopsIndex from "./component/View/Private/Devops/Devops.index";
+import AddEKSToken from "./component/View/Private/Account/AddEKSToken";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
@@ -70,6 +71,7 @@ export default function Router() {
                         <Route path="admin" element={<AdminIndex />} />
                         <Route path="addUser" element={<AddUser />} />
                         <Route path="addAWSKey" element={<AddAWSKey />} />
+                        <Route path="addEKSToken" element={<AddEKSToken />} />
                         <Route path="change-password" element={<ChangePassword />} />
                     </Route>
 
