@@ -61,6 +61,7 @@ export default function EditEksTokenModal({ show, handleClose, reload, eksData }
             setLoading(false)
         })
     }
+    console.log(data, "clusterName")
 
 
 

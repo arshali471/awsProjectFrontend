@@ -37,6 +37,7 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
             },
             { Header: "Token", accessor: "token" },
             { Header: "Connect", accessor: "connect" },
+            { Header: "Dashboard", accessor: "dashboard" },
 
         ],
         []
@@ -72,6 +73,7 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
             ),
             token: data?.token ? <MdOutlineContentCopy className="text-success" style={{ cursor: "pointer" }} onClick={() => copyToClipboard(data.token)} /> : "--",
             connect: data?.connectUrl ? <span style = {{cursor: "pointer"}} className ="text-decoration-underline text-primary" onClick={() => handleNavigate(data?.connectUrl)}>Connect</span>: "--",
+            dashboard: data?.monitorUrl ? <span style = {{cursor: "pointer"}} className ="text-decoration-underline text-primary" onClick={() => handleNavigate(data?.monitorUrl)}>Grafana</span>: "--",
         }));
     }, [tableData, pageNumber, pageSize]);
 
@@ -115,7 +117,7 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
                     })
                 ) : (
                     <tr>
-                        <td colSpan={8} style={{ textAlign: "center", fontSize: 14 }}>
+                        <td colSpan={9} style={{ textAlign: "center", fontSize: 14 }}>
                             No data found
                         </td>
                     </tr>
