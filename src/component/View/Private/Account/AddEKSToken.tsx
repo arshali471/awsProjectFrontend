@@ -156,7 +156,7 @@ export default function AddEKSToken() {
                         </Button>
                     </div>
                 </div>
-                <Card>
+                <Card className="mb-3">
                     <Card.Body>
                         <Table striped hover responsive>
                             <thead>
