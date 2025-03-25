@@ -33,7 +33,11 @@ export default function IffDashboard() {
   const [hoverIndex, setHoverIndex] = useState(null);
 
   const handleNavigate = (url: string) => {
-    window.open(url, "_blank");
+    if(url === "/devops"){
+      navigate(url)
+    }else{
+      window.open(url, "_blank");
+    }
   };
 
   const handleLogout = () => {

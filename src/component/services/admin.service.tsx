@@ -84,4 +84,51 @@ export class AdminService {
     static async changeUserPasswordByAdmin(userId:any, payload:any) {
         return await makeRequest(url.changePasswordByAdmin + "/" + userId, RequestMethods.PUT, payload)
     }
+
+    static async getAllEksToken(query: any, pageNumber: number, pageSize: number, filter: any) {
+        const params = makeParams([
+            {
+                index: "search",
+                value: query
+            },
+            {
+                index: "pageNumber",
+                value: pageNumber
+            },
+            {
+                index: "pageSize",
+                value: pageSize
+            },
+            {
+                index: "filter",
+                value: filter
+            }
+        ])
+        return await makeRequest(url.eksToken.getAllEksToken + params, RequestMethods.GET)
+    }
+
+
+    static async addEKSToken(payload:any) {
+        return await makeRequest(url.eksToken.addEKSToken, RequestMethods.POST, payload)
+    }
+
+    static async getEKSTokenById(id:any) {
+        return await makeRequest(url.eksToken.getEKSTokenById + "/" + id, RequestMethods.GET)
+    }
+
+
+    static async updateEKSToken(id:any, payload:any) {
+        return await makeRequest(url.eksToken.updateEksToken + "/" + id, RequestMethods.PUT, payload)
+    }
+
+    static async deleteEKSToken(id: any) {
+        return await makeRequest(url.eksToken.deleteEksToken + "/" + id, RequestMethods.DELETE)
+    }
+
+    static async getClusterName(keyId: any) {
+        return await makeRequest(url.eksToken.getClusterName + "/" + keyId, RequestMethods.GET)
+    }
+
+    
+    
 }

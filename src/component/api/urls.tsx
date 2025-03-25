@@ -18,6 +18,16 @@ const url = {
     instance: {
         getAllInstance: "/aws/getAllInstance",
         getAllVolumesData: "/aws/getVolumes"
+    },
+
+    eksToken: {
+        getAllEksToken: "/aws/getAllEKSToken",
+        updateEksToken: "/aws/updateEksToken",
+        deleteEksToken: "/aws/deleteEksToken",
+        addEKSToken: "/aws/addEKSToken",
+        getEKSTokenById: "/aws/getEKSTokenById",
+
+        getClusterName: "/aws/getEksClusterName",
     }
 
 };

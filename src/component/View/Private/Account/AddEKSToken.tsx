@@ -1,37 +1,63 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Container, Form } from "react-bootstrap";
+import { Button, Card, Container, Form, Modal, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
 import { AdminService } from "../../../services/admin.service";
 import toast from "react-hot-toast";
 import Select from "react-select"
 import { TbError404Off } from "react-icons/tb";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import AddEksTokenModal from "../../../modal/AddEksToken.modal";
+import { FaEdit, FaTrash, FaUserCheck } from "react-icons/fa";
+import { FaCircleInfo, FaCircleXmark, FaUserXmark } from "react-icons/fa6";
+import { MdOutlineContentCopy } from "react-icons/md";
+import EditEksTokenModal from "../../../modal/EditEksToken.modal";
+import TablePagination from "../../../Pagination/TablePagination";
 
 export default function AddEKSToken() {
 
     const navigate = useNavigate();
 
-    const [data, setData] = useState<any>();
-    const [region, setRegion] = useState<any>();
     const [isAllowed, setIsAllowed] = useState<boolean>(false)
+    const [showAddEksTokenModal, setShowAddEksTokenModal] = useState<boolean>(false)
+    const [data, setData] = useState<any>([])
 
-    const handleChangeValue = (e: any) => {
-        setData({ ...data, [e.target.name]: e.target.value })
-    }
+    const [eksIndex, setEksIndex] = useState<number>(-1);
+    const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+    const [selectedEksToken, setSelectedEksToken] = useState<any>(null);
 
+    const [keyId, setKeyId] = useState<any>(null);
+    const [keyIdData, setKeyIdData] = useState<any>(null);
+    const [search, setSearch] = useState<any>(null);
+
+    const [totalCount, setTotalCount] = useState<number>(0);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [perPage, setPerPage] = useState<number>(10);
 
     const getAllAwsKey = async () => {
         await AdminService.getAllAwsKey().then((res) => {
             if (res.status === 200) {
-                setRegion(Object.values(res.data).map((data: any) => {
+                setKeyId(Object.values(res.data).map((data: any) => {
                     return {
                         label: `${data.enviroment} (${data.region})`,
                         value: data._id
                     }
                 }))
             }
+        }).catch(err => {
+            toast.error(err.response?.data || 'Failed to get AWS key');
         })
     }
+
+
+
+    const getAllEksToken = async () => {
+        const res = await AdminService.getAllEksToken(search, currentPage, perPage, keyIdData);
+        if (res.status === 200) {
+            setData(res.data.data)
+            setTotalCount(res.data.count)
+        }
+    }
+
 
     const getUserData = async () => {
         try {
@@ -49,63 +75,115 @@ export default function AddEKSToken() {
         }
     };
 
+    const copyToClipboard = (text: any) => {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                toast.success("Copied to clipboard!");
+            })
+            .catch((err) => {
+                toast.error("Failed to copy:", err);
+            });
+    };
 
-
-    const handleAWSKeySubmission = async () => {
-        await AdminService.createAWSKey(data).then((res) => {
-            if (res.status === 200) {
-                toast.success("Key Created")
-            }
-        }).catch(err => {
-            toast.error(err.response.data)
-        })
-    }
 
     useEffect(() => {
-        getAllAwsKey();
+        getAllEksToken();
+    }, [search, perPage, currentPage, keyIdData])
+
+
+    useEffect(() => {
         getUserData();
+        getAllAwsKey();
     }, [])
 
+    const handleDelete = async () => {
+        try {
+            const res = await AdminService.deleteEKSToken(selectedEksToken._id);
+            if (res.status === 200) {
+                toast.success("EKS Token deleted successfully");
+                setShowDeleteModal(false);
+                setSelectedEksToken(null);
+                getAllEksToken();
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data || "Failed to delete EKS token");
+        }
+    };
 
-
+    const openDeleteModal = (eksToken: any) => {
+        setSelectedEksToken(eksToken);
+        setShowDeleteModal(true);
+    };
 
     return (
         <>
             <Container className="p-4 mt-5">
                 {isAllowed ?
                     <div>
-                        <h4>
-                            <IoArrowBackCircleSharp className="me-2 mb-1" onClick={() => navigate(-1)} />
-                            Add EKS Token
-                        </h4>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h4>
+                                <IoArrowBackCircleSharp className="me-2 mb-1" onClick={() => navigate(-1)} />
+                                EKS Token
+                            </h4>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <Form.Group className="">
+                                <Form.Control type="text" placeholder="Search..." style={{ width: 400 }} onChange={(e: any) => setSearch(e.target.value)} />
+                            </Form.Group>
+                            <div className="d-flex justify-content-between align-items-center gap-3">
+                                <div style={{ width: 200 }}>
+                                    <Select options={keyId} placeholder="Select Environment" onChange={(e: any) => setKeyIdData(e.value)} />
+                                </div>
+                                <Button variant="dark" onClick={() => setShowAddEksTokenModal(true)}>Add EKS Token</Button>
+                            </div>
+                        </div>
                         <Card>
                             <Card.Body>
-                                <Form.Group className="mb-3">
-                                    <Form.Label style={{ fontWeight: "500" }}>Environment</Form.Label>
-                                    <Select options={region} onChange={(e: any) => setData({ ...data, region: e.value })} />
+                                <Table striped hover responsive>
+                                    <thead>
+                                        <tr>
+                                            <th style={{ fontSize: 14 }}>Sr.No</th>
+                                            <th style={{ fontSize: 14 }}>Cluster Name</th>
+                                            <th style={{ fontSize: 14 }}>Environment</th>
+                                            <th style={{ fontSize: 14 }}>Dashboard URL</th>
+                                            <th style={{ fontSize: 14 }}>Monitoring URL</th>
+                                            <th style={{ fontSize: 14 }}>Token</th>
+                                            <th style={{ fontSize: 14 }}>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
 
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label style={{ fontWeight: "500" }}>Token</Form.Label>
-                                    <Form.Control type="text" name="accessKeyId" onChange={(e: any) => handleChangeValue(e)} />
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label style={{ fontWeight: "500" }}>Cluster Name</Form.Label>
-                                    <Form.Control type="text" name="secretAccessKey" onChange={(e: any) => handleChangeValue(e)} />
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label style={{ fontWeight: "500" }}>Dashboard Url</Form.Label>
-                                    <Form.Control type="text" name="enviroment" onChange={(e: any) => handleChangeValue(e)} />
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label style={{ fontWeight: "500" }}>Monitoring Url</Form.Label>
-                                    <Form.Control type="text" name="enviroment" onChange={(e: any) => handleChangeValue(e)} />
-                                </Form.Group>
-                                <Button className="mt-3" onClick={handleAWSKeySubmission}>
-                                    Add Key
-                                </Button>
+                                        {data && data.length > 0 ? data.map((data: any, index: number) => {
+                                            return (
+                                                <tr key={data._id}>
+                                                    <td style={{ fontSize: 12 }}>{index + 1}</td>
+                                                    <td style={{ fontSize: 12 }}>{data?.clusterName || "--"}</td>
+                                                    <td style={{ fontSize: 12 }}>{data?.awsKeyId?.enviroment || "--"}</td>
+                                                    <td style={{ fontSize: 12 }}>{data?.dashboardUrl || "--"}</td>
+                                                    <td style={{ fontSize: 12 }}>{data?.monitoringUrl || "--"}</td>
+                                                    <td>
+                                                        <MdOutlineContentCopy className="text-success" style={{ cursor: "pointer" }} onClick={() => copyToClipboard(data.token)} />
+                                                    </td>
+                                                    <td style={{ fontSize: 14 }}>
+                                                        <FaEdit className="me-2 text-primary" onClick={() => setEksIndex(index)} />
+                                                        <FaTrash className="ms-2 text-danger" style={{ cursor: "pointer" }} onClick={() => openDeleteModal(data)} />
+                                                    </td>
+                                                </tr>
+                                            )
+                                        }) : "No data found."}
+                                    </tbody>
+                                </Table>
                             </Card.Body>
                         </Card>
+                        <div className="bg-white py-2">
+                            <TablePagination
+                                total={totalCount}
+                                currentPage={currentPage}
+                                perPage={perPage}
+                                handlePageChange={setCurrentPage}
+                                setPerPage={setPerPage}
+                            />
+                        </div>
 
                     </div> :
                     <div className="d-flex justify-content-center align-items-center">
@@ -115,7 +193,42 @@ export default function AddEKSToken() {
                         </div>
                     </div>
                 }
+                <AddEksTokenModal
+                    show={showAddEksTokenModal}
+                    handleClose={() => setShowAddEksTokenModal(false)}
+                    reload={getAllEksToken}
+                />
+
+
+                <EditEksTokenModal
+                    show={eksIndex !== -1 ? true : false}
+                    handleClose={() => setEksIndex(-1)}
+                    reload={getAllEksToken}
+                    eksData={data && data[eksIndex]}
+                />
+
+                {/* Delete Confirmation Modal */}
+                <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Confirm Deletion</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        Are you sure you want to delete the EKS token for cluster{" "}
+                        <strong>{selectedEksToken?.clusterName}</strong>?
+                        <br />
+                        <small className="text-danger">This action cannot be undone.</small>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="danger" onClick={handleDelete}>
+                            Delete
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </Container>
+
         </>
     )
 }
