@@ -94,7 +94,7 @@ export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksT
                 <Offcanvas.Title>Add EKS Token</Offcanvas.Title>
             </Offcanvas.Header>
             <Offcanvas.Body>
-                <div style={{ height: "84vh" }}>
+                <div >
                     <Form.Group className="mb-3">
                         <Form.Label style={{ fontWeight: "500" }}>Environment</Form.Label>
                         <Select options={region} onChange={(e: any) => setData({ ...data, keyId: e.value })} />

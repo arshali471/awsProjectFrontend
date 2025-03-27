@@ -5,6 +5,7 @@ import { Card, Col, Container, Row } from 'react-bootstrap'
 
 import JenkinsImage from "../../../../assets/jenkins.png"
 import AnsibleImage from "../../../../assets/ansible.png"
+import GitLabImage from "../../../../assets/gitlab.png"
 
 export default function DevopsIndex() {
 
@@ -18,8 +19,11 @@ export default function DevopsIndex() {
 
     const apps = [
         { url: "https://jenkins-prod.iff.com", name: "Jenkins Prod", icon: JenkinsImage },
-        { url: "https://jenkins-nonprod.iff.com", name: "Jenkins Non Prod", icon: JenkinsImage },
+        { url: "https://jenkins-ca-nonprod.global.iff.com", name: "Jenkins Non Prod", icon: JenkinsImage },
+        { url: "https://jenkins-nsp-nonprod.global.iff.com", name: "NSP Jenkins Prod", icon: JenkinsImage },
+        { url: "https://jenkins-nps-prod.global.iff.com", name: "NSP Jenkins Non Prod", icon: JenkinsImage },
         { url: "http://10.35.50.193", name: "AWX Tower", icon: AnsibleImage },
+        { url: "https://gitlab.com/danisco-nutrition-and-biosciences/iff-cloud-engineering", name: "Git Lab", icon: GitLabImage },
     ];
 
     return (
@@ -32,7 +36,7 @@ export default function DevopsIndex() {
                     </Col>
                 </Row>
 
-                <Row xs={2} sm={3} md={4} lg={5} xl={6} className="g-3 mt-4">
+                <Row xs={1} sm={2} md={3} lg={4} xl={5} className="g-3 mt-4">
                     {apps.map((app, index) => (
                         <Col key={index}>
                             <Card
