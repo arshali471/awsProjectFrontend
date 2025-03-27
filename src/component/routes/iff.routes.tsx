@@ -62,13 +62,13 @@ export const iffRoutes: IIFFRouter[] = [
                 name: "S3",
                 icon: SiAmazons3
             },
-            {
-                path: "eks",
-                navbarShow: true,
-                element: <Kubernetes />,
-                name: "Kubernetes",
-                icon: SiAmazoneks
-            },
+            // {
+            //     path: "eks",
+            //     navbarShow: true,
+            //     element: <Kubernetes />,
+            //     name: "Kubernetes",
+            //     icon: SiAmazoneks
+            // },
             {
                 path: "rds",
                 navbarShow: true,

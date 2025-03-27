@@ -45,6 +45,7 @@ export default function InstanceTable({ tableData, pageNumber, pageSize }: IInst
             { Header: "VPC ID", accessor: "vpcId" },
             { Header: "Platform Details", accessor: "platformDetails" },
             { Header: "Availability Zone", accessor: "availabilityZone" },
+            { Header: "Created At", accessor: "createdAt" },
         ],
         []
     );
@@ -66,6 +67,7 @@ export default function InstanceTable({ tableData, pageNumber, pageSize }: IInst
             vpcId: data?.VpcId || "--",
             platformDetails: data?.PlatformDetails || "--",
             availabilityZone: data?.Placement?.AvailabilityZone || "--",
+            createdAt: data?.createdAt ? moment(data?.createdAt).format("D MMM YYYY, hh:mm a") : "--",
         }));
     }, [tableData, pageNumber, pageSize]);
 

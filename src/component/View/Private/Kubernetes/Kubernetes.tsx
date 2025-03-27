@@ -8,8 +8,9 @@ import TablePagination from '../../../Pagination/TablePagination';
 import EksTable from '../../../Table/Eks.table';
 import { CSVLink } from 'react-csv';
 
-export default function Kubernetes() {
-    const { selectedRegion }: any = useContext(SelectedRegionContext);
+export default function Kubernetes({ selectedRegion }: any) {
+
+
     const { loading, setLoading }: any = useContext(LoadingContext);
 
     const [eksData, setEksData] = useState<any>([]);
@@ -90,18 +91,6 @@ export default function Kubernetes() {
                             </div>
                         </Col>
                     </Row>
-                    {/* <Row className="mt-3">
-                        <Col>
-                            <div className="mt-3 mb-3 d-flex justify-content-between align-items-center">
-                                <Form.Group>
-                                    <Form.Control
-                                        placeholder="Search..."
-                                        onChange={(e) => setSearchText(e.target.value)}
-                                    />
-                                </Form.Group>
-                            </div>
-                        </Col>
-                    </Row> */}
                     <div>
                         <Card>
                             <Card.Body>

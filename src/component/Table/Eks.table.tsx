@@ -36,8 +36,8 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
                 sortType: (rowA, rowB) => rowA.values.status.localeCompare(rowB.values.status)
             },
             { Header: "Token", accessor: "token" },
-            { Header: "Connect", accessor: "connect" },
-            { Header: "Dashboard", accessor: "dashboard" },
+            { Header: "Kubernetes Dashboard", accessor: "connect" },
+            { Header: "Monitor", accessor: "dashboard" },
 
         ],
         []
@@ -72,8 +72,8 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
                 </span>
             ),
             token: data?.token ? <MdOutlineContentCopy className="text-success" style={{ cursor: "pointer" }} onClick={() => copyToClipboard(data.token)} /> : "--",
-            connect: data?.connectUrl ? <span style = {{cursor: "pointer"}} className ="text-decoration-underline text-primary" onClick={() => handleNavigate(data?.connectUrl)}>Connect</span>: "--",
-            dashboard: data?.monitorUrl ? <span style = {{cursor: "pointer"}} className ="text-decoration-underline text-primary" onClick={() => handleNavigate(data?.monitorUrl)}>Grafana</span>: "--",
+            connect: data?.connectUrl ? <span style = {{cursor: "pointer"}} className ="text-decoration-underline text-primary text-center" onClick={() => handleNavigate(data?.connectUrl)}>Connect</span>: "--",
+            dashboard: data?.monitorUrl ? <span style = {{cursor: "pointer"}} className ="text-decoration-underline text-primary" onClick={() => handleNavigate(data?.monitorUrl)}>Connect</span>: "--",
         }));
     }, [tableData, pageNumber, pageSize]);
 

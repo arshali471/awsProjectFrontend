@@ -25,7 +25,6 @@ export default function Dashboard() {
     const [perPage, setPerPage] = useState<number>(10);
     const [downloadFilteredData, setDownloadFilteredData] = useState<any[]>([]);
 
-    const [selectedType, setSelectedType] = useState<any>();
     const [startDate, setStartDate] = useState(new Date());
 
     const data = [
@@ -43,20 +42,22 @@ export default function Dashboard() {
         },
     ]
 
+
     const getAllInstance = async () => {
         if (!selectedRegion?.value) return;
         setLoading(true);
         try {
             const res = await AdminService.getAllInstance(
                 selectedRegion.value,
-                selectedType?.value,
-                selectedType?.value === "db" ? moment(startDate).utc().format() : undefined
+                moment(new Date()).isSame(startDate, "day") ? "api" : "db",
+                !moment(new Date()).isSame(startDate, "day") ? moment(startDate).utc().format() : undefined
             );
             if (res.status === 200 && Array.isArray(res.data.data)) {
                 setInstanceData(res.data.data);
+                // convertToCSV(res.data.data);
                 setTotalCount(res.data.data.length);
             } else {
-                setInstanceData([]); // Ensure it's always an array
+                setInstanceData([]);
                 setTotalCount(0);
             }
         } catch (err: any) {
@@ -66,6 +67,45 @@ export default function Dashboard() {
         }
         setLoading(false);
     };
+
+    const instanceCSVData = instanceData.map((data: any) => ({
+        InstanceName: data?.Tags?.find((tag: any) => tag.Key === "Name")?.Value || "N/A",
+        InstanceId: data?.InstanceId,
+        InstanceType: data?.InstanceType,
+        State: data?.State?.Name,
+        ImageId: data?.ImageId,
+        KeyName: data?.KeyName,
+        LaunchTime: moment(data?.LaunchTime).format("DD MMM YY"),
+        PrivateIpAddress: data?.PrivateIpAddress,
+        PlatformDetails: data?.PlatformDetails,
+        SubnetId: data?.SubnetId,
+        VpcId: data?.VpcId,
+        AvailabilityZone: data?.Placement?.AvailabilityZone,
+
+        // Newly added fields
+        Architecture: data?.Architecture,
+        RootDeviceType: data?.RootDeviceType,
+        RootDeviceName: data?.RootDeviceName,
+        SecurityGroups: data?.SecurityGroups?.map((group: any) => group?.GroupName).join(", "),
+        EbsOptimized: data?.EbsOptimized,
+        CpuCoreCount: data?.CpuOptions?.CoreCount,
+        ThreadsPerCore: data?.CpuOptions?.ThreadsPerCore,
+
+        // Extracting Volume ID
+        VolumeId: data?.BlockDeviceMappings?.map((block: any) => block?.Ebs?.VolumeId).join(", "),
+
+        // Extracting useful tags
+        OperatingSystem: data?.Tags?.find((tag: any) => tag.Key === "Operating_System")?.Value || "N/A",
+        Environment: data?.Tags?.find((tag: any) => tag.Key === "Environment")?.Value || "N/A",
+        Application: data?.Tags?.find((tag: any) => tag.Key === "Application")?.Value || "N/A",
+        ITLTOwner: data?.Tags?.find((tag: any) => tag.Key === "ITLT_Owner")?.Value || "N/A",
+        BusinessOwner: data?.Tags?.find((tag: any) => tag.Key === "Business_Owner")?.Value || "N/A",
+        CostCenter: data?.Tags?.find((tag: any) => tag.Key === "Cost_Center")?.Value || "N/A",
+        RetentionDays: data?.Tags?.find((tag: any) => tag.Key === "Retention")?.Value || "N/A",
+        ShutDownSchedule: data?.Tags?.find((tag: any) => tag.Key === "Shut_Down")?.Value || "N/A",
+        StartUpSchedule: data?.Tags?.find((tag: any) => tag.Key === "Start_Up")?.Value || "N/A",
+    }));
+
 
     useEffect(() => {
         let filteredData = instanceData;
@@ -79,10 +119,11 @@ export default function Dashboard() {
             });
         }
 
+        console.log(filteredData)
+
         const startIndex = (currentPage - 1) * perPage;
         setPaginatedData(filteredData.slice(startIndex, startIndex + perPage));
         setTotalCount(filteredData.length);
-        setDownloadFilteredData(filteredData);
     }, [instanceData, searchText, currentPage, perPage]);
 
     useEffect(() => {
@@ -90,11 +131,8 @@ export default function Dashboard() {
             setSearchText("");
             getAllInstance();
         }
-    }, [selectedRegion?.value, selectedType?.value !== "db" && selectedType?.value, selectedType?.value === 'db' ? startDate : null]);
+    }, [selectedRegion?.value, startDate]);
 
-    useEffect(() => {
-        setSelectedType(data[0]);
-    }, []);
 
     return (
         <>
@@ -110,14 +148,14 @@ export default function Dashboard() {
                                 <Form.Group>
                                     <Form.Control
                                         // className="w-100"
-                                        style = {{width: 300}}
+                                        style={{ width: 300 }}
                                         placeholder="Find by attribute..."
                                         value={searchText}
                                         onChange={(e) => setSearchText(e.target.value)}
                                     />
                                 </Form.Group>
                                 <div className="d-flex gap-2">
-                                    <div style={{ width: 200 }}>
+                                    {/* <div style={{ width: 200 }}>
                                         <Select
                                             options={data}
                                             value={selectedType}
@@ -125,22 +163,20 @@ export default function Dashboard() {
                                             className="w-100"
                                             isSearchable={true}
                                         />
-                                    </div>
+                                    </div> */}
 
-                                    {selectedType?.value === "db" && (
-                                        <DatePicker
-                                            selected={startDate}
-                                            onChange={(date: any) => setStartDate(date)}
-                                            className="w-100 form-control"
-                                            showTimeSelect
-                                            dateFormat="MMMM d, yyyy h:mm aa"
-                                        />
-                                    )}
+                                    <DatePicker
+                                        selected={startDate}
+                                        onChange={(date: any) => setStartDate(date)}
+                                        className="w-100 form-control"
+                                        showTimeSelect
+                                        dateFormat="MMMM d, yyyy h:mm aa"
+                                    />
 
-                                    {downloadFilteredData.length > 0 ? (
+                                    {instanceCSVData.length > 0 ? (
                                         <CSVLink
-                                            data={downloadFilteredData}
-                                            headers={Object.keys(downloadFilteredData[0] || {})} // Ensure headers are valid
+                                            data={instanceCSVData}
+                                            headers={Object.keys(instanceCSVData[0] || {})} // Ensure headers are valid
                                             filename={"Instances.csv"}
                                             className="btn btn-primary"
                                         >
@@ -152,6 +188,7 @@ export default function Dashboard() {
                                         </button>
                                     )}
                                 </div>
+
 
                             </div>
                         </Col>

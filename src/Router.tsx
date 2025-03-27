@@ -17,6 +17,8 @@ import ChangePassword from "./component/View/Private/ChangePassword/ChangePasswo
 import Devops from "./component/View/Private/Devops/Devops";
 import DevopsIndex from "./component/View/Private/Devops/Devops.index";
 import AddEKSToken from "./component/View/Private/Account/AddEKSToken";
+import Kubernetes from "./component/View/Private/Kubernetes/Kubernetes";
+import KubernetesIndex from "./component/View/Private/Kubernetes/Kubernetes.index";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
@@ -51,6 +53,18 @@ export default function Router() {
                         element={
                             <PrivateRouter>
                                 <Devops />
+                            </PrivateRouter>
+                        }
+
+                    >
+                        <Route index element={<DevopsIndex />} />
+                    </Route>
+
+                    <Route
+                        path="/eks"
+                        element={
+                            <PrivateRouter>
+                                <KubernetesIndex />
                             </PrivateRouter>
                         }
 
