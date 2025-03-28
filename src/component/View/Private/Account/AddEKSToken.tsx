@@ -11,6 +11,7 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import { MdOutlineContentCopy } from "react-icons/md";
 import EditEksTokenModal from "../../../modal/EditEksToken.modal";
 import TablePagination from "../../../Pagination/TablePagination";
+import copy from 'copy-to-clipboard';
 
 export default function AddEKSToken() {
     const navigate = useNavigate();
@@ -74,11 +75,20 @@ export default function AddEKSToken() {
         }
     };
 
+    // const copyToClipboard = (text: string) => {
+    //     navigator.clipboard
+    //         .writeText(text)
+    //         .then(() => toast.success("Copied to clipboard!"))
+    //         .catch(() => toast.error("Failed to copy"));
+    // };
+
     const copyToClipboard = (text: string) => {
-        navigator.clipboard
-            .writeText(text)
-            .then(() => toast.success("Copied to clipboard!"))
-            .catch(() => toast.error("Failed to copy"));
+        const success = copy(text);
+        if (success) {
+            toast.success("Copied to clipboard!");
+        } else {
+            toast.error("Failed to copy");
+        }
     };
 
     const truncateText = (text: string, maxLength: number = 15) => {

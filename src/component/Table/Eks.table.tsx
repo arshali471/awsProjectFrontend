@@ -5,6 +5,7 @@ import { Button, Table } from "react-bootstrap";
 import "react-resizable/css/styles.css"; // Required for column resizing styles
 import { MdOutlineContentCopy } from "react-icons/md";
 import toast from "react-hot-toast";
+import copy from 'copy-to-clipboard';
 
 interface IEksTable {
     tableData: any[];
@@ -43,14 +44,13 @@ export default function EksTable({ tableData, pageNumber, pageSize }: IEksTable)
         []
     );
 
-    const copyToClipboard = (text: any) => {
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                toast.success("Copied to clipboard!");
-            })
-            .catch((err) => {
-                toast.error("Failed to copy:", err);
-            });
+    const copyToClipboard = (text: string) => {
+        const success = copy(text);
+        if (success) {
+            toast.success("Copied to clipboard!");
+        } else {
+            toast.error("Failed to copy");
+        }
     };
 
 

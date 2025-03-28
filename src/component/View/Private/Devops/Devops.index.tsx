@@ -5,7 +5,7 @@ import { Card, Col, Container, Row } from 'react-bootstrap'
 
 import JenkinsImage from "../../../../assets/jenkins.png"
 import AnsibleImage from "../../../../assets/ansible.png"
-import GitLabImage from "../../../../assets/gitlab.png"
+import GitLabImage from "../../../../assets/gitLab.png"
 
 export default function DevopsIndex() {
 
