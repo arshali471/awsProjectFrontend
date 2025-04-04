@@ -20,7 +20,7 @@ const apps = [
   { url: "/platform/ec2", name: "IFF Inventory", icon: ImageData },
   { url: "/eks", name: "EKS Inventory", icon: EksInvImage },
   { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage },
-  { url: "https://app.powerbi.com/groups/me/reports/df62f352-c99d-45a2-bd91-8c81aab7dff9/8bcc73231b0292ec0810?ctid=a2a9bf31-fc44-425c-a6d2-3ae9379573ea&openReportSource=ReportInvitation&experience=power-bi&bookmarkGuid=fa287e5ead9a1908e0a6", name: "Report", icon: ReportImage },
+  { url: "https://app.powerbi.com/reportEmbed?reportId=df62f352-c99d-45a2-bd91-8c81aab7dff9&autoAuth=true&ctid=a2a9bf31-fc44-425c-a6d2-3ae9379573ea", name: "Report", icon: ReportImage },
   { url: "/platform/ec2", name: "Ticketing", icon: TicktImage },
   { url: "https://app.finout.io/app/dashboards/50c3fb57-3fac-4b47-9ad5-8a3fc8e16fc4", name: "Cost", icon: CostImage },
   { url: "/devops", name: "Devops", icon: DevopsImage },
