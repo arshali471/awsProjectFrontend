@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import TablePagination from '../../../Pagination/TablePagination';
 import { AdminService } from '../../../services/admin.service';
 import toast from 'react-hot-toast';
+import moment from 'moment';
 
 export default function SshKey() {
 
@@ -104,6 +105,9 @@ export default function SshKey() {
                 <tr>
                   <th>Sr.No</th>
                   <th>Ssh Key Name</th>
+                  <th>Created By</th>
+                  <th>Updated By</th>
+                  <th>Added On</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -115,6 +119,9 @@ export default function SshKey() {
                     <tr key={item._id}>
                       <td>{index + 1}</td>
                       <td>{item.sshKeyName || "--"}</td>
+                      <td>{item.createdBy?.username || "--"}</td>
+                      <td>{item.updatedBy?.username || "--"}</td>
+                      <td>{moment(item?.createAt).format("DD-MM-YYYY, HH:MM A") || "--"}</td>
                       <td>
                         {/* <FaEdit className="me-2 text-primary" /> */}
                         <FaTrash 
