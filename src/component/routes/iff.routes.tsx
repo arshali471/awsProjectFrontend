@@ -16,6 +16,7 @@ import RDSIndex from "../View/Private/RDS/RDS.index"
 import VolumesIndex from "../View/Private/Volumes/Volumes"
 import { RxDashboard } from "react-icons/rx";
 import IffDashboard from "../View/Private/IffDashboard/IffDashboard"
+import ZabbixStatus from "../View/Private/ZabbixStatus/ZabbixStatus"
 
 export default interface IIFFRouter {
     path: string
@@ -41,6 +42,13 @@ export const iffRoutes: IIFFRouter[] = [
         name: "Platform",
         icon: FaBullhorn,
         children: [
+            {
+                path: "agent-status",
+                navbarShow: true,
+                element: <ZabbixStatus />,
+                name: "Agent Status",
+                icon: SiAmazonec2
+            },
             {
                 path: "ec2",
                 navbarShow: true,

@@ -152,6 +152,25 @@ export class AdminService {
         return await makeRequest(url.eksToken.getSshKey + params, RequestMethods.GET)
     }
 
+    static async getZabbixStatus(keyId: any, sshUsername: any, sshKeyPath: any,operatingSystem: any ) {
+        const params = makeParams([
+            {
+                index: "sshUsername",
+                value: sshUsername
+            },
+            {
+                index: "sshKeyPath",
+                value: sshKeyPath
+            },
+            {
+                index: "operatingSystem",
+                value: operatingSystem
+            },
+        ])
+        return await makeRequest(url.eksToken.getZabbixStatus + "/" + keyId + params, RequestMethods.GET)
+    }
+
+
     static async deleteSshKey(sshId:any) {
         return await makeUploadRequest(url.eksToken.deleteSshKey + "/" + sshId, RequestMethods.DELETE)
     }

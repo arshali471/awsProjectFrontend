@@ -29,6 +29,7 @@ const url = {
         addSshKey: "/aws/addSshKey",
         getSshKey: "/aws/getSshKey",
         deleteSshKey: "/aws/deleteSshKey",
+        getZabbixStatus:"/aws/getZabbixStatus",
         getClusterName: "/aws/getEksClusterName",
     }
 
