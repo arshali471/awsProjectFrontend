@@ -19,6 +19,7 @@ import DevopsIndex from "./component/View/Private/Devops/Devops.index";
 import AddEKSToken from "./component/View/Private/Account/AddEKSToken";
 import Kubernetes from "./component/View/Private/Kubernetes/Kubernetes";
 import KubernetesIndex from "./component/View/Private/Kubernetes/Kubernetes.index";
+import SshKey from "./component/View/Private/Account/SshKey";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
@@ -86,6 +87,7 @@ export default function Router() {
                         <Route path="addUser" element={<AddUser />} />
                         <Route path="addAWSKey" element={<AddAWSKey />} />
                         <Route path="addEKSToken" element={<AddEKSToken />} />
+                        <Route path="ssh-key" element={<SshKey />} />
                         <Route path="change-password" element={<ChangePassword />} />
                     </Route>
 

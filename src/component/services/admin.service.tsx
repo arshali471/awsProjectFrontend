@@ -2,6 +2,7 @@ import moment from "moment";
 import makeRequest, { makeParams } from "../api/makeRequest";
 import { RequestMethods } from "../api/requestMethode";
 import url from "../api/urls";
+import makeUploadRequest from "../api/uploadRequest";
 
 export class AdminService {
     static async getAllAwsKey() {
@@ -127,6 +128,32 @@ export class AdminService {
 
     static async getClusterName(keyId: any) {
         return await makeRequest(url.eksToken.getClusterName + "/" + keyId, RequestMethods.GET)
+    }
+
+    static async uploadSshKey(formData:any) {
+        return await makeUploadRequest(url.eksToken.addSshKey, RequestMethods.POST, formData)
+    }
+
+    static async getSshKey(query: any, pageNumber: number, pageSize: number) {
+        const params = makeParams([
+            {
+                index: "search",
+                value: query
+            },
+            {
+                index: "page",
+                value: pageNumber
+            },
+            {
+                index: "limit",
+                value: pageSize
+            },
+        ])
+        return await makeRequest(url.eksToken.getSshKey + params, RequestMethods.GET)
+    }
+
+    static async deleteSshKey(sshId:any) {
+        return await makeUploadRequest(url.eksToken.deleteSshKey + "/" + sshId, RequestMethods.DELETE)
     }
 
     

@@ -11,10 +11,10 @@ const url = {
     deleteAwsKey: "/awsKey/deleteApiKey",
     updateAwsKey: "/awsKey/updateApiKey",
     getAwsRegion: "/awsKey/getAWSRegions",
-    getEksCluster:"/aws/getEksCluster",
+    getEksCluster: "/aws/getEksCluster",
     getAllRDSData: "/aws/getRdsInstance",
-    changeUserPassword:"/user/changePassword",
-    changePasswordByAdmin:"/user/changePasswordByAdmin",
+    changeUserPassword: "/user/changePassword",
+    changePasswordByAdmin: "/user/changePasswordByAdmin",
     instance: {
         getAllInstance: "/aws/getAllInstance",
         getAllVolumesData: "/aws/getVolumes"
@@ -26,7 +26,9 @@ const url = {
         deleteEksToken: "/aws/deleteEksToken",
         addEKSToken: "/aws/addEKSToken",
         getEKSTokenById: "/aws/getEKSTokenById",
-
+        addSshKey: "/aws/addSshKey",
+        getSshKey: "/aws/getSshKey",
+        deleteSshKey: "/aws/deleteSshKey",
         getClusterName: "/aws/getEksClusterName",
     }
 

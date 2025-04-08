@@ -26,6 +26,7 @@ export default function SettingIndex() {
         { url: "/settings/addUser", name: "Add Users", icon: UserImage },
         { url: "/settings/addAWSKey", name: "Add AWS Key", icon: AwsImage },
         { url: "/settings/addEKSToken", name: "Add EKS Token", icon: EksTokenImage },
+        { url: "/settings/ssh-key", name: "Add SSH Key", icon: EksTokenImage },
         { url: "/settings/change-password", name: "Change Password", icon: PasswordImage },
     ];
 
