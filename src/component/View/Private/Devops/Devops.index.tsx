@@ -22,7 +22,7 @@ export default function DevopsIndex() {
         { url: "https://jenkins-ca-nonprod.global.iff.com", name: "Jenkins Non Prod", icon: JenkinsImage },
         { url: "https://jenkins-nsp-nonprod.global.iff.com", name: "NSP Jenkins Prod", icon: JenkinsImage },
         { url: "https://jenkins-nsp-prod.global.iff.com", name: "NSP Jenkins Non Prod", icon: JenkinsImage },
-        { url: "http://10.35.50.193", name: "AWX Tower", icon: AnsibleImage },
+        { url: "https://awx.iff.com/", name: "AWX Tower", icon: AnsibleImage },
         { url: "https://gitlab.com/danisco-nutrition-and-biosciences/iff-cloud-engineering", name: "Git Lab", icon: GitLabImage },
     ];
 
