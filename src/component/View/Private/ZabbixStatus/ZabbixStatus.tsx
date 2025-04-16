@@ -93,6 +93,7 @@ export default function ZabbixStatus() {
   });
 
   console.log(filteredStatusData, statusData, "filteredStatusData");
+  console.log(statusData, "statusData");
 
 
   const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
