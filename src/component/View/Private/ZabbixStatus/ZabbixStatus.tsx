@@ -13,6 +13,8 @@ import {
   Spinner,
   Table,
 } from 'react-bootstrap';
+import { CSVLink } from "react-csv";
+
 
 export default function ZabbixStatus() {
   const { selectedRegion }: any = useContext(SelectedRegionContext);
@@ -27,10 +29,12 @@ export default function ZabbixStatus() {
   const [statusData, setStatusData] = useState<any>();
   const [loading, setLoading] = useState<boolean>(false);
 
+  const [csvData, setCsvData] = useState<any[]>([])
+
   const getAllSshKey = async () => {
     setLoading(true);
     try {
-      const res = await AdminService.getSshKey('', 1, 999);
+      const res = await AdminService.getSshKey("", 1, 999);
       if (res.status === 200) {
         setData(
           res.data.data.map((data: any) => ({
@@ -72,6 +76,9 @@ export default function ZabbixStatus() {
       });
   };
 
+  
+
+
   const filteredStatusData = statusData?.filter((item: any) => {
     const search = searchText.toLowerCase();
     return (
@@ -80,6 +87,25 @@ export default function ZabbixStatus() {
       item?.ip?.toLowerCase().includes(search)
     );
   });
+
+
+  const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
+    "Sr.No": index + 1,
+    "Instance Name": item?.instanceName || "--",
+    "Instance ID": item?.instanceId || "--",
+    "IP": item?.ip || "--",
+    "OS": item?.os || "--",
+    "Cloud Watch Status": item?.services?.CloudWatch || "--",
+    "Crowd Strike Status": item?.services?.crowdStrike || "--",
+    "Qualys Status": item?.services?.Qualys || "--",
+    "Zabbix agent Status": item?.services?.zabbixAgent || "--",
+    "Cloud Watch Version": item?.versions?.CloudWatch || "--",
+    "Crowd Strike Version": item?.versions?.crowdStrike || "--",
+    "Qualys Version": item?.versions?.Qualys || "--",
+    "Zabbix agent Version": item?.versions?.zabbixAgent || "--",
+    "Platform": item?.platform || "--",
+    "State": item?.state || "--"
+  }));
 
   return (
     <Container>
@@ -140,6 +166,20 @@ export default function ZabbixStatus() {
         </Button>
       </div>
 
+      <div>
+        {statusCSVData?.length > 0 && (
+          <CSVLink
+            data={statusCSVData}
+            headers={Object.keys(statusCSVData[0] || {})} 
+            filename={"AgentStatus.csv"}
+            className="btn btn-primary"
+          >
+            Export to CSV
+          </CSVLink>
+        )
+      }
+      </div>
+
       <Row className="d-flex justify-content-center align-items-center">
         <Col>
           <Card>
@@ -180,13 +220,13 @@ export default function ZabbixStatus() {
                         <td style={{ fontSize: 12 }}>{item?.ip || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.os || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.services?.CloudWatch || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.services['Crowd Strike'] || '--'}</td>
+                        <td style={{ fontSize: 12 }}>{item?.services && item?.services?.crowdStrike || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.services?.Qualys || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.['zabbix agent'] || '--'}</td>
+                        <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.zabbixAgent || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.CloudWatch || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.['Crowd Strike'] || '--'}</td>
+                        <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.crowdStrike || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.Qualys || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.['zabbix agent'] || '--'}</td>
+                        <td style={{ fontSize: 12 }}>{item?.versions?.zabbixAgent || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.platform || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.state || '--'}</td>
                       </tr>
