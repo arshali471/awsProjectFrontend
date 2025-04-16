@@ -220,8 +220,8 @@ export default function ZabbixStatus() {
                         <Spinner animation="border" size="sm" /> Loading...
                       </td>
                     </tr>
-                  ) : filteredStatusData?.length > 0 ? (
-                    filteredStatusData?.map((item: any, index: number) => (
+                  ) : statusData?.length > 0 ? (
+                    statusData?.map((item: any, index: number) => (
                       <tr key={item._id || index}>
                         <td style={{ fontSize: 12 }}>{index + 1}</td>
                         <td style={{ fontSize: 12 }}>{item?.instanceName || '--'}</td>
