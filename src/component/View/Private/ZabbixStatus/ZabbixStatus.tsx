@@ -14,6 +14,7 @@ import {
   Table,
 } from 'react-bootstrap';
 import { CSVLink } from "react-csv";
+import toast from 'react-hot-toast';
 
 
 export default function ZabbixStatus() {
@@ -68,6 +69,7 @@ export default function ZabbixStatus() {
         }
       })
       .catch((err) => {
+        toast.error(err.response.data.message)
         console.log(err);
         setLoading(false);
       })
@@ -95,13 +97,13 @@ export default function ZabbixStatus() {
     "Instance ID": item?.instanceId || "--",
     "IP": item?.ip || "--",
     "OS": item?.os || "--",
-    "Cloud Watch Status": item?.services?.CloudWatch || "--",
+    "Cloud Watch Status": item?.services?.cloudWatch || "--",
     "Crowd Strike Status": item?.services?.crowdStrike || "--",
-    "Qualys Status": item?.services?.Qualys || "--",
+    "Qualys Status": item?.services?.qualys || "--",
     "Zabbix agent Status": item?.services?.zabbixAgent || "--",
-    "Cloud Watch Version": item?.versions?.CloudWatch || "--",
+    "Cloud Watch Version": item?.versions?.cloudWatch || "--",
     "Crowd Strike Version": item?.versions?.crowdStrike || "--",
-    "Qualys Version": item?.versions?.Qualys || "--",
+    "Qualys Version": item?.versions?.qualys || "--",
     "Zabbix agent Version": item?.versions?.zabbixAgent || "--",
     "Platform": item?.platform || "--",
     "State": item?.state || "--"
@@ -166,7 +168,7 @@ export default function ZabbixStatus() {
         </Button>
       </div>
 
-      <div>
+      <div className = "d-flex justify-content-end">
         {statusCSVData?.length > 0 && (
           <CSVLink
             data={statusCSVData}
@@ -219,11 +221,11 @@ export default function ZabbixStatus() {
                         <td style={{ fontSize: 12 }}>{item?.instanceId || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.ip || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.os || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.services?.CloudWatch || '--'}</td>
+                        <td style={{ fontSize: 12 }}>{item?.services?.cloudWatch || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.services && item?.services?.crowdStrike || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.services?.Qualys || '--'}</td>
+                        <td style={{ fontSize: 12 }}>{item?.services?.qualys || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.zabbixAgent || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.CloudWatch || '--'}</td>
+                        <td style={{ fontSize: 12 }}>{item?.versions?.cloudWatch || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.crowdStrike || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.Qualys || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.zabbixAgent || '--'}</td>
