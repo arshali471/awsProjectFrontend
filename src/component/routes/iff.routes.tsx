@@ -1,4 +1,4 @@
-import { FaBullhorn } from "react-icons/fa"
+import { FaBullhorn, FaMagento } from "react-icons/fa"
 import Dashboard from "../View/Private/Dashboard/Dashboard"
 import { MdSpaceDashboard } from "react-icons/md"
 import S3Index from "../View/Private/S3/S3.index"
@@ -47,7 +47,7 @@ export const iffRoutes: IIFFRouter[] = [
                 navbarShow: true,
                 element: <ZabbixStatus />,
                 name: "Agent Status",
-                icon: SiAmazonec2
+                icon: FaMagento
             },
             {
                 path: "ec2",
