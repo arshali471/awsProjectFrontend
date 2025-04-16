@@ -173,6 +173,9 @@ export default function ZabbixStatus() {
       </div>
 
       <div className = "d-flex justify-content-end mb-2">
+
+        {/* Local changes */}
+
         {statusCSVData?.length > 0 && (
           <CSVLink
             data={statusCSVData}
