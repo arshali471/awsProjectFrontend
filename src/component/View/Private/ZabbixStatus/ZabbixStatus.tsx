@@ -90,6 +90,8 @@ export default function ZabbixStatus() {
     );
   });
 
+  console.log(filteredStatusData, "filteredStatusData");
+
 
   const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
     "Sr.No": index + 1,
