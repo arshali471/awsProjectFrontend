@@ -27,13 +27,13 @@ export default function ZabbixStatus() {
   const [operatingSystem, setOperatingSystem] = useState<string>('');
   const [sshKeyPath, setSshKeyPath] = useState<any>(null);
 
-  const [statusData, setStatusData] = useState<any>();
+  const [statusData, setStatusData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   const [csvData, setCsvData] = useState<any[]>([])
 
   const getAllSshKey = async () => {
-    setLoading(true);
+    // setLoading(true);
     try {
       const res = await AdminService.getSshKey("", 1, 999);
       if (res.status === 200) {
@@ -47,7 +47,7 @@ export default function ZabbixStatus() {
     } catch (error) {
       console.error('Error fetching SSH keys:', error);
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 
@@ -78,6 +78,8 @@ export default function ZabbixStatus() {
       });
   };
 
+
+
   
 
 
@@ -90,7 +92,7 @@ export default function ZabbixStatus() {
     );
   });
 
-  console.log(filteredStatusData, "filteredStatusData");
+  console.log(filteredStatusData, statusData, "filteredStatusData");
 
 
   const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
@@ -170,13 +172,13 @@ export default function ZabbixStatus() {
         </Button>
       </div>
 
-      <div className = "d-flex justify-content-end">
+      <div className = "d-flex justify-content-end mb-2">
         {statusCSVData?.length > 0 && (
           <CSVLink
             data={statusCSVData}
             headers={Object.keys(statusCSVData[0] || {})} 
             filename={"AgentStatus.csv"}
-            className="btn btn-primary"
+            className="btn btn-secondary size-sm"
           >
             Export to CSV
           </CSVLink>
@@ -229,7 +231,7 @@ export default function ZabbixStatus() {
                         <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.zabbixAgent || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.cloudWatch || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.crowdStrike || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.Qualys || '--'}</td>
+                        <td style={{ fontSize: 12 }}>{item?.versions?.qualys || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.zabbixAgent || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.platform || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.state || '--'}</td>
