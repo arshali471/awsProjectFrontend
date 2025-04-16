@@ -12,10 +12,37 @@ import {
   Button,
   Spinner,
   Table,
+  Badge,
 } from 'react-bootstrap';
 import { CSVLink } from "react-csv";
 import toast from 'react-hot-toast';
 
+const statusStyles = {
+  inactive: {
+    backgroundColor: '#28a745',
+    color: 'white',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+  },
+  active: {
+    backgroundColor: '#dc3545',
+    color: 'white',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+  },
+  unknown: {
+    backgroundColor: '#6c757d',
+    color: 'white',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+  }
+};
 
 export default function ZabbixStatus() {
   const { selectedRegion }: any = useContext(SelectedRegionContext);
@@ -78,10 +105,18 @@ export default function ZabbixStatus() {
       });
   };
 
-
-
-  
-
+  const getStatusStyle = (status: string) => {
+    if (!status || status === '--') return statusStyles.unknown;
+    
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus.includes('active') || lowerStatus.includes('running') || lowerStatus === 'ok') {
+      return statusStyles.active;
+    } else if (lowerStatus.includes('inactive') || lowerStatus.includes('stopped') || lowerStatus === 'failed') {
+      return statusStyles.inactive;
+    } else {
+      return statusStyles.unknown;
+    }
+  };
 
   const filteredStatusData = statusData?.filter((item: any) => {
     const search = searchText.toLowerCase();
@@ -94,7 +129,6 @@ export default function ZabbixStatus() {
 
   console.log(filteredStatusData, statusData, "filteredStatusData");
   console.log(statusData, "statusData");
-
 
   const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
     "Sr.No": index + 1,
@@ -221,18 +255,34 @@ export default function ZabbixStatus() {
                         <Spinner animation="border" size="sm" /> Loading...
                       </td>
                     </tr>
-                  ) : statusData?.length > 0 ? (
-                    statusData?.map((item: any, index: number) => (
+                  ) : filteredStatusData?.length > 0 ? (
+                    filteredStatusData?.map((item: any, index: number) => (
                       <tr key={item._id || index}>
                         <td style={{ fontSize: 12 }}>{index + 1}</td>
                         <td style={{ fontSize: 12 }}>{item?.instanceName || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.instanceId || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.ip || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.os || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.services?.cloudWatch || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.services && item?.services?.crowdStrike || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.services?.qualys || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.zabbixAgent || '--'}</td>
+                        <td style={{ fontSize: 12 }}>
+                          <span style={getStatusStyle(item?.services?.cloudWatch)}>
+                            {item?.services?.cloudWatch || '--'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 12 }}>
+                          <span style={getStatusStyle(item?.services?.crowdStrike)}>
+                            {item?.services?.crowdStrike || '--'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 12 }}>
+                          <span style={getStatusStyle(item?.services?.qualys)}>
+                            {item?.services?.qualys || '--'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 12 }}>
+                          <span style={getStatusStyle(item?.services?.zabbixAgent)}>
+                            {item?.services?.zabbixAgent || '--'}
+                          </span>
+                        </td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.cloudWatch || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.crowdStrike || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.qualys || '--'}</td>
