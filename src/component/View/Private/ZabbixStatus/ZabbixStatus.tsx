@@ -65,7 +65,7 @@ export default function ZabbixStatus() {
     )
       .then((res) => {
         if (res.status === 200) {
-          setStatusData(res.data);
+          setStatusData(res.data?.results);
         }
       })
       .catch((err) => {
