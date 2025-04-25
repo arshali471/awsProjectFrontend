@@ -19,7 +19,7 @@ import toast from 'react-hot-toast';
 
 const statusStyles = {
   inactive: {
-    backgroundColor: '#28a745',
+    backgroundColor: ' #dc3545',
     color: 'white',
     padding: '4px 8px',
     borderRadius: '4px',
@@ -27,7 +27,7 @@ const statusStyles = {
     fontWeight: 'bold',
   },
   active: {
-    backgroundColor: '#dc3545',
+    backgroundColor: ' #28a745',
     color: 'white',
     padding: '4px 8px',
     borderRadius: '4px',
@@ -35,7 +35,7 @@ const statusStyles = {
     fontWeight: 'bold',
   },
   unknown: {
-    backgroundColor: '#6c757d',
+    backgroundColor: ' #6c757d',
     color: 'white',
     padding: '4px 8px',
     borderRadius: '4px',
