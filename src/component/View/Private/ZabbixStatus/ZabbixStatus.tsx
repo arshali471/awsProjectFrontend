@@ -10,7 +10,6 @@ import {
   Form,
   Card,
   Button,
-  Spinner,
   Table,
   Badge,
 } from 'react-bootstrap';
@@ -57,10 +56,7 @@ export default function ZabbixStatus() {
   const [statusData, setStatusData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [csvData, setCsvData] = useState<any[]>([])
-
   const getAllSshKey = async () => {
-    // setLoading(true);
     try {
       const res = await AdminService.getSshKey("", 1, 999);
       if (res.status === 200) {
@@ -73,8 +69,6 @@ export default function ZabbixStatus() {
       }
     } catch (error) {
       console.error('Error fetching SSH keys:', error);
-    } finally {
-      // setLoading(false);
     }
   };
 
@@ -96,9 +90,8 @@ export default function ZabbixStatus() {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message)
+        toast.error(err.response.data.message);
         console.log(err);
-        setLoading(false);
       })
       .finally(() => {
         setLoading(false);
@@ -107,7 +100,7 @@ export default function ZabbixStatus() {
 
   const getStatusStyle = (status: string) => {
     if (!status || status === '--') return statusStyles.unknown;
-    
+
     const lowerStatus = status.toLowerCase();
     if (lowerStatus.includes('active') || lowerStatus.includes('running') || lowerStatus === 'ok') {
       return statusStyles.active;
@@ -126,9 +119,6 @@ export default function ZabbixStatus() {
       item?.ip?.toLowerCase().includes(search)
     );
   });
-
-  console.log(filteredStatusData, statusData, "filteredStatusData");
-  console.log(statusData, "statusData");
 
   const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
     "Sr.No": index + 1,
@@ -167,143 +157,104 @@ export default function ZabbixStatus() {
             <Form.Label>SSH Username</Form.Label>
             <Form.Control
               type="text"
-              placeholder="Enter SSH username"
               value={sshUsername}
               onChange={(e) => setSshUsername(e.target.value)}
             />
           </Form.Group>
         </Col>
-
         <Col md={3}>
           <Form.Group className="mb-3">
             <Form.Label>Operating System</Form.Label>
             <Form.Control
               type="text"
-              placeholder="Enter operating system"
               value={operatingSystem}
               onChange={(e) => setOperatingSystem(e.target.value)}
             />
           </Form.Group>
         </Col>
-
         <Col md={3}>
           <Form.Group className="mb-3">
-            <Form.Label>SSH Key</Form.Label>
+            <Form.Label>Select SSH Key</Form.Label>
             <Select
               options={data}
-              placeholder="Select SSH Key"
-              isClearable
-              isSearchable
               value={sshKeyPath}
-              onChange={(selectedOption) => setSshKeyPath(selectedOption)}
+              onChange={setSshKeyPath}
+              placeholder="Choose Key"
             />
           </Form.Group>
         </Col>
+        <Col md={3}>
+          <Button variant="primary" className="mt-4" onClick={handleSubmit}>
+            {loading ? 'Checking...' : 'Check Status'}
+          </Button>
+        </Col>
+        <Col md={3} className="mt-4">
+          {filteredStatusData?.length > 0 && (
+            <CSVLink
+              data={statusCSVData}
+              filename={"zabbix_status_report.csv"}
+              className="btn btn-success"
+            >
+              Download CSV
+            </CSVLink>
+          )}
+        </Col>
       </Row>
 
-      <div className="d-flex justify-content-end mb-3">
-        <Button variant="primary" onClick={handleSubmit}>
-          Fetch
-        </Button>
-      </div>
-
-      <div className = "d-flex justify-content-end mb-2">
-
-        {/* Local changes------------------------ */}
-
-        {statusCSVData?.length > 0 && (
-          <CSVLink
-            data={statusCSVData}
-            headers={Object.keys(statusCSVData[0] || {})} 
-            filename={"AgentStatus.csv"}
-            className="btn btn-secondary size-sm"
-          >
-            Export to CSV
-          </CSVLink>
-        )
-      }
-      </div>
-
-      <Row className="d-flex justify-content-center align-items-center">
-        <Col>
-          <Card>
+      {loading ? (
+        <div className="d-flex justify-content-center mt-4">
+          <LoaderSpinner />
+        </div>
+      ) : (
+        filteredStatusData?.length > 0 && (
+          <Card className="mt-4">
             <Card.Body>
-              <Table striped hover responsive>
+              <Table striped bordered hover responsive size="sm">
                 <thead>
                   <tr>
-                    <th style={{ fontSize: 14 }}>Sr.No</th>
-                    <th style={{ fontSize: 14 }}>Instance Name</th>
-                    <th style={{ fontSize: 14 }}>Instance ID</th>
-                    <th style={{ fontSize: 14 }}>IP</th>
-                    <th style={{ fontSize: 14 }}>OS</th>
-                    <th style={{ fontSize: 14 }}>Cloud Watch Status</th>
-                    <th style={{ fontSize: 14 }}>Crowd Strike Status</th>
-                    <th style={{ fontSize: 14 }}>Qualys Status</th>
-                    <th style={{ fontSize: 14 }}>Zabbix agent Status</th>
-                    <th style={{ fontSize: 14 }}>Cloud Watch Version</th>
-                    <th style={{ fontSize: 14 }}>Crowd Strike Version</th>
-                    <th style={{ fontSize: 14 }}>Qualys Version</th>
-                    <th style={{ fontSize: 14 }}>Zabbix agent Version</th>
-                    <th style={{ fontSize: 14 }}>Platform</th>
-                    <th style={{ fontSize: 14 }}>State</th>
+                    <th>#</th>
+                    <th>Instance Name</th>
+                    <th>Instance ID</th>
+                    <th>IP</th>
+                    <th>OS</th>
+                    <th>Cloud Watch</th>
+                    <th>Crowd Strike</th>
+                    <th>Qualys</th>
+                    <th>Zabbix Agent</th>
+                    <th>Cloud Watch Version</th>
+                    <th>Crowd Strike Version</th>
+                    <th>Qualys Version</th>
+                    <th>Zabbix Version</th>
+                    <th>Platform</th>
+                    <th>State</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={15} className="text-center">
-                        <Spinner animation="border" size="sm" /> Loading...
-                      </td>
+                  {filteredStatusData?.map((item: any, index: number) => (
+                    <tr key={item?.instanceId || index}>
+                      <td>{index + 1}</td>
+                      <td>{item?.instanceName || '--'}</td>
+                      <td>{item?.instanceId || '--'}</td>
+                      <td>{item?.ip || '--'}</td>
+                      <td>{item?.os || '--'}</td>
+                      <td><Badge style={getStatusStyle(item?.services?.cloudWatch)}>{item?.services?.cloudWatch || '--'}</Badge></td>
+                      <td><Badge style={getStatusStyle(item?.services?.crowdStrike)}>{item?.services?.crowdStrike || '--'}</Badge></td>
+                      <td><Badge style={getStatusStyle(item?.services?.qualys)}>{item?.services?.qualys || '--'}</Badge></td>
+                      <td><Badge style={getStatusStyle(item?.services?.zabbixAgent)}>{item?.services?.zabbixAgent || '--'}</Badge></td>
+                      <td>{item?.versions?.cloudWatch || '--'}</td>
+                      <td>{item?.versions?.crowdStrike || '--'}</td>
+                      <td>{item?.versions?.qualys || '--'}</td>
+                      <td>{item?.versions?.zabbixAgent || '--'}</td>
+                      <td>{item?.platform || '--'}</td>
+                      <td>{item?.state || '--'}</td>
                     </tr>
-                  ) : filteredStatusData?.length > 0 ? (
-                    filteredStatusData?.map((item: any, index: number) => (
-                      <tr key={item._id || index}>
-                        <td style={{ fontSize: 12 }}>{index + 1}</td>
-                        <td style={{ fontSize: 12 }}>{item?.instanceName || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.instanceId || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.ip || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.os || '--'}</td>
-                        <td style={{ fontSize: 12 }}>
-                          <span style={getStatusStyle(item?.services?.cloudWatch)}>
-                            {item?.services?.cloudWatch || '--'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>
-                          <span style={getStatusStyle(item?.services?.crowdStrike)}>
-                            {item?.services?.crowdStrike || '--'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>
-                          <span style={getStatusStyle(item?.services?.qualys)}>
-                            {item?.services?.qualys || '--'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>
-                          <span style={getStatusStyle(item?.services?.zabbixAgent)}>
-                            {item?.services?.zabbixAgent || '--'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.cloudWatch || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.crowdStrike || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.qualys || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.zabbixAgent || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.platform || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.state || '--'}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={15} className="text-center">
-                        No data found.
-                      </td>
-                    </tr>
-                  )}
+                  ))}
                 </tbody>
               </Table>
             </Card.Body>
           </Card>
-        </Col>
-      </Row>
+        )
+      )}
     </Container>
   );
 }
