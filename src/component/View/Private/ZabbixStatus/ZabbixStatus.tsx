@@ -109,9 +109,9 @@ export default function ZabbixStatus() {
     if (!status || status === '--') return statusStyles.unknown;
     
     const lowerStatus = status.toLowerCase();
-    if (lowerStatus.includes('active') || lowerStatus.includes('running') || lowerStatus === 'ok') {
+    if (lowerStatus === 'active' || lowerStatus === 'running' || lowerStatus === 'ok') {
       return statusStyles.active;
-    } else if (lowerStatus.includes('inactive') || lowerStatus.includes('stopped') || lowerStatus === 'failed') {
+    } else if (lowerStatus === 'inactive' || lowerStatus === 'stopped' || lowerStatus === 'failed') {
       return statusStyles.inactive;
     } else {
       return statusStyles.unknown;
