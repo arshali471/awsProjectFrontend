@@ -16,6 +16,8 @@ import {
 } from 'react-bootstrap';
 import { CSVLink } from "react-csv";
 import toast from 'react-hot-toast';
+import DatePicker from "react-datepicker";
+
 
 const statusStyles = {
   inactive: {
@@ -57,6 +59,9 @@ export default function ZabbixStatus() {
   const [statusData, setStatusData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
+
   const [csvData, setCsvData] = useState<any[]>([])
 
   const getAllSshKey = async () => {
@@ -88,7 +93,9 @@ export default function ZabbixStatus() {
       selectedRegion?.value,
       sshUsername,
       sshKeyPath?.value,
-      operatingSystem
+      operatingSystem,
+      startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
+      endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined,
     )
       .then((res) => {
         if (res.status === 200) {
@@ -107,7 +114,7 @@ export default function ZabbixStatus() {
 
   const getStatusStyle = (status: string) => {
     if (!status || status === '--') return statusStyles.unknown;
-    
+
     const lowerStatus = status.toLowerCase();
     if (lowerStatus === 'active' || lowerStatus === 'running' || lowerStatus === 'ok') {
       return statusStyles.active;
@@ -127,8 +134,6 @@ export default function ZabbixStatus() {
     );
   });
 
-  console.log(filteredStatusData, statusData, "filteredStatusData");
-  console.log(statusData, "statusData");
 
   const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
     "Sr.No": index + 1,
@@ -199,6 +204,22 @@ export default function ZabbixStatus() {
             />
           </Form.Group>
         </Col>
+        <Col md={3}>
+          <Form.Group className="mb-3">
+            <Form.Label>Start Date - End Date</Form.Label>
+            <DatePicker
+              selectsRange={true}
+              startDate={startDate}
+              endDate={endDate}
+              onChange={(update) => {
+                setDateRange(update);
+              }}
+              className="w-100 form-control"
+              maxDate={new Date()}
+              withPortal
+            />
+          </Form.Group>
+        </Col>
       </Row>
 
       <div className="d-flex justify-content-end mb-3">
@@ -207,21 +228,21 @@ export default function ZabbixStatus() {
         </Button>
       </div>
 
-      <div className = "d-flex justify-content-end mb-2">
+      <div className="d-flex justify-content-end mb-2">
 
         {/* Local changes------------------------ */}
 
         {statusCSVData?.length > 0 && (
           <CSVLink
             data={statusCSVData}
-            headers={Object.keys(statusCSVData[0] || {})} 
+            headers={Object.keys(statusCSVData[0] || {})}
             filename={"AgentStatus.csv"}
             className="btn btn-secondary size-sm"
           >
             Export to CSV
           </CSVLink>
         )
-      }
+        }
       </div>
 
       <Row className="d-flex justify-content-center align-items-center">
@@ -236,6 +257,7 @@ export default function ZabbixStatus() {
                     <th style={{ fontSize: 14 }}>Instance ID</th>
                     <th style={{ fontSize: 14 }}>IP</th>
                     <th style={{ fontSize: 14 }}>OS</th>
+                    <th style={{ fontSize: 14 }}>State</th>
                     <th style={{ fontSize: 14 }}>Cloud Watch Status</th>
                     <th style={{ fontSize: 14 }}>Crowd Strike Status</th>
                     <th style={{ fontSize: 14 }}>Qualys Status</th>
@@ -245,7 +267,7 @@ export default function ZabbixStatus() {
                     <th style={{ fontSize: 14 }}>Qualys Version</th>
                     <th style={{ fontSize: 14 }}>Zabbix agent Version</th>
                     <th style={{ fontSize: 14 }}>Platform</th>
-                    <th style={{ fontSize: 14 }}>State</th>
+                    {/* <th style={{ fontSize: 14 }}>State</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -263,6 +285,7 @@ export default function ZabbixStatus() {
                         <td style={{ fontSize: 12 }}>{item?.instanceId || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.ip || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.os || '--'}</td>
+                        <td style={{ fontSize: 12 }} className = "text-success">{item?.state || '--'}</td>
                         <td style={{ fontSize: 12 }}>
                           <span style={getStatusStyle(item?.services?.cloudWatch)}>
                             {item?.services?.cloudWatch || '--'}
@@ -288,7 +311,6 @@ export default function ZabbixStatus() {
                         <td style={{ fontSize: 12 }}>{item?.versions?.qualys || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.versions?.zabbixAgent || '--'}</td>
                         <td style={{ fontSize: 12 }}>{item?.platform || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.state || '--'}</td>
                       </tr>
                     ))
                   ) : (

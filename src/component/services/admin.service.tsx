@@ -152,7 +152,7 @@ export class AdminService {
         return await makeRequest(url.eksToken.getSshKey + params, RequestMethods.GET)
     }
 
-    static async getZabbixStatus(keyId: any, sshUsername: any, sshKeyPath: any,operatingSystem: any ) {
+    static async getZabbixStatus(keyId: any, sshUsername: any, sshKeyPath: any,operatingSystem: any, startDate:any, endDate: any ) {
         const params = makeParams([
             {
                 index: "sshUsername",
@@ -165,6 +165,14 @@ export class AdminService {
             {
                 index: "operatingSystem",
                 value: operatingSystem
+            },
+            {
+                index: "startDate",
+                value: startDate
+            },
+            {
+                index: "endDate",
+                value: endDate
             },
         ])
         return await makeRequest(url.eksToken.getZabbixStatus + "/" + keyId + params, RequestMethods.GET)

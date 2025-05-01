@@ -6,6 +6,7 @@ import { Card, Col, Container, Row } from 'react-bootstrap'
 import JenkinsImage from "../../../../assets/jenkins.png"
 import AnsibleImage from "../../../../assets/ansible.png"
 import GitLabImage from "../../../../assets/gitLab.png"
+import NexusImage from "../../../../assets/nexus.png"
 
 export default function DevopsIndex() {
 
@@ -18,12 +19,13 @@ export default function DevopsIndex() {
 
 
     const apps = [
-        { url: "https://jenkins-prod.iff.com", name: "Jenkins Prod", icon: JenkinsImage },
-        { url: "https://jenkins-ca-nonprod.global.iff.com", name: "Jenkins Non Prod", icon: JenkinsImage },
-        { url: "https://jenkins-nsp-nonprod.global.iff.com", name: "NSP Jenkins Prod", icon: JenkinsImage },
-        { url: "https://jenkins-nsp-prod.global.iff.com", name: "NSP Jenkins Non Prod", icon: JenkinsImage },
-        { url: "https://awx.iff.com/", name: "AWX Tower", icon: AnsibleImage },
+        // { url: "https://jenkins-prod.iff.com", name: "Jenkins Prod", icon: JenkinsImage },
+        // { url: "https://jenkins-ca-nonprod.global.iff.com", name: "Jenkins Non Prod", icon: JenkinsImage },
+        // { url: "https://jenkins-nsp-nonprod.global.iff.com", name: "NSP Jenkins Prod", icon: JenkinsImage },
+        // { url: "https://jenkins-nsp-prod.global.iff.com", name: "NSP Jenkins Non Prod", icon: JenkinsImage },
+        { url: "https://awx.iff.com", name: "AWX Tower", icon: AnsibleImage },
         { url: "https://gitlab.com/danisco-nutrition-and-biosciences/iff-cloud-engineering", name: "Git Lab", icon: GitLabImage },
+        { url: "http://nexus.iff.com", name: "Nexus", icon: NexusImage },
     ];
 
     return (
@@ -54,7 +56,7 @@ export default function DevopsIndex() {
                                 <Card.Img
                                     variant="top"
                                     src={app.icon}
-                                    style={{ width: "70px", height: "70px", margin: "0 auto" }}
+                                    style={{ width: "70px", height: "70px", margin: "0 auto" , objectFit: "cover"}}
                                 />
                                 {/* <app.icon 
                             style={{ width: "50px", height: "50px", margin: "0 auto" }}

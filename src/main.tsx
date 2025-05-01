@@ -7,6 +7,8 @@ import "react-datepicker/dist/react-datepicker.css";
 
 import 'react-date-picker/dist/DatePicker.css';
 import 'react-calendar/dist/Calendar.css';
+import "react-resizable/css/styles.css"; // Required for column resizing styles
+
 
 import "react-resizable/css/styles.css"; 
 
