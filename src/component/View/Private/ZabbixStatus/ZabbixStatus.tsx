@@ -13,10 +13,12 @@ import {
   Spinner,
   Table,
   Badge,
+  InputGroup,
 } from 'react-bootstrap';
 import { CSVLink } from "react-csv";
 import toast from 'react-hot-toast';
 import DatePicker from "react-datepicker";
+import { FaTimes } from 'react-icons/fa';
 
 
 const statusStyles = {
@@ -130,6 +132,10 @@ export default function ZabbixStatus() {
     return (
       item?.instanceName?.toLowerCase().includes(search) ||
       item?.instanceId?.toLowerCase().includes(search) ||
+      item?.services?.cloudWatch?.toLowerCase().includes(search) ||
+      item?.services?.crowdStrike?.toLowerCase().includes(search) ||
+      item?.services?.qualys?.toLowerCase().includes(search) ||
+      item?.services?.zabbixAgent?.toLowerCase().includes(search) ||
       item?.ip?.toLowerCase().includes(search)
     );
   });
@@ -207,17 +213,26 @@ export default function ZabbixStatus() {
         <Col md={3}>
           <Form.Group className="mb-3">
             <Form.Label>Start Date - End Date</Form.Label>
-            <DatePicker
-              selectsRange={true}
-              startDate={startDate}
-              endDate={endDate}
-              onChange={(update) => {
-                setDateRange(update);
-              }}
-              className="w-100 form-control"
-              maxDate={new Date()}
-              withPortal
-            />
+            <InputGroup>
+              <DatePicker
+                selectsRange={true}
+                startDate={startDate}
+                endDate={endDate}
+                onChange={(update) => {
+                  setDateRange(update);
+                }}
+                className="w-100 form-control"
+                maxDate={new Date()}
+                withPortal
+              />
+              <Button
+                variant="outline-secondary"
+                onClick={() => setDateRange([null, null])}
+                disabled={!startDate && !endDate}
+              >
+                <FaTimes />
+              </Button>
+            </InputGroup>
           </Form.Group>
         </Col>
       </Row>
