@@ -228,21 +228,9 @@ export default function ZabbixStatus() {
                 }}
                 className="w-100 form-control"
                 maxDate={new Date()}
+                isClearable
                 withPortal
               />
-              <Button
-                variant="none"
-                onClick={() => setDateRange([null, null])}
-                disabled={!startDate && !endDate}
-                // className="border-start-0"
-                // style={{ 
-                //   backgroundColor: 'transparent',
-                //   borderColor: '#ced4da',
-                //   color: '#6c757d'
-                // }}
-              >
-                <FaTimes />
-              </Button>
             </InputGroup>
           </Form.Group>
         </Col>
