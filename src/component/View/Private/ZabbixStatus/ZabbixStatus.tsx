@@ -210,12 +210,14 @@ export default function ZabbixStatus() {
             />
           </Form.Group>
         </Col>
-        <Col md={3}>
+        <Col md={6}>
           <Form.Group className="mb-3">
-            <Form.Label>Start Date - End Date</Form.Label>
-            <small className="text-muted d-block mb-2" style={{fontSize:12}}>
-              NOTE: To fetch live data, clear date filter
-            </small>
+            <div className="d-flex align-items-center mb-2">
+              <Form.Label className="mb-0">Start Date - End Date</Form.Label>
+              <small className="text-danger ms-1" style={{ fontSize: '12px' }}>
+                (Note: To fetch live data, clear date filter)
+              </small>
+            </div>
             <InputGroup>
               <DatePicker
                 selectsRange={true}
@@ -229,15 +231,15 @@ export default function ZabbixStatus() {
                 withPortal
               />
               <Button
-                variant="outline-secondary"
+                variant="none"
                 onClick={() => setDateRange([null, null])}
                 disabled={!startDate && !endDate}
-                className="border-start-0"
-                style={{ 
-                  backgroundColor: 'transparent',
-                  borderColor: '#ced4da',
-                  color: '#6c757d'
-                }}
+                // className="border-start-0"
+                // style={{ 
+                //   backgroundColor: 'transparent',
+                //   borderColor: '#ced4da',
+                //   color: '#6c757d'
+                // }}
               >
                 <FaTimes />
               </Button>
