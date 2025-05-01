@@ -213,6 +213,9 @@ export default function ZabbixStatus() {
         <Col md={3}>
           <Form.Group className="mb-3">
             <Form.Label>Start Date - End Date</Form.Label>
+            <small className="text-muted d-block mb-2" style={{fontSize:12}}>
+              NOTE: To fetch live data, clear date filter
+            </small>
             <InputGroup>
               <DatePicker
                 selectsRange={true}
@@ -229,6 +232,12 @@ export default function ZabbixStatus() {
                 variant="outline-secondary"
                 onClick={() => setDateRange([null, null])}
                 disabled={!startDate && !endDate}
+                className="border-start-0"
+                style={{ 
+                  backgroundColor: 'transparent',
+                  borderColor: '#ced4da',
+                  color: '#6c757d'
+                }}
               >
                 <FaTimes />
               </Button>
