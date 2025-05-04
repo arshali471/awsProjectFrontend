@@ -10,64 +10,34 @@ import {
   Form,
   Card,
   Button,
-  Spinner,
-  Table,
-  Badge,
   InputGroup,
 } from 'react-bootstrap';
 import { CSVLink } from "react-csv";
 import toast from 'react-hot-toast';
 import DatePicker from "react-datepicker";
-import { FaTimes } from 'react-icons/fa';
-
-
-const statusStyles = {
-  inactive: {
-    backgroundColor: ' #dc3545',
-    color: 'white',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-  },
-  active: {
-    backgroundColor: ' #28a745',
-    color: 'white',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-  },
-  unknown: {
-    backgroundColor: ' #6c757d',
-    color: 'white',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-  }
-};
+import TablePagination from "../../../Pagination/TablePagination";
+import StatusCheckTable from '../../../Table/statusCheck.table';
 
 export default function ZabbixStatus() {
   const { selectedRegion }: any = useContext(SelectedRegionContext);
+  const { loading, setLoading }: any = useContext(LoadingContext);
 
+  const [statusData, setStatusData] = useState<any[]>([]);
   const [searchText, setSearchText] = useState<string>('');
-  const [data, setData] = useState<any>([]);
-
+  const [paginatedData, setPaginatedData] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(10);
+  const [dateRange, setDateRange] = useState([null, null]);
   const [sshUsername, setSshUsername] = useState<string>('');
   const [operatingSystem, setOperatingSystem] = useState<string>('');
   const [sshKeyPath, setSshKeyPath] = useState<any>(null);
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [data, setData] = useState<any[]>([]);
 
-  const [statusData, setStatusData] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
 
-  const [csvData, setCsvData] = useState<any[]>([])
-
   const getAllSshKey = async () => {
-    // setLoading(true);
     try {
       const res = await AdminService.getSshKey("", 1, 999);
       if (res.status === 200) {
@@ -80,8 +50,6 @@ export default function ZabbixStatus() {
       }
     } catch (error) {
       console.error('Error fetching SSH keys:', error);
-    } finally {
-      // setLoading(false);
     }
   };
 
@@ -114,19 +82,6 @@ export default function ZabbixStatus() {
       });
   };
 
-  const getStatusStyle = (status: string) => {
-    if (!status || status === '--') return statusStyles.unknown;
-
-    const lowerStatus = status.toLowerCase();
-    if (lowerStatus === 'active' || lowerStatus === 'running' || lowerStatus === 'ok') {
-      return statusStyles.active;
-    } else if (lowerStatus === 'inactive' || lowerStatus === 'stopped' || lowerStatus === 'failed') {
-      return statusStyles.inactive;
-    } else {
-      return statusStyles.unknown;
-    }
-  };
-
   const filteredStatusData = statusData?.filter((item: any) => {
     const search = searchText.toLowerCase();
     return (
@@ -136,10 +91,16 @@ export default function ZabbixStatus() {
       item?.services?.crowdStrike?.toLowerCase().includes(search) ||
       item?.services?.qualys?.toLowerCase().includes(search) ||
       item?.services?.zabbixAgent?.toLowerCase().includes(search) ||
-      item?.ip?.toLowerCase().includes(search)
+      item?.ip?.toLowerCase().includes(search) ||
+      item?.versions?.cloudWatch?.toLowerCase().includes(search) ||
+      item?.versions?.crowdStrike?.toLowerCase().includes(search) ||
+      item?.versions?.qualys?.toLowerCase().includes(search) ||
+      item?.versions?.zabbixAgent?.toLowerCase().includes(search) ||
+      item?.platform?.toLowerCase().includes(search) ||
+      item?.state?.toLowerCase().includes(search) ||
+      item?.os?.toLowerCase().includes(search)
     );
   });
-
 
   const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
     "Sr.No": index + 1,
@@ -159,6 +120,14 @@ export default function ZabbixStatus() {
     "State": item?.state || "--"
   }));
 
+  useEffect(() => {
+    let filteredData = filteredStatusData;
+
+    const startIndex = (currentPage - 1) * perPage;
+    setPaginatedData(filteredData.slice(startIndex, startIndex + perPage));
+    setTotalCount(filteredData.length);
+  }, [filteredStatusData, currentPage, perPage]);
+
   return (
     <Container>
       <Row className="mt-3">
@@ -173,6 +142,7 @@ export default function ZabbixStatus() {
             />
           </Form.Group>
         </Col>
+
         <Col md={3}>
           <Form.Group className="mb-3">
             <Form.Label>SSH Username</Form.Label>
@@ -210,6 +180,7 @@ export default function ZabbixStatus() {
             />
           </Form.Group>
         </Col>
+
         <Col md={6}>
           <Form.Group className="mb-3">
             <div className="d-flex align-items-center mb-2">
@@ -243,9 +214,6 @@ export default function ZabbixStatus() {
       </div>
 
       <div className="d-flex justify-content-end mb-2">
-
-        {/* Local changes------------------------ */}
-
         {statusCSVData?.length > 0 && (
           <CSVLink
             data={statusCSVData}
@@ -255,89 +223,25 @@ export default function ZabbixStatus() {
           >
             Export to CSV
           </CSVLink>
-        )
-        }
+        )}
       </div>
 
       <Row className="d-flex justify-content-center align-items-center">
         <Col>
           <Card>
             <Card.Body>
-              <Table striped hover responsive>
-                <thead>
-                  <tr>
-                    <th style={{ fontSize: 14 }}>Sr.No</th>
-                    <th style={{ fontSize: 14 }}>Instance Name</th>
-                    <th style={{ fontSize: 14 }}>Instance ID</th>
-                    <th style={{ fontSize: 14 }}>IP</th>
-                    <th style={{ fontSize: 14 }}>OS</th>
-                    <th style={{ fontSize: 14 }}>State</th>
-                    <th style={{ fontSize: 14 }}>Cloud Watch Status</th>
-                    <th style={{ fontSize: 14 }}>Crowd Strike Status</th>
-                    <th style={{ fontSize: 14 }}>Qualys Status</th>
-                    <th style={{ fontSize: 14 }}>Zabbix agent Status</th>
-                    <th style={{ fontSize: 14 }}>Cloud Watch Version</th>
-                    <th style={{ fontSize: 14 }}>Crowd Strike Version</th>
-                    <th style={{ fontSize: 14 }}>Qualys Version</th>
-                    <th style={{ fontSize: 14 }}>Zabbix agent Version</th>
-                    <th style={{ fontSize: 14 }}>Platform</th>
-                    {/* <th style={{ fontSize: 14 }}>State</th> */}
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={15} className="text-center">
-                        <Spinner animation="border" size="sm" /> Loading...
-                      </td>
-                    </tr>
-                  ) : filteredStatusData?.length > 0 ? (
-                    filteredStatusData?.map((item: any, index: number) => (
-                      <tr key={item._id || index}>
-                        <td style={{ fontSize: 12 }}>{index + 1}</td>
-                        <td style={{ fontSize: 12 }}>{item?.instanceName || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.instanceId || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.ip || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.os || '--'}</td>
-                        <td style={{ fontSize: 12 }} className = "text-success">{item?.state || '--'}</td>
-                        <td style={{ fontSize: 12 }}>
-                          <span style={getStatusStyle(item?.services?.cloudWatch)}>
-                            {item?.services?.cloudWatch || '--'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>
-                          <span style={getStatusStyle(item?.services?.crowdStrike)}>
-                            {item?.services?.crowdStrike || '--'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>
-                          <span style={getStatusStyle(item?.services?.qualys)}>
-                            {item?.services?.qualys || '--'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>
-                          <span style={getStatusStyle(item?.services?.zabbixAgent)}>
-                            {item?.services?.zabbixAgent || '--'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.cloudWatch || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions && item?.versions?.crowdStrike || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.qualys || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.versions?.zabbixAgent || '--'}</td>
-                        <td style={{ fontSize: 12 }}>{item?.platform || '--'}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={15} className="text-center">
-                        No data found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
+              <StatusCheckTable tableData={paginatedData} pageNumber={currentPage} pageSize={perPage} loading={loading} />
             </Card.Body>
           </Card>
+          <div className="bg-white py-2">
+            <TablePagination
+              total={totalCount}
+              currentPage={currentPage}
+              perPage={perPage}
+              handlePageChange={setCurrentPage}
+              setPerPage={setPerPage}
+            />
+          </div>
         </Col>
       </Row>
     </Container>
