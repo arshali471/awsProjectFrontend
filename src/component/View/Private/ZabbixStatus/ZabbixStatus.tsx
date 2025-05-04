@@ -84,23 +84,28 @@ export default function ZabbixStatus() {
 
   const filteredStatusData = statusData?.filter((item: any) => {
     const search = searchText.toLowerCase();
+
     return (
-      item?.instanceName?.toLowerCase().includes(search) ||
-      item?.instanceId?.toLowerCase().includes(search) ||
-      item?.services?.cloudWatch?.toLowerCase().includes(search) ||
-      item?.services?.crowdStrike?.toLowerCase().includes(search) ||
-      item?.services?.qualys?.toLowerCase().includes(search) ||
-      item?.services?.zabbixAgent?.toLowerCase().includes(search) ||
-      item?.ip?.toLowerCase().includes(search) ||
-      item?.versions?.cloudWatch?.toLowerCase().includes(search) ||
-      item?.versions?.crowdStrike?.toLowerCase().includes(search) ||
-      item?.versions?.qualys?.toLowerCase().includes(search) ||
-      item?.versions?.zabbixAgent?.toLowerCase().includes(search) ||
-      item?.platform?.toLowerCase().includes(search) ||
-      item?.state?.toLowerCase().includes(search) ||
-      item?.os?.toLowerCase().includes(search)
+        // For services, we perform strict matching (i.e., exact match)
+        (item?.instanceName?.toLowerCase().includes(search) ||
+        item?.instanceId?.toLowerCase().includes(search) ||
+        item?.ip?.toLowerCase().includes(search) ||
+        item?.versions?.cloudWatch?.toLowerCase().includes(search) ||
+        item?.versions?.crowdStrike?.toLowerCase().includes(search) ||
+        item?.versions?.qualys?.toLowerCase().includes(search) ||
+        item?.versions?.zabbixAgent?.toLowerCase().includes(search) ||
+        item?.platform?.toLowerCase().includes(search) ||
+        item?.state?.toLowerCase().includes(search) ||
+        item?.os?.toLowerCase().includes(search)) ||
+
+        // Strict search for services fields (exact match)
+        (item?.services?.cloudWatch?.toLowerCase() === search ||
+        item?.services?.crowdStrike?.toLowerCase() === search ||
+        item?.services?.qualys?.toLowerCase() === search ||
+        item?.services?.zabbixAgent?.toLowerCase() === search)
     );
-  });
+});
+
 
   const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
     "Sr.No": index + 1,
