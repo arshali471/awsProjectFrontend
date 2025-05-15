@@ -127,7 +127,9 @@ export default function ZabbixStatus() {
     "Qualys Version": item?.versions?.qualys || "--",
     "Zabbix agent Version": item?.versions?.zabbixAgent || "--",
     "Platform": item?.platform || "--",
-    "State": item?.state || "--"
+    "State": item?.state || "--",
+    "Error": item?.error || "--",
+    "Date": item?.createdAt || "--",
   }));
 
   useEffect(() => {

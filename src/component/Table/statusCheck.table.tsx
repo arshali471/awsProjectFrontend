@@ -69,7 +69,9 @@ export default function StatusCheckTable({ tableData, loading }: IStatusCheckTab
         { field: 'crowdStrikeVersion', headerName: 'CS Ver', width: 100 },
         { field: 'qualysVersion', headerName: 'Q Ver', width: 100 },
         { field: 'zabbixAgentVersion', headerName: 'ZB Ver', width: 100 },
-        { field: 'platform', headerName: 'Platform', width: 120 }
+        { field: 'platform', headerName: 'Platform', width: 120 },
+        { field: "date", headerName: "Date", width: 150 },
+        { field: "error", headerName: "Error", width: 400 },
     ];
 
     const rows = tableData.map((data, index) => ({
@@ -89,6 +91,8 @@ export default function StatusCheckTable({ tableData, loading }: IStatusCheckTab
         qualysVersion: data?.versions?.qualys || 'N/A',
         zabbixAgentVersion: data?.versions?.zabbixAgent || 'N/A',
         platform: data?.platform || '--',
+        date: data?.createdAt ? new Date(data.createdAt).toLocaleString() : '--',
+        error: data?.error || '--'
     }));
 
     const dynamicHeight = rows.length > 0 ? 600 : 200;
