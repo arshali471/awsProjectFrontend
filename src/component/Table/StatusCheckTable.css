@@ -1,0 +1,51 @@
+.table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  background-color: #ffffff;
+}
+
+.tr {
+  display: flex;
+  width: 100%;
+}
+
+.th, .td {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #e9ecef;
+  overflow: hidden;
+  font-size: 13px;
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.th {
+  font-weight: 700;
+  background-color: #f8f9fa;
+  color: #343a40;
+  position: relative;
+}
+
+.td {
+  font-weight: 400;
+  color: #212529;
+  background-color: #ffffff;
+}
+
+/* Custom resize handle as vertical pipe */
+.custom-resize-handle {
+  cursor: col-resize;
+  position: absolute;
+  top: 0;
+  right: -5px;
+  height: 100%;
+  padding: 0 4px;
+  font-weight: bold;
+  color: #adb5bd;
+  user-select: none;
+}

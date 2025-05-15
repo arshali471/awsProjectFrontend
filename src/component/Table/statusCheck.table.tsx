@@ -1,163 +1,147 @@
-import React from "react";
-import { useTable, useSortBy } from "react-table";
-import { Resizable } from "react-resizable";
-import moment from "moment";
-import { Table, Badge, Spinner, Card, Row, Col } from "react-bootstrap";
-import "react-resizable/css/styles.css"; // Required for column resizing styles
+import * as React from 'react';
+import { DataGrid, GridColDef, useGridApiRef } from '@mui/x-data-grid';
+import Paper from '@mui/material/Paper';
+import { Button, Box, CircularProgress } from '@mui/material';
+import { saveAs } from 'file-saver';
 
 interface IStatusCheckTable {
     tableData: any[];
-    pageNumber: number;
-    pageSize: number;
-    loading?: boolean;
+    loading: boolean;
 }
 
-const ResizableColumn = (props: any) => {
-    const { resizeHandler, isResizing, column } = props;
+const getStatusBadge = (status: string) => {
+    const baseStyle = {
+        borderRadius: '4px',
+        color: 'white',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        padding: '3px 6px',
+    };
+    if (!status || status === '--') return <span style={{ ...baseStyle, backgroundColor: '#6c757d' }}>--</span>;
+    const lower = status.toLowerCase();
+    if (["active", "running", "ok"].includes(lower)) return <span style={{ ...baseStyle, backgroundColor: '#28a745' }}>{status}</span>;
+    if (["inactive", "stopped", "failed"].includes(lower)) return <span style={{ ...baseStyle, backgroundColor: '#dc3545' }}>{status}</span>;
+    return <span style={{ ...baseStyle, backgroundColor: '#6c757d' }}>{status}</span>;
+};
+
+export default function StatusCheckTable({ tableData, loading }: IStatusCheckTable) {
+    const apiRef = useGridApiRef();
+    // Using the loading prop instead of inferring from tableData
+    const isLoading = loading;
+
+    const columns: GridColDef[] = [
+        { field: 'serialNo', headerName: 'Sr#', width: 70, resizable: true },
+        { field: 'instanceName', headerName: 'Name', width: 150 },
+        { field: 'instanceId', headerName: 'ID', width: 200 },
+        { field: 'ip', headerName: 'IP', width: 150 },
+        { field: 'os', headerName: 'OS', width: 100 },
+        {
+            field: 'state',
+            headerName: 'State',
+            width: 100,
+            renderCell: (params) => getStatusBadge(params.value)
+        },
+        {
+            field: 'cloudWatchStatus',
+            headerName: 'CloudWatch',
+            width: 120,
+            renderCell: (params) => getStatusBadge(params.value)
+        },
+        {
+            field: 'crowdStrikeStatus',
+            headerName: 'CrowdStrike',
+            width: 120,
+            renderCell: (params) => getStatusBadge(params.value)
+        },
+        {
+            field: 'qualysStatus',
+            headerName: 'Qualys',
+            width: 100,
+            renderCell: (params) => getStatusBadge(params.value)
+        },
+        {
+            field: 'zabbixAgentStatus',
+            headerName: 'Zabbix',
+            width: 100,
+            renderCell: (params) => getStatusBadge(params.value)
+        },
+        { field: 'cloudWatchVersion', headerName: 'CW Ver', width: 100 },
+        { field: 'crowdStrikeVersion', headerName: 'CS Ver', width: 100 },
+        { field: 'qualysVersion', headerName: 'Q Ver', width: 100 },
+        { field: 'zabbixAgentVersion', headerName: 'ZB Ver', width: 100 },
+        { field: 'platform', headerName: 'Platform', width: 120 }
+    ];
+
+    const rows = tableData.map((data, index) => ({
+        id: index + 1,
+        serialNo: index + 1,
+        instanceName: data?.instanceName || '--',
+        instanceId: data?.instanceId || '--',
+        ip: data?.ip || '--',
+        os: data?.os || '--',
+        state: data?.state || '--',
+        cloudWatchStatus: data?.services?.cloudWatch || '--',
+        crowdStrikeStatus: data?.services?.crowdStrike || '--',
+        qualysStatus: data?.services?.qualys || '--',
+        zabbixAgentStatus: data?.services?.zabbixAgent || '--',
+        cloudWatchVersion: data?.versions?.cloudWatch || 'N/A',
+        crowdStrikeVersion: data?.versions?.crowdStrike || 'N/A',
+        qualysVersion: data?.versions?.qualys || 'N/A',
+        zabbixAgentVersion: data?.versions?.zabbixAgent || 'N/A',
+        platform: data?.platform || '--',
+    }));
+
+    const dynamicHeight = rows.length > 0 ? 600 : 200;
+
+    const handleExport = () => {
+        const selectedIDs = new Set(apiRef.current.getSelectedRows().keys());
+        const exportRows = selectedIDs.size > 0
+            ? rows.filter(row => selectedIDs.has(row.id))
+            : rows;
+
+        const csvContent = [
+            columns.map(col => col.headerName).join(','),
+            ...exportRows.map(row =>
+                columns.map(col => {
+                    const val = row[col.field as keyof typeof row];
+                    return typeof val === 'string' ? `"${val}"` : val;
+                }).join(',')
+            )
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, 'statusInventory.csv');
+    };
+
     return (
-        <div className={`resizable ${isResizing ? "resizing" : ""}`}>
-            {props.children}
-            <div className="resize-handle" onMouseDown={resizeHandler}></div>
+        <div>
+            <Box display="flex" justifyContent="flex-end" p={1}>
+                <Button onClick={handleExport} variant="contained" color="primary">
+                    Export to CSV
+                </Button>
+            </Box>
+
+        <Paper >
+            <DataGrid
+                apiRef={apiRef}
+                rows={rows}
+                columns={columns}
+                loading={isLoading}
+                initialState={{
+                    pagination: {
+                        paginationModel: {
+                            page: 0,
+                            pageSize: tableData.length || 10
+                        }
+                    }
+                }}
+
+                pageSizeOptions={[10, 20, 50]}
+                checkboxSelection
+                sx={{ border: 0 }}
+            />
+        </Paper>
         </div>
-    );
-};
 
-const getStatusStyle = (status: string) => {
-    if (!status || status === '--') return { backgroundColor: '#6c757d', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' };
-
-    const lowerStatus = status.toLowerCase();
-    if (lowerStatus === 'active' || lowerStatus === 'running' || lowerStatus === 'ok') {
-        return { backgroundColor: ' #28a745', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' };
-    } else if (lowerStatus === 'inactive' || lowerStatus === 'stopped' || lowerStatus === 'failed') {
-        return { backgroundColor: ' #dc3545', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' };
-    } else {
-        return { backgroundColor: ' #6c757d', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' };
-    }
-};
-
-export default function StatusCheckTable({ tableData, pageNumber, pageSize, loading }: IStatusCheckTable) {
-    const columns = React.useMemo(
-        () => [
-            { Header: "Sr.No", accessor: "serialNo", sortType: "number" },
-            { Header: "Instance Name", accessor: "instanceName" },
-            { Header: "Instance ID", accessor: "instanceId" },
-            { Header: "IP", accessor: "ip" },
-            { Header: "OS", accessor: "os" },
-            { Header: "State", accessor: "state" },
-            { Header: "Cloud Watch Status", accessor: "cloudWatchStatus" },
-            { Header: "Crowd Strike Status", accessor: "crowdStrikeStatus" },
-            { Header: "Qualys Status", accessor: "qualysStatus" },
-            { Header: "Zabbix Agent Status", accessor: "zabbixAgentStatus" },
-            { Header: "Cloud Watch Version", accessor: "cloudWatchVersion" },
-            { Header: "Crowd Strike Version", accessor: "crowdStrikeVersion" },
-            { Header: "Qualys Version", accessor: "qualysVersion" },
-            { Header: "Zabbix Agent Version", accessor: "zabbixAgentVersion" },
-            { Header: "Platform", accessor: "platform" },
-        ],
-        []
-    );
-
-    const data = React.useMemo(() => {
-        return tableData?.map((data, index) => ({
-            serialNo: index + 1 + (pageNumber - 1) * pageSize,
-            instanceName: data?.instanceName || "--",
-            instanceId: data?.instanceId || "--",
-            ip: data?.ip || "--",
-            os: data?.os || "--",
-            state:
-                <Badge bg={data?.state === "stopped" ? "danger" : "success"}>
-                    {data?.state || "--"}
-                </Badge>,
-            cloudWatchStatus: (
-                <span style={getStatusStyle(data?.services?.cloudWatch)}>
-                    {data?.services?.cloudWatch || "--"}
-                </span>
-            ),
-            crowdStrikeStatus: (
-                <span style={getStatusStyle(data?.services?.crowdStrike)}>
-                    {data?.services?.crowdStrike || "--"}
-                </span>
-            ),
-            qualysStatus: (
-                <span style={getStatusStyle(data?.services?.qualys)}>
-                    {data?.services?.qualys || "--"}
-                </span>
-            ),
-            zabbixAgentStatus: (
-                <span style={getStatusStyle(data?.services?.zabbixAgent)}>
-                    {data?.services?.zabbixAgent || "--"}
-                </span>
-            ),
-            cloudWatchVersion: data?.versions?.cloudWatch || "--",
-            crowdStrikeVersion: data?.versions?.crowdStrike || "--",
-            qualysVersion: data?.versions?.qualys || "--",
-            zabbixAgentVersion: data?.versions?.zabbixAgent || "--",
-            platform: data?.platform || "--",
-        }));
-    }, [tableData, pageNumber, pageSize]);
-
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
-        { columns, data },
-        useSortBy
-    );
-
-    return (
-        <Row className="d-flex justify-content-center align-items-center">
-            <Col>
-                <Card>
-                    <Card.Body>
-                        <Table striped hover responsive {...getTableProps()}>
-                            <thead>
-                                {headerGroups.map(headerGroup => (
-                                    <tr {...headerGroup.getHeaderGroupProps()}>
-                                        {headerGroup.headers.map(column => (
-                                            <th
-                                                {...column.getHeaderProps(column.getSortByToggleProps())}
-                                                className="sortable-header"
-                                                style={{ fontSize: 14, cursor: "pointer" }}
-                                            >
-                                                {column.render("Header")}
-                                                {column.isSorted ? (column.isSortedDesc ? " 🔽" : " 🔼") : ""}
-                                                <ResizableColumn column={column} />
-                                            </th>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </thead>
-                            <tbody {...getTableBodyProps()}>
-                            {loading ? (
-                                    <tr>
-                                        <td colSpan={15} style={{ textAlign: "center", fontSize: 14 }}>
-                                            <Spinner animation="border" size="sm" /> Loading...
-                                        </td>
-                                    </tr>
-                                ) :
-                                rows.length > 0 ? (
-                                    rows.map(row => {
-                                        prepareRow(row);
-                                        return (
-                                            <tr {...row.getRowProps()}>
-                                                {row.cells.map(cell => (
-                                                    <td {...cell.getCellProps()} style={{ fontSize: 12 }}>
-                                                        {cell.render("Cell")}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        );
-                                    })
-                                ) : (
-                                    <tr>
-                                        <td colSpan={15} style={{ textAlign: "center", fontSize: 14 }}>
-
-                                                No data found.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </Table>
-                    </Card.Body>
-                </Card>
-            </Col>
-        </Row>
     );
 }
