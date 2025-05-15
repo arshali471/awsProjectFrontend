@@ -71,7 +71,7 @@ export default function StatusCheckTable({ tableData, loading }: IStatusCheckTab
         { field: 'zabbixAgentVersion', headerName: 'ZB Ver', width: 100 },
         { field: 'platform', headerName: 'Platform', width: 120 },
         { field: "date", headerName: "Date", width: 150 },
-        { field: "error", headerName: "Error", width: 400 },
+        { field: "error", headerName: "Error" },
     ];
 
     const rows = tableData.map((data, index) => ({
@@ -91,7 +91,7 @@ export default function StatusCheckTable({ tableData, loading }: IStatusCheckTab
         qualysVersion: data?.versions?.qualys || 'N/A',
         zabbixAgentVersion: data?.versions?.zabbixAgent || 'N/A',
         platform: data?.platform || '--',
-        date: data?.createdAt ? new Date(data.createdAt).toLocaleString() : '--',
+        date: data?.createdAt ? new Date(data.createdAt).toLocaleString() : new Date().toLocaleString(),
         error: data?.error || '--'
     }));
 
