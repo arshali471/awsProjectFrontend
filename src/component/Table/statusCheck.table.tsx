@@ -125,26 +125,34 @@ export default function StatusCheckTable({ tableData, loading }: IStatusCheckTab
                 </Button>
             </Box>
 
-        <Paper sx={{ height: dynamicHeight, width: '100%', position: 'relative' }}>
-            <DataGrid
-                apiRef={apiRef}
-                rows={rows}
-                columns={columns}
-                loading={isLoading}
-                initialState={{
-                    pagination: {
-                        paginationModel: {
-                            page: 0,
-                            pageSize: tableData.length || 10
+            <Paper sx={{
+                width: '100%',
+                position: 'relative',
+                minHeight: rows.length === 0 || isLoading ? 300 : 'auto', // fallback height only if no data
+            }}>
+                <DataGrid
+                    apiRef={apiRef}
+                    rows={rows}
+                    columns={columns}
+                    loading={isLoading}
+                    initialState={{
+                        pagination: {
+                            paginationModel: {
+                                page: 0,
+                                pageSize: tableData.length || 10
+                            }
                         }
-                    }
-                }}
+                    }}
 
-                pageSizeOptions={[10, 20, 50]}
-                checkboxSelection
-                sx={{ border: 0 }}
-            />
-        </Paper>
+                    pageSizeOptions={[10, 20, 50]}
+                    checkboxSelection
+                    sx={{
+                        border: 0, width: '100%',
+                        position: 'relative',
+                        minHeight: rows.length === 0 || isLoading ? 300 : 'auto',
+                    }}
+                />
+            </Paper>
         </div>
 
     );
