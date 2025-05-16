@@ -125,7 +125,7 @@ export default function StatusCheckTable({ tableData, loading }: IStatusCheckTab
                 </Button>
             </Box>
 
-        <Paper >
+        <Paper sx={{ height: dynamicHeight, width: '100%', position: 'relative' }}>
             <DataGrid
                 apiRef={apiRef}
                 rows={rows}

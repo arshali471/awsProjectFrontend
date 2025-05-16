@@ -131,7 +131,7 @@ export default function ZabbixStatus() {
   useEffect(() => {
     const startIndex = (currentPage - 1) * perPage;
     const pageData = filteredStatusData.slice(startIndex, startIndex + perPage);
-    setPaginatedData(pageData);
+    setPaginatedData(filteredStatusData);
     setTotalCount(filteredStatusData.length);
   }, [filteredStatusData, currentPage, perPage]);
 
