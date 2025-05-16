@@ -71,7 +71,7 @@ export default function StatusCheckTable({ tableData, loading }: IStatusCheckTab
         { field: 'zabbixAgentVersion', headerName: 'ZB Ver', width: 100 },
         { field: 'platform', headerName: 'Platform', width: 120 },
         { field: "date", headerName: "Date", width: 150 },
-        { field: "error", headerName: "Error" },
+        { field: "error", headerName: "Error", width: 200 },
     ];
 
     const rows = tableData.map((data, index) => ({

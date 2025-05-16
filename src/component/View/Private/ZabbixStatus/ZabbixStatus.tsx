@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useMemo } from 'react';
 import { LoadingContext, SelectedRegionContext } from '../../../context/context';
 import { AdminService } from '../../../services/admin.service';
 import Select from 'react-select';
@@ -28,28 +28,27 @@ export default function ZabbixStatus() {
   const [sshUsername, setSshUsername] = useState<string>('');
   const [operatingSystem, setOperatingSystem] = useState<string>('');
   const [sshKeyPath, setSshKeyPath] = useState<any>(null);
-  const [csvData, setCsvData] = useState<any[]>([]);
   const [data, setData] = useState<any[]>([]);
 
   const [startDate, endDate] = dateRange;
 
-  const getAllSshKey = async () => {
-    try {
-      const res = await AdminService.getSshKey("", 1, 999);
-      if (res.status === 200) {
-        setData(
-          res.data.data.map((data: any) => ({
-            label: data?.sshKeyName,
-            value: data?._id,
-          }))
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching SSH keys:', error);
-    }
-  };
-
   useEffect(() => {
+    const getAllSshKey = async () => {
+      try {
+        const res = await AdminService.getSshKey("", 1, 999);
+        if (res.status === 200) {
+          setData(
+            res.data.data.map((data: any) => ({
+              label: data?.sshKeyName,
+              value: data?._id,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching SSH keys:', error);
+      }
+    };
+
     getAllSshKey();
   }, []);
 
@@ -71,7 +70,8 @@ export default function ZabbixStatus() {
       );
 
       if (res.status === 200) {
-        setStatusData(res.data?.results);
+        setStatusData(res.data?.results || []);
+        setCurrentPage(1); // reset to page 1 on new data
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Something went wrong");
@@ -81,12 +81,9 @@ export default function ZabbixStatus() {
     }
   };
 
-
-  const filteredStatusData = statusData?.filter((item: any) => {
+  const filteredStatusData = useMemo(() => {
     const search = searchText.toLowerCase();
-
-    return (
-      // For services, we perform strict matching (i.e., exact match)
+    return statusData?.filter((item: any) => (
       (
         item?.instanceName?.toLowerCase().includes(search) ||
         item?.instanceId?.toLowerCase().includes(search) ||
@@ -98,9 +95,6 @@ export default function ZabbixStatus() {
         item?.platform?.toLowerCase().includes(search) ||
         item?.state?.toLowerCase().includes(search)
       ) ||
-
-
-      // Strict search for services fields (exact match)
       (
         item?.os?.toLowerCase() === search ||
         item?.services?.cloudWatch?.toLowerCase() === search ||
@@ -108,34 +102,37 @@ export default function ZabbixStatus() {
         item?.services?.qualys?.toLowerCase() === search ||
         item?.services?.zabbixAgent?.toLowerCase() === search
       )
-    );
-  });
+    ));
+  }, [statusData, searchText]);
 
-
-  const statusCSVData = filteredStatusData?.map((item: any, index: number) => ({
-    "Sr.No": index + 1,
-    "Instance Name": item?.instanceName || "--",
-    "Instance ID": item?.instanceId || "--",
-    "IP": item?.ip || "--",
-    "OS": item?.os || "--",
-    "Cloud Watch Status": item?.services?.cloudWatch || "--",
-    "Crowd Strike Status": item?.services?.crowdStrike || "--",
-    "Qualys Status": item?.services?.qualys || "--",
-    "Zabbix agent Status": item?.services?.zabbixAgent || "--",
-    "Cloud Watch Version": item?.versions?.cloudWatch || "--",
-    "Crowd Strike Version": item?.versions?.crowdStrike || "--",
-    "Qualys Version": item?.versions?.qualys || "--",
-    "Zabbix agent Version": item?.versions?.zabbixAgent || "--",
-    "Platform": item?.platform || "--",
-    "State": item?.state || "--",
-    "Error": item?.error || "--",
-    "Date": item?.createdAt || "--",
-  }));
+  const statusCSVData = useMemo(() =>
+    filteredStatusData?.map((item: any, index: number) => ({
+      "Sr.No": index + 1,
+      "Instance Name": item?.instanceName || "--",
+      "Instance ID": item?.instanceId || "--",
+      "IP": item?.ip || "--",
+      "OS": item?.os || "--",
+      "Cloud Watch Status": item?.services?.cloudWatch || "--",
+      "Crowd Strike Status": item?.services?.crowdStrike || "--",
+      "Qualys Status": item?.services?.qualys || "--",
+      "Zabbix agent Status": item?.services?.zabbixAgent || "--",
+      "Cloud Watch Version": item?.versions?.cloudWatch || "--",
+      "Crowd Strike Version": item?.versions?.crowdStrike || "--",
+      "Qualys Version": item?.versions?.qualys || "--",
+      "Zabbix agent Version": item?.versions?.zabbixAgent || "--",
+      "Platform": item?.platform || "--",
+      "State": item?.state || "--",
+      "Error": item?.error || "--",
+      "Date": item?.createdAt
+        ? new Date(item.createdAt).toLocaleString('en-IN')
+        : "--"
+    })), [filteredStatusData]);
 
   useEffect(() => {
-    let filteredData = filteredStatusData;
-    setPaginatedData(filteredData);
-    setTotalCount(filteredData.length);
+    const startIndex = (currentPage - 1) * perPage;
+    const pageData = filteredStatusData.slice(startIndex, startIndex + perPage);
+    setPaginatedData(pageData);
+    setTotalCount(filteredStatusData.length);
   }, [filteredStatusData, currentPage, perPage]);
 
   return (
@@ -201,12 +198,10 @@ export default function ZabbixStatus() {
             </div>
             <InputGroup>
               <DatePicker
-                selectsRange={true}
+                selectsRange
                 startDate={startDate}
                 endDate={endDate}
-                onChange={(update) => {
-                  setDateRange(update);
-                }}
+                onChange={(update) => setDateRange(update)}
                 className="w-100 form-control"
                 maxDate={new Date()}
                 isClearable
@@ -222,7 +217,11 @@ export default function ZabbixStatus() {
           Fetch
         </Button>
       </div>
-      <StatusCheckTable tableData={paginatedData} loading={loading} />
+
+      <StatusCheckTable
+        tableData={paginatedData}
+        loading={loading}
+      />
     </Container>
   );
 }
