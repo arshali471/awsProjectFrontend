@@ -36,6 +36,7 @@
     "react-table": "^7.8.0"
   },
   "devDependencies": {
+    "@ljharb/tsconfig": "^0.3.2",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",

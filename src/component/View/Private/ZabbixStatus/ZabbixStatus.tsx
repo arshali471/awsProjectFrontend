@@ -136,7 +136,7 @@ export default function ZabbixStatus() {
   }, [filteredStatusData, currentPage, perPage]);
 
   return (
-    <Container>
+    <>
       <Row className="mt-3">
         <Col md={3}>
           <Form.Group className="mb-3">
@@ -212,16 +212,13 @@ export default function ZabbixStatus() {
         </Col>
       </Row>
 
-      <div className="d-flex justify-content-end mb-3">
-        <Button variant="primary" onClick={handleSubmit}>
-          Fetch
-        </Button>
-      </div>
+
 
       <StatusCheckTable
         tableData={paginatedData}
         loading={loading}
+        fetchData={handleSubmit}
       />
-    </Container>
+    </>
   );
 }

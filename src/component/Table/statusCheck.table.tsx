@@ -7,6 +7,7 @@ import { saveAs } from 'file-saver';
 interface IStatusCheckTable {
     tableData: any[];
     loading: boolean;
+    fetchData: () => void;
 }
 
 const getStatusBadge = (status: string) => {
@@ -24,13 +25,13 @@ const getStatusBadge = (status: string) => {
     return <span style={{ ...baseStyle, backgroundColor: '#6c757d' }}>{status}</span>;
 };
 
-export default function StatusCheckTable({ tableData, loading }: IStatusCheckTable) {
+export default function StatusCheckTable({ tableData, loading, fetchData }: IStatusCheckTable) {
     const apiRef = useGridApiRef();
     // Using the loading prop instead of inferring from tableData
     const isLoading = loading;
 
     const columns: GridColDef[] = [
-        { field: 'serialNo', headerName: 'Sr#', width: 70, resizable: true },
+        { field: 'serialNo', headerName: 'Sr No.', width: 70, resizable: true },
         { field: 'instanceName', headerName: 'Name', width: 150 },
         { field: 'instanceId', headerName: 'ID', width: 200 },
         { field: 'ip', headerName: 'IP', width: 150 },
@@ -119,7 +120,12 @@ export default function StatusCheckTable({ tableData, loading }: IStatusCheckTab
 
     return (
         <div>
-            <Box display="flex" justifyContent="flex-end" p={1}>
+            <Box display="flex" justifyContent="flex-end" p={1} >
+                {/* <div className="d-flex justify-content-end mb-3"> */}
+                    <Button variant="contained" onClick={fetchData} className='me-2'>
+                        Fetch
+                    </Button>
+                {/* </div> */}
                 <Button onClick={handleExport} variant="contained" color="primary">
                     Export to CSV
                 </Button>

@@ -12,7 +12,7 @@ export default function PrivateRoutes() {
             </div>
             <div className="main-content">
                 <TopBar menuData={mainRoutes} />
-                <div className="container py-3">
+                <div className=" p-3">
                     <Outlet />
                 </div>
             </div>
