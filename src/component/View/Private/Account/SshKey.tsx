@@ -50,7 +50,8 @@ export default function SshKey() {
         getAllSshKey();
       }
     }).catch(err => {
-      toast.error(err.response.data)
+      console.log(err, "error");
+      toast.error(err.response.data.message || "Failed to upload SSH key")
     })
   }
 

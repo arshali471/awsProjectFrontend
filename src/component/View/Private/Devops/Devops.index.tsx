@@ -19,8 +19,8 @@ export default function DevopsIndex() {
 
 
     const apps = [
-        // { url: "https://jenkins-prod.iff.com", name: "Jenkins Prod", icon: JenkinsImage },
-        // { url: "https://jenkins-ca-nonprod.global.iff.com", name: "Jenkins Non Prod", icon: JenkinsImage },
+        { url: "https://jenkins-prod.iff.com", name: "Jenkins Prod", icon: JenkinsImage },
+        { url: "https://jenkins-ca-nonprod.global.iff.com", name: "Jenkins Non Prod", icon: JenkinsImage },
         // { url: "https://jenkins-nsp-nonprod.global.iff.com", name: "NSP Jenkins Prod", icon: JenkinsImage },
         // { url: "https://jenkins-nsp-prod.global.iff.com", name: "NSP Jenkins Non Prod", icon: JenkinsImage },
         { url: "https://awx.iff.com", name: "AWX Tower", icon: AnsibleImage },
@@ -56,7 +56,7 @@ export default function DevopsIndex() {
                                 <Card.Img
                                     variant="top"
                                     src={app.icon}
-                                    style={{ width: "70px", height: "70px", margin: "0 auto" , objectFit: "cover"}}
+                                    style={{ width: "70px", height: "70px", margin: "0 auto" , objectFit: "contain" }}
                                 />
                                 {/* <app.icon 
                             style={{ width: "50px", height: "50px", margin: "0 auto" }}

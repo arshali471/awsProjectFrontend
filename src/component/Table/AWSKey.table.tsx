@@ -21,7 +21,9 @@ export default function AWSKeyTable({ tableData, reload }: IUsersTable) {
         await AdminService.deleteAwsKey(awsKey).then((res) => {
             if (res.status === 200) {
                 reload();
-                toast.success("User Deletd")
+                toast.success("User Deleted Successfully")
+                setShowConfirmationModal(undefined)
+
             }
         }).catch(err => {
             toast.error(err.response.data)

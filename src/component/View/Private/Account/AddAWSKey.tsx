@@ -11,7 +11,8 @@ export default function AddAWSKey() {
 
     const navigate = useNavigate();
 
-    const [data, setData] = useState<any>();
+
+    const [data, setData] = useState<any>({});
     const [region, setRegion] = useState<any>();
     const [isAllowed, setIsAllowed] = useState<boolean>(false)
 
@@ -52,9 +53,21 @@ export default function AddAWSKey() {
 
 
     const handleAWSKeySubmission = async () => {
-        await AdminService.createAWSKey(data).then((res) => {
+        let payload = {
+            region: data?.region?.value,
+            accessKeyId: data?.accessKeyId,
+            secretAccessKey: data?.secretAccessKey,
+            enviroment: data?.enviroment
+        }
+        await AdminService.createAWSKey(payload).then((res) => {
             if (res.status === 200) {
                 toast.success("Key Created")
+                setData({
+                    region: "",
+                    accessKeyId: "",
+                    secretAccessKey: "",
+                    enviroment: ""
+                })
             }
         }).catch(err => {
             toast.error(err.response.data)
@@ -82,20 +95,20 @@ export default function AddAWSKey() {
                             <Card.Body>
                                 <Form.Group className="mb-3">
                                     <Form.Label style={{ fontWeight: "500" }}>Region</Form.Label>
-                                    <Select options={region} onChange={(e: any) => setData({ ...data, region: e.value })} />
+                                    <Select options={region} onChange={(e: any) => setData({ ...data, region: e })} value={data?.region} />
 
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label style={{ fontWeight: "500" }}>Access Key Id</Form.Label>
-                                    <Form.Control type="text" name="accessKeyId" onChange={(e: any) => handleChangeValue(e)} />
+                                    <Form.Control type="text" name="accessKeyId" onChange={(e: any) => handleChangeValue(e)} value={data?.accessKeyId} />
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label style={{ fontWeight: "500" }}>Secret Access Key</Form.Label>
-                                    <Form.Control type="text" name="secretAccessKey" onChange={(e: any) => handleChangeValue(e)} />
+                                    <Form.Control type="text" name="secretAccessKey" onChange={(e: any) => handleChangeValue(e)} value={data?.secretAccessKey} />
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label style={{ fontWeight: "500" }}>Enviroment</Form.Label>
-                                    <Form.Control type="text" name="enviroment" onChange={(e: any) => handleChangeValue(e)} />
+                                    <Form.Control type="text" name="enviroment" onChange={(e: any) => handleChangeValue(e)} value={data?.enviroment} />
                                 </Form.Group>
                                 <Button className="mt-3" onClick={handleAWSKeySubmission}>
                                     Add Key
