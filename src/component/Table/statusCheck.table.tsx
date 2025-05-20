@@ -3,6 +3,7 @@ import { DataGrid, GridColDef, useGridApiRef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import { Button, Box, CircularProgress } from '@mui/material';
 import { saveAs } from 'file-saver';
+import { Spinner } from 'react-bootstrap';
 
 interface IStatusCheckTable {
     tableData: any[];
@@ -122,9 +123,9 @@ export default function StatusCheckTable({ tableData, loading, fetchData }: ISta
         <div>
             <Box display="flex" justifyContent="flex-end" p={1} >
                 {/* <div className="d-flex justify-content-end mb-3"> */}
-                    <Button variant="contained" onClick={fetchData} className='me-2'>
-                        Fetch
-                    </Button>
+                <Button variant="contained" onClick={fetchData} className='me-2' disabled={isLoading}>
+                    {isLoading ? <span> <Spinner  as="span" animation="border" size="sm" role="status" aria-hidden="true"/> Loading... </span>  : "Fetch"}
+                </Button>
                 {/* </div> */}
                 <Button onClick={handleExport} variant="contained" color="primary">
                     Export to CSV
