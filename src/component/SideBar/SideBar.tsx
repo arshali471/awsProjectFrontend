@@ -40,7 +40,7 @@ export default function SideBar({ menuData }: ISideBar) {
         <>
             <div className="d-flex flex-column text-white vh-100 p-3 sidebar-bg" style={{ width: '250px' }}>
                 <div>
-                    <div className="mb-2 ms-3 d-flex align-items-center gap-3">
+                    <div className="mb-2 ms-3 d-flex align-items-center gap-3" onClick={ () => navigate("/dashboard") } style={{ cursor: "pointer" }}>
                         <Image src={LogoImage} width={50} />
                         Cloud Inventory
                     </div>
