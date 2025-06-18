@@ -13,6 +13,7 @@ import EksInvImage from "../../../../assets/eks_invntory.png";
 import ReportImage from "../../../../assets/report.png";
 import CostImage from "../../../../assets/cost.png";
 import TicktImage from "../../../../assets/ticketing.png";
+import Kubebot from "../../../../assets/kubebot.png";
 import { HiOutlineLogout } from "react-icons/hi";
 
 
@@ -24,6 +25,7 @@ const apps = [
   { url: "/platform/ec2", name: "Ticketing", icon: TicktImage },
   { url: "https://app.finout.io/app/dashboards/50c3fb57-3fac-4b47-9ad5-8a3fc8e16fc4", name: "Cost", icon: CostImage },
   { url: "/devops", name: "Devops", icon: DevopsImage },
+  { url: "/kubebot", name: "Kubebot", icon: Kubebot },
 ];
 
 export default function IffDashboard() {
