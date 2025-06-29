@@ -309,6 +309,11 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
                     paginationModel={paginationModel}
                     onPaginationModelChange={(newModel) => setPaginationModel(newModel)}
                     pageSizeOptions={[10, 20, 50]}
+                    sx={{
+                        border: 0, width: '100%',
+                        position: 'relative',
+                        minHeight: rows.length === 0 || loading ? 300 : 'auto',
+                    }}
                 />
             </Paper>
         </div>
