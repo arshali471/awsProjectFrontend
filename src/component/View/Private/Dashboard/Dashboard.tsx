@@ -47,6 +47,11 @@ export default function Dashboard() {
     const getGlobalInstance = async () => {
         setLoading(true);
         try {
+            if (!searchText.trim()) {
+                toast.error("Please enter IP address to search.");
+                setLoading(false);
+                return;
+            }
 
             const res = await AdminService.getGlobalInstance(
                 searchText.toLowerCase()
