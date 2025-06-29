@@ -17,7 +17,8 @@ const url = {
     changePasswordByAdmin: "/user/changePasswordByAdmin",
     instance: {
         getAllInstance: "/aws/getAllInstance",
-        getAllVolumesData: "/aws/getVolumes"
+        getAllVolumesData: "/aws/getVolumes",
+        getGlobalInstance: "/aws/getInstanceDetailsByGlobalSearch",
     },
 
     eksToken: {

@@ -5,9 +5,9 @@
 
 .stat-box {
     background-color: #f8f9fa;
-    padding: 10px 20px;
+    padding: 4px 18px;
     border-radius: 8px;
-    font-weight: bold;
+
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 10px;
     white-space: nowrap;

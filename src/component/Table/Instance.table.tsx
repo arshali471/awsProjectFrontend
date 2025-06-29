@@ -145,6 +145,7 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
 
     const columns: GridColDef[] = [
         { field: 'serialNo', headerName: 'Sr No.', width: 70 },
+        { field: "account", headerName: "Account", width: 150 },
         { field: 'instanceName', headerName: 'Instance Name', width: 200 },
         { field: 'instanceId', headerName: 'Instance ID', width: 200 },
         { field: 'privateIp', headerName: 'Private IP', width: 150 },
@@ -192,6 +193,7 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
     const rows = tableData.map((data, index) => ({
         id: index + 1,
         serialNo: index + 1,
+        account: data?.environment || "N/A",
         instanceName: data?.Tags?.find((tag: any) => tag.Key === "Name")?.Value || "N/A",
         instanceId: data?.InstanceId,
         instanceType: data?.InstanceType,

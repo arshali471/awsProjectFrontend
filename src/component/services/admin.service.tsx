@@ -32,6 +32,10 @@ export class AdminService {
         return await makeRequest(url.instance.getAllInstance + "/" + keyId + params, RequestMethods.GET)
     }
 
+    static async getGlobalInstance(ip: string) {
+        return await makeRequest(url.instance.getGlobalInstance + "/" + ip, RequestMethods.GET)
+    }
+
     static async getEksCluster(keyId: any) {
         return await makeRequest(url.getEksCluster + "/" + keyId, RequestMethods.GET)
     }
