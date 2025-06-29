@@ -1,0 +1,31 @@
+.stats-row {
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.stat-box {
+    background-color: #f8f9fa;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-box.running {
+    background-color: #28a745;
+    color: white;
+}
+
+.stat-box.stopped {
+    background-color: #dc3545;
+    color: white;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    transition: 0.2s;
+}
