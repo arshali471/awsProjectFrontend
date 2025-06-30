@@ -123,6 +123,10 @@
 
 
 
+
+
+
+
 import * as React from 'react';
 import { DataGrid, GridColDef, useGridApiRef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
@@ -130,6 +134,7 @@ import { Button, Box } from '@mui/material';
 import { saveAs } from 'file-saver';
 import { Spinner } from 'react-bootstrap';
 import moment from 'moment';
+import ConnectModal from '../modal/Connect.modal';
 
 interface IInstanceTable {
     tableData: any[];
@@ -143,24 +148,61 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
     const apiRef = useGridApiRef();
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
 
+    const [showModal, setShowModal] = React.useState(false);
+    const [selectedInstance, setSelectedInstance] = React.useState(null);
+
+    const handleConnectClick = (instance) => {
+        setSelectedInstance(instance);
+        setShowModal(true);
+    };
+
     const columns: GridColDef[] = [
         { field: 'serialNo', headerName: 'Sr No.', width: 70 },
+        {
+            field: 'connect',
+            headerName: 'Actions',
+            width: 150,
+            renderCell: (params) => {
+                const isRunning = params.row.state?.toLowerCase() === 'running';
+                return (
+                    <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => handleConnectClick(params.row)}
+                        disabled={!isRunning}
+                        style={{
+                            color: !isRunning ? '#dc3545' : undefined, // red color for not running
+                        }}
+                    >
+                        Connect
+                    </Button>
+                );
+            },
+        },
         { field: "account", headerName: "Account", width: 150 },
+        {
+            field: 'state',
+            headerName: 'State',
+            width: 100,
+            renderCell: (params) => (
+                <span style={{
+                    backgroundColor: params.value?.toLowerCase() === 'running' ? '#28a745' : '#dc3545',
+                    color: 'white',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                }}>
+                    {params.value}
+                </span>
+            )
+        },
+
         { field: 'instanceName', headerName: 'Instance Name', width: 200 },
         { field: 'instanceId', headerName: 'Instance ID', width: 200 },
         { field: 'privateIp', headerName: 'Private IP', width: 150 },
         { field: 'instanceType', headerName: 'Instance Type', width: 150 },
         // { field: 'state', headerName: 'State', width: 100 },
-        { field: 'state', headerName: 'State', width: 100, renderCell: (params) => (
-        <span style={{
-            backgroundColor: params.value?.toLowerCase() === 'running' ? '#28a745' : '#dc3545',
-            color: 'white',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            fontWeight: 'bold'
-        }}>{params.value}</span>
-    ) },
         { field: 'imageId', headerName: 'Image ID', width: 200 },
         { field: 'keyName', headerName: 'Key Name', width: 150 },
         { field: 'launchTime', headerName: 'Launch Time', width: 150 },
@@ -202,6 +244,7 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
         keyName: data?.KeyName,
         launchTime: moment(data?.LaunchTime).format("DD MMM YYYY hh:mm A"),
         privateIp: data?.PrivateIpAddress,
+        publicIp: data?.PublicIpAddress || "N/A",
         platformDetails: data?.PlatformDetails,
         subnetId: data?.SubnetId,
         vpcId: data?.VpcId,
@@ -318,6 +361,16 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
                     }}
                 />
             </Paper>
+            {showModal && (
+                <ConnectModal
+                    instance={selectedInstance}
+                    onClose={() => setShowModal(false)}
+                // onConnect={(data) => {
+                //     console.log('Connecting with data:', data);
+                //     setShowModal(false);
+                // }}
+                />
+            )}
         </div>
     );
 }

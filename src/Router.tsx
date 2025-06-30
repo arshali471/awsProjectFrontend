@@ -20,6 +20,7 @@ import AddEKSToken from "./component/View/Private/Account/AddEKSToken";
 import Kubernetes from "./component/View/Private/Kubernetes/Kubernetes";
 import KubernetesIndex from "./component/View/Private/Kubernetes/Kubernetes.index";
 import SshKey from "./component/View/Private/Account/SshKey";
+import TerminalPage from "./component/View/Private/terminal/terminalPage";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
@@ -38,6 +39,7 @@ export default function Router() {
                 <Routes>
                     {/* Public route */}
                     <Route path="/login" element={<Login />} />
+                    <Route path="/terminal" element={<TerminalPage />} />
 
                     {/* Protected dashboard route */}
                     <Route
