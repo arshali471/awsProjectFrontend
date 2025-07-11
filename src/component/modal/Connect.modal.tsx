@@ -216,7 +216,8 @@ export default function ConnectModal({ instance, onClose }) {
     const handleConnect = async () => {
         try {
             const formData = new FormData();
-            formData.append('ip', instance.publicIp);
+            // formData.append('ip', instance.publicIp);
+            formData.append('ip', instance.privateIp || instance.publicIp);
             formData.append('username', username);
             if (sshFile) formData.append('sshkey', sshFile);
 
