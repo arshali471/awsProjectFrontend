@@ -1,12 +1,8 @@
-import React, { useState } from 'react'
-import SideBar from '../../../SideBar/SideBar'
-import mainRoutes from '../../../routes/routes'
-import { Outlet, useNavigate } from 'react-router-dom'
-import TopBar from '../../../TopBar/TopBar'
-import { RiAdminFill } from 'react-icons/ri'
-import { FaUsersGear } from 'react-icons/fa6'
-import { IoKeySharp } from 'react-icons/io5'
-import { Card, Col, Container, Row } from 'react-bootstrap'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Container } from 'react-bootstrap'
+import { IoSettingsSharp } from 'react-icons/io5'
+import { FaShieldAlt } from 'react-icons/fa'
 
 import AdminImage from "../../../../assets/admin.png"
 import UserImage from "../../../../assets/UsersAdd.png"
@@ -14,63 +10,55 @@ import PasswordImage from "../../../../assets/password.png"
 import AwsImage from "../../../../assets/awsKey.png"
 import EksTokenImage from "../../../../assets/ekstoken.png"
 
+import "./Settings.css"
+
 export default function SettingIndex() {
     const navigate = useNavigate();
 
-    const [hoverIndex, setHoverIndex] = useState(null);
-
-
-
     const apps = [
-        { url: "/settings/admin", name: "Admin", icon: AdminImage },
-        { url: "/settings/addUser", name: "Add Users", icon: UserImage },
-        { url: "/settings/addAWSKey", name: "Add AWS Key", icon: AwsImage },
-        { url: "/settings/addEKSToken", name: "Add EKS Token", icon: EksTokenImage },
-        { url: "/settings/ssh-key", name: "Add SSH Key", icon: EksTokenImage },
-        { url: "/settings/change-password", name: "Change Password", icon: PasswordImage },
+        { url: "/settings/admin", name: "Admin", icon: AdminImage, isAdmin: true, description: "Manage administrators" },
+        { url: "/settings/addUser", name: "Add Users", icon: UserImage, isAdmin: true, description: "Create new users" },
+        { url: "/settings/addAWSKey", name: "AWS Keys", icon: AwsImage, isAdmin: true, description: "Manage AWS credentials" },
+        { url: "/settings/addEKSToken", name: "EKS Token", icon: EksTokenImage, isAdmin: true, description: "Configure EKS access" },
+        { url: "/settings/ssh-key", name: "SSH Keys", icon: EksTokenImage, isAdmin: true, description: "Manage SSH keys" },
+        { url: "/settings/change-password", name: "Password", icon: PasswordImage, isAdmin: false, description: "Change your password" },
     ];
 
     return (
-        <>
-            <Container className="p-4 mt-5">
+        <div className="settings-wrapper">
+            <Container>
+                <div className="settings-header">
+                    <h1 className="settings-title">
+                        <div className="settings-title-icon">
+                            <IoSettingsSharp />
+                        </div>
+                        Settings & Configuration
+                    </h1>
+                    <p className="settings-subtitle">Manage your account, security, and system preferences</p>
+                </div>
 
-                <Row className="mb-3">
-                    <Col>
-                        <h5>Settings</h5>
-                    </Col>
-                </Row>
-
-                <Row xs={2} sm={3} md={4} lg={5} xl={6} className="g-3 mt-4">
+                {/* Settings Grid */}
+                <div className="settings-grid">
                     {apps.map((app, index) => (
-                        <Col key={index}>
-                            <Card
-                                className={`text-center p-3 transition`}
-                                onMouseEnter={() => setHoverIndex(index)}
-                                onMouseLeave={() => setHoverIndex(null)}
-                                style={{
-                                    cursor: "pointer",
-                                    boxShadow: hoverIndex === index ? "0px 4px 12px rgba(0, 0, 0, 0.2)" : "none",
-                                    transform: hoverIndex === index ? "scale(1.05)" : "scale(1)",
-                                    transition: "all 0.3s ease-in-out",
-                                }}
-                                onClick={() => navigate(app.url)}
-                            >
-                                <Card.Img
-                                    variant="top"
-                                    src={app.icon}
-                                    style={{ width: "50px", height: "50px", margin: "0 auto" }}
-                                />
-                                {/* <app.icon 
-                            style={{ width: "50px", height: "50px", margin: "0 auto" }}
-                            /> */}
-                                <Card.Body>
-                                    <Card.Title style={{ fontSize: "0.9rem" }}>{app.name}</Card.Title>
-                                </Card.Body>
-                            </Card>
-                        </Col>
+                        <div
+                            key={index}
+                            className="settings-card"
+                            onClick={() => navigate(app.url)}
+                        >
+                            {app.isAdmin && (
+                                <div className="admin-badge">
+                                    <FaShieldAlt size={8} /> ADMIN
+                                </div>
+                            )}
+                            <div className="settings-icon-container">
+                                <img src={app.icon} className="settings-icon" alt={app.name} />
+                            </div>
+                            <p className="settings-name">{app.name}</p>
+                            <p className="settings-description">{app.description}</p>
+                        </div>
                     ))}
-                </Row>
-            </Container >
-        </>
+                </div>
+            </Container>
+        </div>
     )
 }

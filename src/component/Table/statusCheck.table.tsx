@@ -28,7 +28,7 @@ const getStatusBadge = (status: string) => {
 
 export default function StatusCheckTable({ tableData, loading, fetchData }: IStatusCheckTable) {
     const apiRef = useGridApiRef();
-    // Using the loading prop instead of inferring from tableData
+    const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
     const isLoading = loading;
 
     const columns: GridColDef[] = [
@@ -121,46 +121,61 @@ export default function StatusCheckTable({ tableData, loading, fetchData }: ISta
 
     return (
         <div>
-            <Box display="flex" justifyContent="flex-end" p={1} >
-                {/* <div className="d-flex justify-content-end mb-3"> */}
-                <Button variant="contained" onClick={fetchData} className='me-2' disabled={isLoading}>
-                    {isLoading ? <span> <Spinner  as="span" animation="border" size="sm" role="status" aria-hidden="true"/> Loading... </span>  : "Fetch"}
-                </Button>
-                {/* </div> */}
-                <Button onClick={handleExport} variant="contained" color="primary">
+            <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} p={2}>
+                <Button
+                    variant="contained"
+                    onClick={handleExport}
+                    sx={{
+                        background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                        color: 'white',
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        fontWeight: 500,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(0, 115, 187, 0.3)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #005a92 0%, #0073bb 100%)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(0, 115, 187, 0.4)',
+                        },
+                        transition: 'all 0.3s ease'
+                    }}
+                >
                     Export to CSV
                 </Button>
             </Box>
 
-            <Paper sx={{
-                width: '100%',
-                position: 'relative',
-                minHeight: rows.length === 0 || isLoading ? 300 : 'auto', // fallback height only if no data
-            }}>
+            <Paper
+                elevation={0}
+                sx={{
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    border: '1px solid #e0e0e0'
+                }}
+            >
                 <DataGrid
                     apiRef={apiRef}
                     rows={rows}
                     columns={columns}
                     loading={isLoading}
-                    initialState={{
-                        pagination: {
-                            paginationModel: {
-                                page: 0,
-                                pageSize: tableData.length || 10
-                            }
-                        }
-                    }}
-
-                    pageSizeOptions={[10, 20, 50]}
+                    pagination
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={setPaginationModel}
+                    pageSizeOptions={[10, 25, 50, 100]}
                     checkboxSelection
+                    disableRowSelectionOnClick
+                    autoHeight
                     sx={{
-                        border: 0, width: '100%',
-                        position: 'relative',
-                        minHeight: rows.length === 0 || isLoading ? 300 : 'auto',
+                        border: 0,
+                        '& .MuiDataGrid-cell:focus': {
+                            outline: 'none',
+                        },
+                        '& .MuiDataGrid-row:hover': {
+                            backgroundColor: 'rgba(0, 115, 187, 0.04)',
+                        },
                     }}
                 />
             </Paper>
         </div>
-
     );
 }

@@ -1,5 +1,98 @@
+/* Enhanced TopBar Design */
+
 .xrg-top-main{
     z-index: 1;
     padding: 0rem 2rem 0rem 1rem;
     height: 3rem;
+}
+
+/* TopBar Container */
+.shadow-sm {
+    background: linear-gradient(90deg, #ffffff 0%, #f8f9fa 100%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.shadow-sm h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #232f3e;
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+
+/* Region Select Container */
+.shadow-sm .d-flex {
+    gap: 1rem;
+}
+
+/* Custom React-Select Styling */
+.shadow-sm .css-b62m3t-container {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.shadow-sm .css-b62m3t-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 115, 187, 0.15);
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.theme-toggle-btn:hover {
+    background: linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%);
+    color: #ffffff;
+    transform: translateY(-2px) rotate(15deg);
+    box-shadow: 0 4px 12px rgba(0, 115, 187, 0.3);
+}
+
+.theme-toggle-btn:active {
+    transform: translateY(0) rotate(0deg);
+}
+
+[data-theme="dark"] .theme-toggle-btn {
+    background: linear-gradient(135deg, #2a2f45 0%, #3a3f5c 100%);
+    color: #ffa726;
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+    background: linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%);
+    color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .shadow-sm h6 {
+        font-size: 0.875rem;
+    }
+
+    .shadow-sm .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .shadow-sm {
+        padding: 0.75rem 1rem !important;
+    }
+
+    .shadow-sm .d-flex > div {
+        width: 100% !important;
+    }
 }

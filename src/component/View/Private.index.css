@@ -1,13 +1,14 @@
-/* PrivateIndex.css */
+/* Enhanced Private Layout Design */
 
 .private-layout {
     display: flex;
     min-height: 100vh;
+    background: linear-gradient(135deg, #f1f6fb 0%, #e9ecef 100%);
 }
 
 .sidebar {
     width: 250px;
-    background-color: #343a40;
+    background-color: #0d1b35;
     color: white;
     flex-shrink: 0;
     height: 100vh;
@@ -15,40 +16,153 @@
     top: 0;
     left: 0;
     overflow-y: auto;
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+    z-index: 1100;
+    transition: all 0.3s ease;
 }
 
 .main-content {
-    margin-left: 250px; /* Keeps space for the sidebar */
+    margin-left: 250px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    width: calc(100% - 250px); /* Adjusts width */
+    width: calc(100% - 250px);
     position: relative;
-    overflow-x: auto; /* Prevents unwanted horizontal scrolling */
+    overflow-x: auto;
+    transition: all 0.3s ease;
 }
 
 .topbar {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
+    background: linear-gradient(90deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid rgba(0, 115, 187, 0.1);
     position: sticky;
     top: 0;
     z-index: 1000;
     width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
 }
 
 .content {
     background-color: #f1f6fb;
     padding: 2rem;
     flex-grow: 1;
+    animation: fadeIn 0.4s ease-out;
 }
 
 .nav-link.disabled {
     cursor: not-allowed !important;
     pointer-events: auto !important;
+    opacity: 0.5;
 }
 
 .nav-link {
     cursor: pointer !important;
+}
+
+/* Page Container */
+.container,
+.container-fluid {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Card Enhancements */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.card:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 220px;
+    }
+
+    .main-content {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 60px;
+        overflow: visible;
+    }
+
+    .main-content {
+        margin-left: 60px;
+        width: calc(100% - 60px);
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    .topbar {
+        padding: 0.75rem 1rem;
+    }
+
+    /* Hide sidebar text on mobile */
+    .sidebar span {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .sidebar {
+        width: 0;
+        transform: translateX(-100%);
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .content {
+        padding: 0.75rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Focus States */
+*:focus {
+    outline: 2px solid rgba(0, 115, 187, 0.5);
+    outline-offset: 2px;
+}
+
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid rgba(0, 115, 187, 0.5);
+    outline-offset: 2px;
 }

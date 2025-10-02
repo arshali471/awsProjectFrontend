@@ -1,0 +1,282 @@
+/* Enhanced Settings Page Design */
+
+/* Similar styling to Dashboard for consistency */
+.settings-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f1f6fb 0%, #e9ecef 100%);
+}
+
+/* Settings Header */
+.settings-header {
+    padding: 2.5rem 0 1.5rem;
+    animation: fadeInDown 0.6s ease-out;
+}
+
+.settings-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #232f3e;
+    margin: 0;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.settings-title-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.settings-subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-top: 0.75rem;
+}
+
+/* Settings Grid */
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.75rem;
+    margin-top: 2rem;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+/* Settings Card */
+.settings-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 18px;
+    padding: 2rem 1.25rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.settings-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 115, 187, 0.05) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.settings-card:hover {
+    transform: translateY(-10px) scale(1.03);
+    box-shadow: 0 16px 40px rgba(0, 115, 187, 0.25);
+    border-color: rgba(0, 115, 187, 0.4);
+}
+
+.settings-card:hover::before {
+    opacity: 1;
+}
+
+.settings-card:active {
+    transform: translateY(-6px) scale(1.02);
+}
+
+/* Settings Icon Container */
+.settings-icon-container {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f1f6fb 0%, #e9ecef 100%);
+    border-radius: 18px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.settings-card:hover .settings-icon-container {
+    transform: scale(1.15) rotate(-8deg);
+    background: linear-gradient(135deg, rgba(0, 115, 187, 0.15) 0%, rgba(26, 140, 216, 0.15) 100%);
+    box-shadow: 0 8px 20px rgba(0, 115, 187, 0.2);
+}
+
+.settings-icon {
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.12));
+}
+
+.settings-card:hover .settings-icon {
+    filter: drop-shadow(0 6px 12px rgba(0, 115, 187, 0.4));
+}
+
+/* Settings Name */
+.settings-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #232f3e;
+    margin: 0;
+    transition: all 0.3s ease;
+    letter-spacing: -0.3px;
+}
+
+.settings-card:hover .settings-name {
+    color: #0073bb;
+}
+
+/* Settings Description */
+.settings-description {
+    font-size: 0.8125rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.settings-card:hover .settings-description {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Admin Badge */
+.admin-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+}
+
+.settings-card:hover .admin-badge {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Staggered Animation for Settings Cards */
+.settings-card:nth-child(1) { animation: fadeInUp 0.5s ease-out 0.05s both; }
+.settings-card:nth-child(2) { animation: fadeInUp 0.5s ease-out 0.1s both; }
+.settings-card:nth-child(3) { animation: fadeInUp 0.5s ease-out 0.15s both; }
+.settings-card:nth-child(4) { animation: fadeInUp 0.5s ease-out 0.2s both; }
+.settings-card:nth-child(5) { animation: fadeInUp 0.5s ease-out 0.25s both; }
+.settings-card:nth-child(6) { animation: fadeInUp 0.5s ease-out 0.3s both; }
+
+/* Category Labels */
+.settings-category {
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.category-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #232f3e;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+    position: relative;
+}
+
+.category-title::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, #0073bb, #1a8cd8);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .settings-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .settings-title {
+        font-size: 1.5rem;
+    }
+
+    .settings-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .settings-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .settings-icon-container {
+        width: 65px;
+        height: 65px;
+    }
+
+    .settings-icon {
+        width: 45px;
+        height: 45px;
+    }
+
+    .settings-name {
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .settings-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .settings-title {
+        font-size: 1.25rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}

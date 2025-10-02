@@ -1,113 +1,121 @@
-import React from "react";
-import { useTable, useSortBy } from "react-table";
-import { Resizable } from "react-resizable";
-import moment from "moment";
-import { Badge, Table } from "react-bootstrap";
-import "react-resizable/css/styles.css"; // Required for column resizing styles
+import * as React from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import Paper from '@mui/material/Paper';
+import { Button, Box } from '@mui/material';
+import { saveAs } from 'file-saver';
+import moment from 'moment';
 
 interface IVolumesTable {
     tableData: any[];
-    pageNumber: number;
-    pageSize: number;
+    loading?: boolean;
 }
 
-// Resizable Column Component
-const ResizableColumn = (props: any) => {
-    const { resizeHandler, isResizing, column } = props;
+export default function VolumesTable({ tableData, loading = false }: IVolumesTable) {
+    const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
+
+    const columns: GridColDef[] = [
+        { field: 'serialNo', headerName: 'Sr No.', width: 70 },
+        { field: 'volumeId', headerName: 'Volume ID', width: 200 },
+        { field: 'state', headerName: 'State', width: 120 },
+        { field: 'size', headerName: 'Size (GB)', width: 100 },
+        { field: 'volumeType', headerName: 'Volume Type', width: 120 },
+        { field: 'iops', headerName: 'IOPS', width: 100 },
+        { field: 'throughput', headerName: 'Throughput', width: 120 },
+        { field: 'snapshotId', headerName: 'Snapshot ID', width: 200 },
+        { field: 'availabilityZone', headerName: 'Availability Zone', width: 150 },
+        { field: 'encrypted', headerName: 'Encrypted', width: 100 },
+        { field: 'createdAt', headerName: 'Created At', width: 150 },
+        { field: 'attachedInstances', headerName: 'Attached Instances', width: 300 },
+        { field: 'attachmentStatus', headerName: 'Attachment Status', width: 150 },
+    ];
+
+    const rows = tableData.map((data, index) => ({
+        id: index + 1,
+        serialNo: index + 1,
+        volumeId: data.volumeId || "--",
+        state: data.state || "--",
+        size: data.size || "--",
+        volumeType: data.volumeType || "--",
+        iops: data.iops || "--",
+        throughput: data.throughput || "--",
+        snapshotId: data.snapshotId || "--",
+        availabilityZone: data.availabilityZone || "--",
+        encrypted: data.encrypted ? "Yes" : "No",
+        createdAt: data.createdAt ? moment(data.createdAt).format("DD MMM YYYY") : "--",
+        attachedInstances: data.attachedInstances?.length > 0 ? data.attachedInstances.join(", ") : "--",
+        attachmentStatus: data.attachedInstances?.length > 0 ? "Attached" : "Unattached",
+    }));
+
+    const handleExport = () => {
+        const csvContent = [
+            columns.map(col => col.headerName).join(','),
+            ...rows.map(row =>
+                columns.map(col => {
+                    const val = row[col.field as keyof typeof row];
+                    return typeof val === 'string' ? `"${val}"` : val;
+                }).join(',')
+            )
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, 'ebs_volumes.csv');
+    };
+
     return (
-        <div className={`resizable ${isResizing ? "resizing" : ""}`}>
-            {props.children}
-            <div className="resize-handle" onMouseDown={resizeHandler}></div>
+        <div>
+            <Box display="flex" justifyContent="flex-end" p={2}>
+                <Button
+                    variant="contained"
+                    onClick={handleExport}
+                    sx={{
+                        background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                        color: 'white',
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        fontWeight: 500,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(0, 115, 187, 0.3)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #005a92 0%, #0073bb 100%)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(0, 115, 187, 0.4)',
+                        },
+                        transition: 'all 0.3s ease'
+                    }}
+                >
+                    Export to CSV
+                </Button>
+            </Box>
+
+            <Paper
+                elevation={0}
+                sx={{
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    border: '1px solid #e0e0e0'
+                }}
+            >
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    loading={loading}
+                    pagination
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={setPaginationModel}
+                    pageSizeOptions={[10, 25, 50, 100]}
+                    disableRowSelectionOnClick
+                    autoHeight
+                    sx={{
+                        border: 0,
+                        '& .MuiDataGrid-cell:focus': {
+                            outline: 'none',
+                        },
+                        '& .MuiDataGrid-row:hover': {
+                            backgroundColor: 'rgba(0, 115, 187, 0.04)',
+                        },
+                    }}
+                />
+            </Paper>
         </div>
-    );
-};
-
-export default function VolumesTable({ tableData, pageNumber, pageSize }: IVolumesTable) {
-    const columns = React.useMemo(
-        () => [
-            { Header: "Sr.No", accessor: "serialNo" },
-            { Header: "Volume ID", accessor: "volumeId" },
-            { Header: "State", accessor: "state" },
-            { Header: "Size (GB)", accessor: "size" },
-            { Header: "Volume Type", accessor: "volumeType" },
-            { Header: "IOPS", accessor: "iops" },
-            { Header: "Throughput", accessor: "throughput" },
-            { Header: "Snapshot ID", accessor: "snapshotId" },
-            { Header: "Availability Zone", accessor: "availabilityZone" },
-            { Header: "Encrypted", accessor: "encrypted" },
-            { Header: "Created At", accessor: "createdAt" },
-            { Header: "Attached Instances", accessor: "attachedInstances" },
-            { Header: "Attached Status", accessor: "attachedVolumeStatus" }
-        ],
-        []
-    );
-
-    const data = React.useMemo(() => {
-        return tableData.map((data, index) => ({
-            serialNo: index + 1 + (pageNumber - 1) * pageSize,
-            volumeId: data.volumeId || "--",
-            state: data.state || "--",
-            size: data.size || "--",
-            volumeType: data.volumeType || "--",
-            iops: data.iops || "--",
-            throughput: data.throughput || "--",
-            snapshotId: data.snapshotId || "--",
-            availabilityZone: data.availabilityZone || "--",
-            encrypted: data.encrypted || "--",
-            createdAt: data.createdAt ? moment(data.createdAt).format("DD MMM YY") : "--",
-            attachedInstances: data.attachedInstances?.length > 0 ? data.attachedInstances.join(", ") : "--",
-            attachedVolumeStatus: data.attachedInstances?.length > 0 ? (
-                <Badge bg={ "success" }>Attached</Badge>
-            ) : <Badge bg={"danger"}>UnAttached</Badge>
-        }));
-    }, [tableData, pageNumber, pageSize]);
-
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
-        { columns, data },
-        useSortBy
-    );
-
-    return (
-        <Table striped hover responsive {...getTableProps()}>
-            <thead>
-                {headerGroups.map(headerGroup => (
-                    <tr {...headerGroup.getHeaderGroupProps()}>
-                        {headerGroup.headers.map(column => (
-                            <th
-                                {...column.getHeaderProps(column.getSortByToggleProps())}
-                                className="sortable-header"
-                                style={{ fontSize: 14, cursor: "pointer" }}
-                            >
-                                {column.render("Header")}
-                                {column.isSorted ? (column.isSortedDesc ? " 🔽" : " 🔼") : ""}
-                                <ResizableColumn column={column} />
-                            </th>
-                        ))}
-                    </tr>
-                ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-                {rows.length > 0 ? (
-                    rows.map(row => {
-                        prepareRow(row);
-                        return (
-                            <tr {...row.getRowProps()}>
-                                {row.cells.map(cell => (
-                                    <td {...cell.getCellProps()} style={{ fontSize: 12 }}>
-                                        {cell.render("Cell")}
-                                    </td>
-                                ))}
-                            </tr>
-                        );
-                    })
-                ) : (
-                    <tr>
-                        <td colSpan={14} style={{ textAlign: "center", fontSize: 14 }}>
-                            Please select a region to get data
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-        </Table>
     );
 }

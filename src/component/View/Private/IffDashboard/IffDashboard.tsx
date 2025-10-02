@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { RxAvatar } from "react-icons/rx";
 import CustomToggle from "../../../helpers/CustomToggle";
 import { IoSettingsSharp } from "react-icons/io5";
+import { FiExternalLink } from "react-icons/fi";
 
 import DevopsImage from "../../../../assets/devops.png";
 import EksImage from "../../../../assets/eks.png";
@@ -16,106 +17,69 @@ import TicktImage from "../../../../assets/ticketing.png";
 import Kubebot from "../../../../assets/kubebot.png";
 import { HiOutlineLogout } from "react-icons/hi";
 
+import "./IffDashboard.css";
 
 const apps = [
-  { url: "/platform/agent-status", name: "IFF Inventory", icon: ImageData },
-  { url: "/eks", name: "EKS Inventory", icon: EksInvImage },
-  { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage },
-  { url: "https://app.powerbi.com/reportEmbed?reportId=df62f352-c99d-45a2-bd91-8c81aab7dff9&autoAuth=true&ctid=a2a9bf31-fc44-425c-a6d2-3ae9379573ea", name: "Report", icon: ReportImage },
-  { url: "/platform/ec2", name: "Ticketing", icon: TicktImage },
-  { url: "https://app.finout.io/app/dashboards/50c3fb57-3fac-4b47-9ad5-8a3fc8e16fc4", name: "Cost", icon: CostImage },
-  { url: "/devops", name: "Devops", icon: DevopsImage },
-  { url: "/kubebot", name: "Kubebot", icon: Kubebot },
+  { url: "/platform/agent-status", name: "IFF Inventory", icon: ImageData, isExternal: false },
+  { url: "/eks", name: "EKS Inventory", icon: EksInvImage, isExternal: false },
+  { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage, isExternal: true },
+  { url: "https://app.powerbi.com/reportEmbed?reportId=df62f352-c99d-45a2-bd91-8c81aab7dff9&autoAuth=true&ctid=a2a9bf31-fc44-425c-a6d2-3ae9379573ea", name: "Report", icon: ReportImage, isExternal: true },
+  { url: "/platform/ec2", name: "Ticketing", icon: TicktImage, isExternal: false },
+  { url: "https://app.finout.io/app/dashboards/50c3fb57-3fac-4b47-9ad5-8a3fc8e16fc4", name: "Cost", icon: CostImage, isExternal: true },
+  { url: "/devops", name: "DevOps", icon: DevopsImage, isExternal: false },
+  { url: "/kubebot", name: "Kubebot", icon: Kubebot, isExternal: false },
 ];
 
 export default function IffDashboard() {
-
   const navigate = useNavigate();
 
-  const [hoverIndex, setHoverIndex] = useState(null);
-
-  const handleNavigate = (url: string) => {
-    if(url === "/devops"){
-      navigate(url)
-    }else{
+  const handleNavigate = (url: string, isExternal: boolean) => {
+    if (isExternal || url.startsWith("http")) {
       window.open(url, "_blank");
+    } else {
+      navigate(url);
     }
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem("authKey");
     sessionStorage.removeItem("username");
-    navigate("/login")
-  }
+    navigate("/login");
+  };
 
-
+  const username = sessionStorage.getItem("username") || "User";
 
   return (
-    <>
-      <Navbar className="bg-body-tertiary">
+    <div className="dashboard-wrapper">
+      {/* Modern Navbar */}
+      <Navbar className="dashboard-navbar">
         <Container>
-          <div className="d-flex align-items-center">
-            <Navbar.Brand
-              className="p-2"
-              style={{
-                borderRight: "1px solid black",
-              }}
-            >
-              <img
-                src={ImageData}
-                width="30"
-                height="30"
-                alt="IFF Logo"
-              />
-            </Navbar.Brand>
-            <p className="m-0 text-medium text-secondary" style={{ fontSize: 16 }}>My Apps</p>
+          <div className="navbar-brand-section">
+            <img src={ImageData} className="navbar-logo" alt="IFF Logo" />
+            <p className="navbar-title">My Apps</p>
           </div>
 
           <Dropdown align="end">
             <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: "50%",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                }}
-              >
-               {sessionStorage.getItem("username")?.substring(0, 2).toUpperCase()}
+              <div className="user-avatar">
+                {username.substring(0, 2).toUpperCase()}
               </div>
             </Dropdown.Toggle>
 
-            <Dropdown.Menu className="dropdown-bottom-left">
+            <Dropdown.Menu>
               <Dropdown.Item>
-                <div className="d-flex align-items-center">
-                  <div
-                    style={{
-                      width: 25,
-                      height: 25,
-                      borderRadius: "50%",
-                      backgroundColor: "#007bff",
-                      color: "white",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "12px",
-                    }}
-                  >
-                   {sessionStorage.getItem("username")?.substring(0, 2).toUpperCase()}
+                <div className="d-flex align-items-center gap-2">
+                  <div className="user-avatar" style={{ width: 28, height: 28, fontSize: "12px" }}>
+                    {username.substring(0, 2).toUpperCase()}
                   </div>
-                  <span className="ms-2">
-                    {sessionStorage.getItem("username")}
-                  </span>
+                  <span className="fw-semibold">{username}</span>
                 </div>
               </Dropdown.Item>
               <Dropdown.Divider />
-              <Dropdown.Item className="d-flex align-items-center gap-2" onClick={() => navigate("/settings")}>
+              <Dropdown.Item
+                className="d-flex align-items-center gap-2"
+                onClick={() => navigate("/settings")}
+              >
                 <IoSettingsSharp />
                 <span>Settings</span>
               </Dropdown.Item>
@@ -129,44 +93,37 @@ export default function IffDashboard() {
               </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
-
         </Container>
-      </Navbar >
-      <Container className="p-4 mt-5">
-        <Row className="mb-3">
-          <Col>
-            <h5>Apps dashboard</h5>
-          </Col>
-        </Row>
+      </Navbar>
 
-        <Row xs={2} sm={3} md={4} lg={5} xl={6} className="g-3 mt-4">
+      {/* Dashboard Content */}
+      <Container>
+        <div className="dashboard-header">
+          <h1 className="dashboard-title">Welcome back, {username.split(" ")[0]}!</h1>
+          <p className="dashboard-subtitle">Access your cloud management tools and services</p>
+        </div>
+
+        {/* Apps Grid */}
+        <div className="apps-grid">
           {apps.map((app, index) => (
-            <Col key={index}>
-              <Card
-                className={`text-center p-3 transition`}
-                onMouseEnter={() => setHoverIndex(index)}
-                onMouseLeave={() => setHoverIndex(null)}
-                style={{
-                  cursor: "pointer",
-                  boxShadow: hoverIndex === index ? "0px 4px 12px rgba(0, 0, 0, 0.2)" : "none",
-                  transform: hoverIndex === index ? "scale(1.05)" : "scale(1)",
-                  transition: "all 0.3s ease-in-out",
-                }}
-                onClick={() => handleNavigate(app.url)}
-              >
-                <Card.Img
-                  variant="top"
-                  src={app.icon}
-                  style={{ width: "50px", height: "50px", margin: "0 auto" }}
-                />
-                <Card.Body>
-                  <Card.Title style={{ fontSize: "0.9rem" }}>{app.name}</Card.Title>
-                </Card.Body>
-              </Card>
-            </Col>
+            <div
+              key={index}
+              className="app-card"
+              onClick={() => handleNavigate(app.url, app.isExternal)}
+            >
+              {app.isExternal && (
+                <div className="external-badge">
+                  <FiExternalLink size={10} />
+                </div>
+              )}
+              <div className="app-icon-container">
+                <img src={app.icon} className="app-icon" alt={app.name} />
+              </div>
+              <p className="app-name">{app.name}</p>
+            </div>
           ))}
-        </Row>
+        </div>
       </Container>
-    </>
+    </div>
   );
 }

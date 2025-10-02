@@ -1,61 +1,174 @@
 import { useState } from "react";
-import { Button, Card, Container, Form } from "react-bootstrap";
 import { AuthService } from "../../services/auth.service";
 import Auth from "../../Auth/auth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import iffLogo from "../../../assets/IFF.png";
+import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import "./Login.css";
 
 export default function Login() {
     const navigate = useNavigate();
 
-    const [data, setData] = useState<any>();
+    const [data, setData] = useState<any>({});
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
 
     const handleChange = (e: any) => {
-        setData({ ...data, [e.target.name]: e.target.value })
-    }
+        setData({ ...data, [e.target.name]: e.target.value });
+    };
 
-    const handleLoginSubmmission = async () => {
+    const handleLoginSubmission = async (e: any) => {
+        e.preventDefault();
 
-        await AuthService.login(data).then(res => {
+        if (!data.username || !data.password) {
+            toast.error("Please fill in all fields");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const res = await AuthService.login(data);
             if (res.status === 200) {
                 Auth.authenticate();
                 sessionStorage.setItem("authKey", res.data.token);
-                sessionStorage.setItem("username", res.data.username)
-                navigate('/dashboard');
-                toast.success("Login Successful")
+                sessionStorage.setItem("username", res.data.username);
+
+                if (rememberMe) {
+                    localStorage.setItem("rememberedUsername", data.username);
+                }
+
+                toast.success("Login Successful! Redirecting...");
+                setTimeout(() => {
+                    navigate('/dashboard');
+                }, 500);
             }
-        }).catch(err => {
-            console.log(err)
-            toast.error(err.response?.data || err.message)
-        })
+        } catch (err: any) {
+            console.log(err);
+            toast.error(err.response?.data || err.message || "Login failed");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    }
-
+    const handleKeyPress = (e: any) => {
+        if (e.key === "Enter") {
+            handleLoginSubmission(e);
+        }
+    };
 
     return (
-        <div className="d-flex justify-content-center align-items-center flex-column" style={{ height: "100vh" }}>
-            <Card className="mt-5" style={{ width: "30rem", margin: "0 auto" }}>
-                <h4 className="text-center mt-3 d-flex justify-content-center align-items-center gap-2">
-                    <img src={iffLogo} width="35" height="20" alt="IFF Logo" />
-                    Login
-                </h4>
+        <div className="login-container">
+            {/* Animated Particles */}
+            <div className="particles">
+                {[...Array(10)].map((_, i) => (
+                    <div key={i} className="particle" />
+                ))}
+            </div>
 
-                <Card.Body>
-                    <Form.Group className="mb-3" controlId="formBasicEmail">
-                        <Form.Label className="fw-bold">Username</Form.Label>
-                        <Form.Control type="email" placeholder="Username" name="username" onChange={(e: any) => handleChange(e)} />
-                    </Form.Group>
+            {/* Login Card */}
+            <div className="login-card">
+                {/* Header Section */}
+                <div className="login-header">
+                    <div className="login-logo">
+                        <img src={iffLogo} width="50" alt="IFF Logo" />
+                    </div>
+                    <h1 className="login-title">Welcome Back</h1>
+                    <p className="login-subtitle">Sign in to access Cloud Inventory</p>
+                </div>
 
-                    <Form.Group className="mb-3" controlId="formBasicPassword">
-                        <Form.Label className="fw-bold">Password</Form.Label>
-                        <Form.Control type="password" placeholder="Password" name="password" onChange={(e: any) => handleChange(e)} />
-                    </Form.Group>
-                    <Button className=" w-50 d-flex justify-content-center align-items-center" style={{ margin: "0 auto", backgroundColor: "#007ec6" }} variant="primary" type="submit" onClick={handleLoginSubmmission}>
-                        Login
-                    </Button>
-                </Card.Body>
-            </Card>
+                {/* Login Form */}
+                <form className="login-form" onSubmit={handleLoginSubmission}>
+                    {/* Username Field */}
+                    <div className="form-group-modern">
+                        <label className="form-label-modern" htmlFor="username">
+                            Username
+                        </label>
+                        <div className="form-input-wrapper">
+                            <FaUser className="form-input-icon" />
+                            <input
+                                id="username"
+                                type="text"
+                                name="username"
+                                className="form-control-modern"
+                                placeholder="Enter your username"
+                                onChange={handleChange}
+                                onKeyPress={handleKeyPress}
+                                disabled={loading}
+                                autoComplete="username"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Password Field */}
+                    <div className="form-group-modern">
+                        <label className="form-label-modern" htmlFor="password">
+                            Password
+                        </label>
+                        <div className="form-input-wrapper">
+                            <FaLock className="form-input-icon" />
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                className="form-control-modern"
+                                placeholder="Enter your password"
+                                onChange={handleChange}
+                                onKeyPress={handleKeyPress}
+                                disabled={loading}
+                                autoComplete="current-password"
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle"
+                                onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Remember Me & Forgot Password */}
+                    <div className="remember-forgot">
+                        <div className="remember-me">
+                            <input
+                                type="checkbox"
+                                id="rememberMe"
+                                className="custom-checkbox"
+                                checked={rememberMe}
+                                onChange={(e) => setRememberMe(e.target.checked)}
+                            />
+                            <label htmlFor="rememberMe" className="remember-label">
+                                Remember me
+                            </label>
+                        </div>
+                        <a href="#" className="forgot-password">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    {/* Login Button */}
+                    <button
+                        type="submit"
+                        className="login-button"
+                        disabled={loading}
+                    >
+                        {loading && <span className="button-spinner" />}
+                        {loading ? "Signing in..." : "Sign In"}
+                    </button>
+                </form>
+
+                {/* Footer */}
+                <div className="login-footer">
+                    Don't have an account?{" "}
+                    <a href="#" className="signup-link">
+                        Contact Administrator
+                    </a>
+                </div>
+            </div>
         </div>
-    )
+    );
 }

@@ -1,98 +1,134 @@
-import React from "react";
-import { useTable, useSortBy } from "react-table";
-import { Resizable } from "react-resizable";
-import moment from "moment";
-import { Table } from "react-bootstrap";
-import "react-resizable/css/styles.css"; // Required for column resizing styles
+import * as React from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import Paper from '@mui/material/Paper';
+import { Button, Box } from '@mui/material';
+import { saveAs } from 'file-saver';
+import moment from 'moment';
 
 interface IS3Table {
     tableData: any[];
-    pageNumber: number;
-    pageSize: number;
+    loading?: boolean;
 }
 
-const ResizableColumn = (props: any) => {
-    const { resizeHandler, isResizing, column } = props;
+export default function S3Table({ tableData, loading = false }: IS3Table) {
+    const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
+
+    const columns: GridColDef[] = [
+        {
+            field: 'serialNo',
+            headerName: 'Sr No.',
+            width: 80,
+            align: 'center',
+            headerAlign: 'center'
+        },
+        {
+            field: 'bucketName',
+            headerName: 'Bucket Name',
+            flex: 1,
+            minWidth: 250
+        },
+        {
+            field: 'creationDate',
+            headerName: 'Creation Date',
+            width: 180
+        },
+        {
+            field: 'location',
+            headerName: 'Region',
+            width: 150
+        },
+        {
+            field: 'size',
+            headerName: 'Size',
+            width: 120,
+            align: 'right',
+            headerAlign: 'right'
+        },
+    ];
+
+    const rows = tableData.map((data, index) => ({
+        id: data?.Name || index,
+        serialNo: index + 1,
+        bucketName: data?.Name || data?.bucketName || "N/A",
+        creationDate: data?.CreationDate || data?.creationDate
+            ? moment(data?.CreationDate || data?.creationDate).format("DD MMM YYYY")
+            : "N/A",
+        location: data?.LocationConstraint || data?.location || "us-east-1",
+        size: data?.size || "N/A",
+    }));
+
+    const handleExport = () => {
+        const csvContent = [
+            columns.map(col => col.headerName).join(','),
+            ...rows.map(row =>
+                columns.map(col => {
+                    const val = row[col.field as keyof typeof row];
+                    return typeof val === 'string' ? `"${val}"` : val;
+                }).join(',')
+            )
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, 's3_buckets.csv');
+    };
+
     return (
-        <div className={`resizable ${isResizing ? "resizing" : ""}`}>
-            {props.children}
-            <div className="resize-handle" onMouseDown={resizeHandler}></div>
+        <div>
+            <Box display="flex" justifyContent="flex-end" p={2}>
+                <Button
+                    variant="contained"
+                    onClick={handleExport}
+                    sx={{
+                        background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                        color: 'white',
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        fontWeight: 500,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(0, 115, 187, 0.3)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #005a92 0%, #0073bb 100%)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(0, 115, 187, 0.4)',
+                        },
+                        transition: 'all 0.3s ease'
+                    }}
+                >
+                    Export to CSV
+                </Button>
+            </Box>
+
+            <Paper
+                elevation={0}
+                sx={{
+                    width: '100%',
+                    height: 'auto',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    border: '1px solid #e0e0e0'
+                }}
+            >
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    loading={loading}
+                    pagination
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={setPaginationModel}
+                    pageSizeOptions={[10, 25, 50, 100]}
+                    disableRowSelectionOnClick
+                    autoHeight
+                    sx={{
+                        border: 'none',
+                        '& .MuiDataGrid-cell:focus': {
+                            outline: 'none',
+                        },
+                        '& .MuiDataGrid-row:hover': {
+                            backgroundColor: 'rgba(0, 115, 187, 0.04)',
+                        },
+                    }}
+                />
+            </Paper>
         </div>
-    );
-};
-
-export default function S3Table({ tableData, pageNumber, pageSize }: IS3Table) {
-    const columns = React.useMemo(
-        () => [
-            { Header: "Sr.No", accessor: "serialNo", sortType: "number" },
-            { Header: "Bucket Name", accessor: "bucketName" },
-            { 
-                Header: "Creation Date", 
-                accessor: "creationDate", 
-                sortType: (rowA, rowB) => new Date(rowA.values.creationDate).getTime() - new Date(rowB.values.creationDate).getTime()
-            },
-            { Header: "Location", accessor: "location" },
-            { Header: "Size (GB)", accessor: "size", sortType: "number" }
-        ],
-        []
-    );
-
-    const data = React.useMemo(() => {
-        return tableData.map((data, index) => ({
-            serialNo: index + 1 + (pageNumber - 1) * pageSize,
-            bucketName: data?.bucketName || "--",
-            creationDate: data?.creationDate ? moment(data?.creationDate).format("D MMM YYYY") : "--",
-            location: data?.location || "--",
-            size: data?.size || "--"
-        }));
-    }, [tableData, pageNumber, pageSize]);
-
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
-        { columns, data },
-        useSortBy
-    );
-
-    return (
-        <Table striped hover responsive {...getTableProps()}>
-            <thead>
-                {headerGroups.map(headerGroup => (
-                    <tr {...headerGroup.getHeaderGroupProps()}>
-                        {headerGroup.headers.map(column => (
-                            <th
-                                {...column.getHeaderProps(column.getSortByToggleProps())}
-                                className="sortable-header"
-                                style={{ fontSize: 14, cursor: "pointer" }}
-                            >
-                                {column.render("Header")}
-                                {column.isSorted ? (column.isSortedDesc ? " 🔽" : " 🔼") : ""}
-                                <ResizableColumn column={column} />
-                            </th>
-                        ))}
-                    </tr>
-                ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-                {rows.length > 0 ? (
-                    rows.map(row => {
-                        prepareRow(row);
-                        return (
-                            <tr {...row.getRowProps()}>
-                                {row.cells.map(cell => (
-                                    <td {...cell.getCellProps()} style={{ fontSize: 12 }}>
-                                        {cell.render("Cell")}
-                                    </td>
-                                ))}
-                            </tr>
-                        );
-                    })
-                ) : (
-                    <tr>
-                        <td colSpan={5} style={{ textAlign: "center", fontSize: 14 }}>
-                            Please select a region to get data
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-        </Table>
     );
 }
