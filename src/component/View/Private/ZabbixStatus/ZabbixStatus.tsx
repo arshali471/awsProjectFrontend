@@ -13,6 +13,8 @@ import {
 import toast from 'react-hot-toast';
 import DatePicker from "react-datepicker";
 import StatusCheckTable from '../../../Table/statusCheck.table';
+import { Box, Typography } from '@mui/material';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 
 export default function ZabbixStatus() {
   const { selectedRegion }: any = useContext(SelectedRegionContext);
@@ -137,6 +139,53 @@ export default function ZabbixStatus() {
 
   return (
     <>
+      {/* Page Header - Matching Dashboard Style */}
+      <Box sx={{ mb: 3, mt: 3 }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              boxShadow: '0 4px 16px rgba(0, 115, 187, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 20px rgba(0, 115, 187, 0.4)',
+              }
+            }}
+          >
+            <MonitorHeartIcon sx={{ fontSize: 32 }} />
+          </Box>
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: '#232f3e',
+                letterSpacing: '-0.5px',
+              }}
+            >
+              Agent Status Check
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#6c757d',
+                mt: 0.5,
+              }}
+            >
+              Monitor Zabbix, CloudWatch, CrowdStrike, and Qualys agent status
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
       <Row className="mt-3">
         <Col md={3}>
           <Form.Group className="mb-3">

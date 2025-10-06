@@ -7,12 +7,10 @@ import "./Private.index.css"
 export default function PrivateRoutes() {
     return (
         <div className="private-layout">
-            <div className="sidebar">
-                <SideBar menuData={mainRoutes} />
-            </div>
-            <div className="main-content">
+            <SideBar menuData={mainRoutes} />
+            <div className="main-content sidebar-expanded">
                 <TopBar menuData={mainRoutes} />
-                <div className=" p-3">
+                <div className="p-3">
                     <Outlet />
                 </div>
             </div>

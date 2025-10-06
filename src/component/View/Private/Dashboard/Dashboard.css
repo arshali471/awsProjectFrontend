@@ -1,31 +1,242 @@
-.stats-row {
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+/* EC2 Dashboard Elegant Styles */
+
+.ec2-dashboard-container {
+    min-height: calc(100vh - 80px);
+    padding: 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    animation: fadeIn 0.5s ease-out;
 }
 
-.stat-box {
-    background-color: #f8f9fa;
-    padding: 4px 18px;
-    border-radius: 8px;
-
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* Page Header */
+.page-header-elegant {
+    animation: slideDown 0.6s ease-out;
 }
 
-.stat-box.running {
-    background-color: #28a745;
+.page-icon-elegant {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: white;
+    box-shadow: 0 4px 16px rgba(0, 115, 187, 0.3);
+    transition: all 0.3s ease;
 }
 
-.stat-box.stopped {
-    background-color: #dc3545;
-    color: white;
-}
-
-.stat-box:hover {
+.page-icon-elegant:hover {
     transform: translateY(-2px);
-    transition: 0.2s;
+    box-shadow: 0 8px 20px rgba(0, 115, 187, 0.4);
+}
+
+.page-title-elegant {
+    font-weight: 700 !important;
+    color: #232f3e !important;
+    letter-spacing: -0.5px !important;
+}
+
+.page-subtitle-elegant {
+    color: #6c757d !important;
+    margin-top: 4px !important;
+}
+
+/* Stat Cards */
+.stat-card-elegant {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-radius: 16px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+    animation: fadeInUp 0.7s ease-out both;
+}
+
+.stat-card-elegant:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 115, 187, 0.15) !important;
+}
+
+.stat-card-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    border: none !important;
+}
+
+.stat-card-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #e4606d 100%) !important;
+    border: none !important;
+}
+
+.stat-label-elegant {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: #6c757d !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.stat-label-white {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.stat-value-elegant {
+    font-weight: 700 !important;
+    color: #232f3e !important;
+    margin-top: 8px !important;
+}
+
+.stat-value-white {
+    color: #ffffff !important;
+}
+
+.stat-icon-elegant {
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 115, 187, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0073bb;
+    font-size: 20px;
+}
+
+.stat-icon-white {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+/* OS Stats Paper */
+.os-stats-paper {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+    transition: all 0.3s ease !important;
+    animation: fadeInUp 0.8s ease-out both;
+}
+
+.os-stats-paper:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.os-chip {
+    transition: all 0.2s ease !important;
+}
+
+.os-chip:hover {
+    transform: translateY(-2px);
+}
+
+/* Search Paper */
+.search-paper-elegant {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+    transition: all 0.3s ease !important;
+    animation: fadeInUp 0.9s ease-out both;
+}
+
+.search-paper-elegant:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark Mode Support */
+[data-theme="dark"] .ec2-dashboard-container {
+    background: linear-gradient(135deg, #0f1419 0%, #161b22 100%);
+}
+
+[data-theme="dark"] .page-title-elegant {
+    color: #f0f6fc !important;
+}
+
+[data-theme="dark"] .page-subtitle-elegant {
+    color: #c9d1d9 !important;
+}
+
+[data-theme="dark"] .stat-card-elegant {
+    background: linear-gradient(135deg, #1c2128 0%, #2d333b 100%) !important;
+    border-color: #444c56 !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .stat-label-elegant {
+    color: #c9d1d9 !important;
+}
+
+[data-theme="dark"] .stat-value-elegant {
+    color: #f0f6fc !important;
+}
+
+[data-theme="dark"] .stat-icon-elegant {
+    background: rgba(0, 115, 187, 0.2);
+    color: #4db8ff;
+}
+
+[data-theme="dark"] .os-stats-paper,
+[data-theme="dark"] .search-paper-elegant {
+    background: linear-gradient(135deg, #1c2128 0%, #2d333b 100%) !important;
+    border-color: #444c56 !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .os-chip {
+    background-color: #2d333b !important;
+    color: #f0f6fc !important;
+}
+
+[data-theme="dark"] .os-chip:hover {
+    background-color: #444c56 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ec2-dashboard-container {
+        padding: 1rem;
+    }
+
+    .page-icon-elegant {
+        width: 48px;
+        height: 48px;
+    }
+
+    .page-title-elegant {
+        font-size: 1.5rem !important;
+    }
+
+    .stat-card-elegant {
+        margin-bottom: 1rem;
+    }
 }

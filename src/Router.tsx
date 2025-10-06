@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Auth from "./component/Auth/auth";
 import PrivateRoutes from "./component/View/Private.index";
+import DevOpsLayout from "./component/View/DevOps.layout";
 import mainRoutes from "./component/routes/routes";
 import IRouter from "./component/Interface/IRouter";
 import Login from "./component/View/Public/Login";
@@ -21,6 +22,9 @@ import Kubernetes from "./component/View/Private/Kubernetes/Kubernetes";
 import KubernetesIndex from "./component/View/Private/Kubernetes/Kubernetes.index";
 import SshKey from "./component/View/Private/Account/SshKey";
 import TerminalPage from "./component/View/Private/terminal/terminalPage";
+import RdpPage from "./component/View/Private/rdp/RdpPage";
+import AIChat from "./component/View/Private/AIChat/AIChat";
+import SSHTerminal from "./component/View/Private/SSHTerminal/SSHTerminal";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
@@ -40,6 +44,7 @@ export default function Router() {
                     {/* Public route */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/terminal" element={<TerminalPage />} />
+                    <Route path="/rdp" element={<RdpPage />} />
 
                     {/* Protected dashboard route */}
                     <Route
@@ -55,7 +60,7 @@ export default function Router() {
                         path="/devops"
                         element={
                             <PrivateRouter>
-                                <Devops />
+                                <DevOpsLayout />
                             </PrivateRouter>
                         }
 
@@ -74,6 +79,26 @@ export default function Router() {
                     >
                         <Route index element={<DevopsIndex />} />
                     </Route>
+
+                    {/* AI Chat route */}
+                    <Route
+                        path="/ai-chat"
+                        element={
+                            <PrivateRouter>
+                                <AIChat />
+                            </PrivateRouter>
+                        }
+                    />
+
+                    {/* SSH Terminal route */}
+                    <Route
+                        path="/ssh-terminal"
+                        element={
+                            <PrivateRouter>
+                                <SSHTerminal />
+                            </PrivateRouter>
+                        }
+                    />
 
                     {/* Protected settings routes */}
                     <Route

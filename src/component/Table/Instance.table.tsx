@@ -389,6 +389,12 @@ import { saveAs } from 'file-saver';
 import { Spinner } from 'react-bootstrap';
 import moment from 'moment';
 import ConnectModal from '../modal/Connect.modal';
+import InstanceDetailsModal from '../modal/InstanceDetails.modal';
+import RdpConnectModal from '../modal/RdpConnect.modal';
+import LinkIcon from '@mui/icons-material/Link';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
 
 interface IInstanceTable {
     tableData: any[];
@@ -404,6 +410,10 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
     const [rowSelectionModel, setRowSelectionModel] = React.useState<RowSelection>({ type: 'include', ids: new Set() });
     const [showModal, setShowModal] = React.useState(false);
     const [selectedInstance, setSelectedInstance] = React.useState<any>(null);
+    const [showDetailsModal, setShowDetailsModal] = React.useState(false);
+    const [detailsInstance, setDetailsInstance] = React.useState<any>(null);
+    const [showRdpModal, setShowRdpModal] = React.useState(false);
+    const [rdpInstance, setRdpInstance] = React.useState<any>(null);
 
     const columns: GridColDef[] = [
         { field: 'serialNo', headerName: 'Sr No.', width: 70 },
@@ -502,9 +512,18 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
     const selectedRow = isSingleRowSelected ? rows.find(row => row.id === selectedIds[0]) : null;
     const canConnect = !!selectedRow && selectedRow.state?.toLowerCase() === 'running';
 
+    // Check if selected instance is Windows
+    const isWindows = selectedRow?.platformDetails?.toLowerCase().includes('windows') ||
+                      selectedRow?.operatingSystem?.toLowerCase().includes('windows');
+
     const handleConnectClick = () => {
-        setSelectedInstance(selectedRow);
-        setShowModal(true);
+        if (isWindows) {
+            setRdpInstance(selectedRow);
+            setShowRdpModal(true);
+        } else {
+            setSelectedInstance(selectedRow);
+            setShowModal(true);
+        }
     };
 
     const handleExport = () => {
@@ -527,21 +546,76 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
         saveAs(blob, 'instanceData.csv');
     };
 
+    const handleRowDoubleClick = (params: any) => {
+        setDetailsInstance(params.row);
+        setShowDetailsModal(true);
+    };
+
     return (
         <div>
-            <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} p={1}>
+            <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} p={2}>
                 <Button
                     variant="contained"
-                    color="success"
                     disabled={!canConnect}
                     onClick={handleConnectClick}
+                    startIcon={isWindows ? <DesktopWindowsIcon /> : <LinkIcon />}
+                    sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1,
+                        background: canConnect
+                            ? isWindows
+                                ? 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)'
+                                : 'linear-gradient(135deg, #28a745 0%, #20c997 100%)'
+                            : undefined,
+                        '&:hover': canConnect ? {
+                            background: isWindows
+                                ? 'linear-gradient(135deg, #005a9e 0%, #004578 100%)'
+                                : 'linear-gradient(135deg, #218838 0%, #1aa179 100%)',
+                        } : undefined,
+                    }}
                 >
-                    CONNECT
+                    {isWindows ? 'RDP Connect' : 'SSH Connect'}
                 </Button>
-                <Button variant="contained" onClick={fetchData} className='me-2' disabled={loading}>
-                    {loading ? <span><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> Loading...</span> : "Fetch"}
+                <Button
+                    variant="contained"
+                    onClick={fetchData}
+                    disabled={loading}
+                    startIcon={loading ? <Spinner as="span" animation="border" size="sm" /> : <RefreshIcon />}
+                    sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1,
+                        background: 'linear-gradient(135deg, #0073bb 0%, #005a94 100%)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #005a94 0%, #004876 100%)',
+                        },
+                    }}
+                >
+                    {loading ? 'Fetching...' : 'Fetch Data'}
                 </Button>
-                <Button onClick={handleExport} variant="contained" color="primary">Export to CSV</Button>
+                <Button
+                    onClick={handleExport}
+                    variant="contained"
+                    startIcon={<FileDownloadIcon />}
+                    sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1,
+                        background: 'linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #5a32a3 0%, #4a2885 100%)',
+                        },
+                    }}
+                >
+                    Export CSV
+                </Button>
             </Box>
 
             <Paper sx={{ width: '100%', position: 'relative', minHeight: rows.length === 0 || loading ? 300 : 'auto' }}>
@@ -556,10 +630,14 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
                     paginationModel={paginationModel}
                     onPaginationModelChange={(newModel) => setPaginationModel(newModel)}
                     pageSizeOptions={[10, 20, 50]}
+                    onRowDoubleClick={handleRowDoubleClick}
                     sx={{
                         border: 0, width: '100%',
                         position: 'relative',
                         minHeight: rows.length === 0 || loading ? 300 : 'auto',
+                        '& .MuiDataGrid-row': {
+                            cursor: 'pointer',
+                        },
                     }}
                     rowSelectionModel={rowSelectionModel}
                     onRowSelectionModelChange={model => {
@@ -586,6 +664,18 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
                 <ConnectModal
                     instance={selectedInstance}
                     onClose={() => setShowModal(false)}
+                />
+            )}
+            {showRdpModal && (
+                <RdpConnectModal
+                    instance={rdpInstance}
+                    onClose={() => setShowRdpModal(false)}
+                />
+            )}
+            {showDetailsModal && (
+                <InstanceDetailsModal
+                    instance={detailsInstance}
+                    onClose={() => setShowDetailsModal(false)}
                 />
             )}
         </div>

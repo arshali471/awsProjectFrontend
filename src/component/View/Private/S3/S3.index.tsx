@@ -4,6 +4,8 @@ import { AdminService } from "../../../services/admin.service";
 import S3Table from "../../../Table/S3.table";
 import { FaDatabase, FaSearch } from "react-icons/fa";
 import { MdCloudQueue } from "react-icons/md";
+import { Box, Typography } from "@mui/material";
+import StorageIcon from "@mui/icons-material/Storage";
 import "../SharedPage.css";
 
 export default function S3Index() {
@@ -56,16 +58,52 @@ export default function S3Index() {
 
     return (
         <div className="page-wrapper">
-            {/* Page Header */}
-            <div className="page-header">
-                <h1 className="page-title">
-                    <div className="page-title-icon">
-                        <FaDatabase />
-                    </div>
-                    S3 Buckets
-                </h1>
-                <p className="page-subtitle">Manage and monitor your Amazon S3 storage buckets</p>
-            </div>
+            {/* Page Header - Matching Dashboard Style */}
+            <Box sx={{ mb: 3 }}>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <Box
+                        sx={{
+                            width: 56,
+                            height: 56,
+                            background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                            borderRadius: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            boxShadow: '0 4px 16px rgba(0, 115, 187, 0.3)',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 8px 20px rgba(0, 115, 187, 0.4)',
+                            }
+                        }}
+                    >
+                        <StorageIcon sx={{ fontSize: 32 }} />
+                    </Box>
+                    <Box>
+                        <Typography
+                            variant="h4"
+                            sx={{
+                                fontWeight: 700,
+                                color: '#232f3e',
+                                letterSpacing: '-0.5px',
+                            }}
+                        >
+                            S3 Buckets
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                color: '#6c757d',
+                                mt: 0.5,
+                            }}
+                        >
+                            Manage and monitor your Amazon S3 storage buckets
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
 
             {/* Stats Cards */}
             <div className="stats-container">

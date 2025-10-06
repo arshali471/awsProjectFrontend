@@ -2,8 +2,9 @@
 
 .sidebar-bg {
     background: linear-gradient(180deg, #0d1b35 0%, #1a2a54 50%, #0d1b35 100%);
-    position: relative;
-    overflow: hidden;
+    position: fixed;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .sidebar-bg::before {

@@ -35,6 +35,7 @@ export default function Login() {
                 Auth.authenticate();
                 sessionStorage.setItem("authKey", res.data.token);
                 sessionStorage.setItem("username", res.data.username);
+                sessionStorage.setItem("role", res.data.role || res.data.userType || 'user');
 
                 if (rememberMe) {
                     localStorage.setItem("rememberedUsername", data.username);

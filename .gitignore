@@ -23,3 +23,29 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Development and backup files
+ALL_FIXES_SUMMARY.md
+*.backup.tsx
+*.old.css
+**/Dashboard.backup.tsx
+**/Dashboard.old.css
+
+# # Unused/WIP features
+# src/component/View/DevOps.layout.tsx
+# src/component/View/Private/AIChat/
+# src/component/View/Private/SSHTerminal/
+# src/component/View/Private/rdp/
+# src/component/View/Private/terminal/SplitTerminal.tsx
+# src/component/View/Private/terminal/TerminalPane.tsx
+# src/component/api/axiosSetup.tsx
+# src/component/modal/InstanceDetails.modal.tsx
+# src/component/modal/RdpConnect.modal.tsx
+
+# Claude Code files
+.claude/
+CLAUDE.md
+DESIGN_UPDATES_COMPLETE.md
+DESIGN_UPGRADE_GUIDE.md
+FIXES_COMPLETE.md
+PROFESSIONAL_UPGRADES_COMPLETE.md

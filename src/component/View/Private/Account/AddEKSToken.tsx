@@ -1,17 +1,33 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Container, Form, Modal, OverlayTrigger, Spinner, Table, Tooltip } from "react-bootstrap";
+import { Container, OverlayTrigger, Spinner, Table, Tooltip } from "react-bootstrap";
 import { AdminService } from "../../../services/admin.service";
 import toast from "react-hot-toast";
 import Select from "react-select";
-import { TbError404Off } from "react-icons/tb";
-import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import AddEksTokenModal from "../../../modal/AddEksToken.modal";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { MdOutlineContentCopy } from "react-icons/md";
 import EditEksTokenModal from "../../../modal/EditEksToken.modal";
 import TablePagination from "../../../Pagination/TablePagination";
 import copy from 'copy-to-clipboard';
+import {
+    Box,
+    Typography,
+    Paper,
+    Button as MuiButton,
+    IconButton,
+    TextField,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+} from "@mui/material";
+import TokenIcon from "@mui/icons-material/Token";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import BlockIcon from "@mui/icons-material/Block";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import SearchIcon from "@mui/icons-material/Search";
 
 export default function AddEKSToken() {
     const navigate = useNavigate();
@@ -64,6 +80,15 @@ export default function AddEKSToken() {
 
     const getUserData = async () => {
         try {
+            // Check sessionStorage first
+            const userRole = sessionStorage.getItem('role');
+            if (userRole === 'admin') {
+                setIsAllowed(true);
+                setIsUserLoading(false);
+                return;
+            }
+
+            // Fallback to API call
             const res = await AdminService.getUserData();
             if (res.status === 200 && res.data.admin) {
                 setIsAllowed(true);
@@ -126,48 +151,242 @@ export default function AddEKSToken() {
 
     if (isUserLoading) {
         return (
-            <div className="d-flex justify-content-center align-items-center vh-100">
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
                 <Spinner animation="border" />
-            </div>
+            </Box>
         );
     }
 
     if (!isAllowed) {
         return (
-            <div className="d-flex justify-content-center align-items-center vh-100">
-                <div className="d-flex flex-column justify-content-center align-items-center">
-                    <TbError404Off size={100} className="text-secondary" />
-                    <p className="text-muted">You're not allowed. Please contact the admin.</p>
-                </div>
-            </div>
+            <Box
+                sx={{
+                    minHeight: '100vh',
+                    background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    py: 4,
+                    px: 3,
+                }}
+            >
+                <Paper
+                    elevation={0}
+                    sx={{
+                        p: 6,
+                        borderRadius: '24px',
+                        textAlign: 'center',
+                        border: '2px solid rgba(220, 53, 69, 0.2)',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #fff5f5 100%)',
+                        boxShadow: '0 8px 32px rgba(220, 53, 69, 0.15)',
+                        maxWidth: 500,
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 120,
+                            height: 120,
+                            margin: '0 auto 24px',
+                            background: 'linear-gradient(135deg, #dc3545 0%, #e4606d 100%)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            boxShadow: '0 8px 24px rgba(220, 53, 69, 0.3)',
+                        }}
+                    >
+                        <BlockIcon sx={{ fontSize: 64 }} />
+                    </Box>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#232f3e', mb: 2 }}>
+                        Access Denied
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#6c757d', mb: 1, fontSize: '1.1rem' }}>
+                        You don't have permission to access this page.
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#dc3545', mb: 4, fontWeight: 600 }}>
+                        Only administrators can manage EKS tokens.
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                        <MuiButton
+                            variant="outlined"
+                            startIcon={<ArrowBackIcon />}
+                            onClick={() => navigate(-1)}
+                            sx={{
+                                borderRadius: '10px',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                px: 3,
+                                py: 1.2,
+                                borderColor: '#e0e0e0',
+                                color: '#6c757d',
+                                '&:hover': {
+                                    borderColor: '#bdbdbd',
+                                    background: 'rgba(0, 0, 0, 0.02)',
+                                }
+                            }}
+                        >
+                            Go Back
+                        </MuiButton>
+                        <MuiButton
+                            variant="contained"
+                            onClick={() => navigate('/dashboard')}
+                            sx={{
+                                borderRadius: '10px',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                px: 3,
+                                py: 1.2,
+                                background: 'linear-gradient(135deg, #FF6B6B 0%, #e4606d 100%)',
+                                boxShadow: '0 4px 12px rgba(255, 107, 107, 0.3)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #e55555 0%, #d35560 100%)',
+                                    boxShadow: '0 6px 16px rgba(255, 107, 107, 0.4)',
+                                }
+                            }}
+                        >
+                            Go to Dashboard
+                        </MuiButton>
+                    </Box>
+                </Paper>
+            </Box>
         );
     }
 
     return (
-        <Container className="p-4 mt-5">
-            <div>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h4>
-                        <IoArrowBackCircleSharp className="me-2 mb-1" onClick={() => navigate(-1)} />
-                        EKS Token
-                    </h4>
-                </div>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                    <Form.Control
-                        type="text"
-                        placeholder="Search..."
-                        style={{ width: 400 }}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    <div className="d-flex gap-3">
-                        <Select options={keyId} placeholder="Select Environment" onChange={(e: any) => setKeyIdData(e?.value)} />
-                        <Button variant="dark" onClick={() => setShowAddEksTokenModal(true)}>
+        <Box
+            sx={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
+                py: 4,
+                px: 3,
+            }}
+        >
+            <Container>
+                {/* Page Header */}
+                <Box sx={{ mb: 4 }}>
+                    <Box display="flex" alignItems="center" justifyContent="space-between">
+                        <Box display="flex" alignItems="center" gap={2}>
+                            <IconButton
+                                onClick={() => navigate(-1)}
+                                sx={{
+                                    background: 'linear-gradient(135deg, #FF6B6B 0%, #e4606d 100%)',
+                                    color: 'white',
+                                    '&:hover': {
+                                        background: 'linear-gradient(135deg, #e55555 0%, #d35560 100%)',
+                                        transform: 'translateY(-2px)',
+                                    },
+                                    transition: 'all 0.3s ease',
+                                }}
+                            >
+                                <ArrowBackIcon />
+                            </IconButton>
+                            <Box
+                                sx={{
+                                    width: 56,
+                                    height: 56,
+                                    background: 'linear-gradient(135deg, #FF6B6B 0%, #e4606d 100%)',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    boxShadow: '0 4px 16px rgba(255, 107, 107, 0.3)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 8px 20px rgba(255, 107, 107, 0.4)',
+                                    }
+                                }}
+                            >
+                                <TokenIcon sx={{ fontSize: 32 }} />
+                            </Box>
+                            <Box>
+                                <Typography
+                                    variant="h4"
+                                    sx={{
+                                        fontWeight: 700,
+                                        color: '#232f3e',
+                                        letterSpacing: '-0.5px',
+                                    }}
+                                >
+                                    EKS Token Management
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: '#6c757d', mt: 0.5 }}>
+                                    Manage EKS cluster access tokens
+                                </Typography>
+                            </Box>
+                        </Box>
+                        <MuiButton
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => setShowAddEksTokenModal(true)}
+                            sx={{
+                                borderRadius: '10px',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                px: 3,
+                                py: 1.2,
+                                background: 'linear-gradient(135deg, #FF6B6B 0%, #e4606d 100%)',
+                                boxShadow: '0 4px 12px rgba(255, 107, 107, 0.3)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #e55555 0%, #d35560 100%)',
+                                    boxShadow: '0 6px 16px rgba(255, 107, 107, 0.4)',
+                                }
+                            }}
+                        >
                             Add EKS Token
-                        </Button>
-                    </div>
-                </div>
-                <Card className="mb-3">
-                    <Card.Body>
+                        </MuiButton>
+                    </Box>
+                </Box>
+
+                {/* Search and Filter */}
+                <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <TextField
+                        placeholder="Search..."
+                        value={search || ''}
+                        onChange={(e) => setSearch(e.target.value)}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ color: '#6c757d', mr: 1 }} />,
+                        }}
+                        sx={{
+                            flex: 1,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                background: 'white',
+                            }
+                        }}
+                    />
+                    <Box sx={{ minWidth: 300 }}>
+                        <Select
+                            options={keyId}
+                            placeholder="Select Environment"
+                            onChange={(e: any) => setKeyIdData(e?.value)}
+                            styles={{
+                                control: (base) => ({
+                                    ...base,
+                                    borderRadius: '12px',
+                                    border: '1px solid #e0e0e0',
+                                    padding: '4px',
+                                })
+                            }}
+                        />
+                    </Box>
+                </Box>
+
+                {/* Table Card */}
+                <Paper
+                    elevation={0}
+                    sx={{
+                        borderRadius: '16px',
+                        border: '1px solid rgba(0, 0, 0, 0.06)',
+                        overflow: 'hidden',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
+                        mb: 3,
+                    }}
+                >
+                    <Box sx={{ p: 3 }}>
                         <Table striped hover responsive>
                             <thead>
                                 <tr>
@@ -236,17 +455,23 @@ export default function AddEKSToken() {
                                                         "--"
                                                     )} */}
                                                     {item.token && (
-                                                        <MdOutlineContentCopy
-                                                            className="ms-2 text-success"
-                                                            style={{ cursor: "pointer" }}
+                                                        <IconButton
+                                                            size="small"
                                                             onClick={() => copyToClipboard(item.token)}
-                                                        />
+                                                            sx={{ color: '#28a745' }}
+                                                        >
+                                                            <ContentCopyIcon fontSize="small" />
+                                                        </IconButton>
                                                     )}
                                                 </div>
                                             </td>
                                             <td>
-                                                <FaEdit className="me-2 text-primary" onClick={() => setEksIndex(index)} />
-                                                <FaTrash className="ms-2 text-danger" onClick={() => openDeleteModal(item)} />
+                                                <IconButton size="small" onClick={() => setEksIndex(index)} sx={{ color: '#0073bb' }}>
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton size="small" onClick={() => openDeleteModal(item)} sx={{ color: '#dc3545', ml: 1 }}>
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
                                             </td>
                                         </tr>
                                     ))
@@ -257,34 +482,100 @@ export default function AddEKSToken() {
                                 )}
                             </tbody>
                         </Table>
-                    </Card.Body>
-                </Card>
+                    </Box>
+                </Paper>
                 <TablePagination total={totalCount} currentPage={currentPage} perPage={perPage} handlePageChange={setCurrentPage} setPerPage={setPerPage} />
-            </div>
+            </Container>
+
             <AddEksTokenModal show={showAddEksTokenModal} handleClose={() => setShowAddEksTokenModal(false)} reload={getAllEksToken} />
             <EditEksTokenModal show={eksIndex !== -1} handleClose={() => setEksIndex(-1)} reload={getAllEksToken} eksData={data[eksIndex]} />
 
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: '16px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                    }
+                }}
+            >
+                <DialogTitle sx={{ p: 3, pb: 2 }}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Box
+                            sx={{
+                                width: 48,
+                                height: 48,
+                                background: 'linear-gradient(135deg, #dc3545 0%, #e4606d 100%)',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                            }}
+                        >
+                            <DeleteIcon sx={{ fontSize: 24 }} />
+                        </Box>
+                        <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#232f3e' }}>
+                                Confirm Deletion
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#6c757d', mt: 0.5 }}>
+                                This action cannot be undone
+                            </Typography>
+                        </Box>
+                    </Box>
+                </DialogTitle>
 
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirm Deletion</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Are you sure you want to delete the EKS token for cluster{" "}
-                    <strong>{selectedEksToken?.clusterName}</strong>?
-                    <br />
-                    <small className="text-danger">This action cannot be undone.</small>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                <DialogContent sx={{ p: 3, pt: 2 }}>
+                    <Typography variant="body1">
+                        Are you sure you want to delete the EKS token for cluster{" "}
+                        <strong>{selectedEksToken?.clusterName}</strong>?
+                    </Typography>
+                </DialogContent>
+
+                <DialogActions sx={{ p: 3, pt: 2, gap: 1 }}>
+                    <MuiButton
+                        onClick={() => setShowDeleteModal(false)}
+                        variant="outlined"
+                        sx={{
+                            borderRadius: '10px',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            px: 3,
+                            borderColor: '#e0e0e0',
+                            color: '#6c757d',
+                            '&:hover': {
+                                borderColor: '#bdbdbd',
+                                background: 'rgba(0, 0, 0, 0.02)',
+                            }
+                        }}
+                    >
                         Cancel
-                    </Button>
-                    <Button variant="danger" onClick={handleDelete}>
+                    </MuiButton>
+                    <MuiButton
+                        onClick={handleDelete}
+                        variant="contained"
+                        sx={{
+                            borderRadius: '10px',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            px: 3,
+                            background: 'linear-gradient(135deg, #dc3545 0%, #e4606d 100%)',
+                            boxShadow: '0 4px 12px rgba(220, 53, 69, 0.3)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #c82333 0%, #d35560 100%)',
+                                boxShadow: '0 6px 16px rgba(220, 53, 69, 0.4)',
+                            }
+                        }}
+                    >
                         Delete
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-
-        </Container>
+                    </MuiButton>
+                </DialogActions>
+            </Dialog>
+        </Box>
     );
 }

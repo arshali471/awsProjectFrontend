@@ -70,19 +70,28 @@ export default function TopBar({ menuData }: ITopBar) {
 
   return (
     <>
-      <div className="shadow-sm p-2 d-flex align-items-center w-100">
-        <h6 className="mb-0">Welcome {sessionStorage.getItem("username")}</h6>
-        <div className="d-flex ms-auto align-items-center" style={{ gap: "1rem" }}>
-          <div style={{ width: "20rem" }}>
+      <div className="topbar shadow-sm p-3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ flex: '0 1 auto', minWidth: 0 }}>
+          <h6 className="mb-0" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Welcome {sessionStorage.getItem("username")}
+          </h6>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 auto', justifyContent: 'flex-end', minWidth: 0 }}>
+          <div style={{ flex: '1 1 auto', minWidth: '200px', maxWidth: '300px' }}>
             <AsyncSelect
               value={selectedRegion}
               placeholder="Search Region..."
-              className="w-100"
               cacheOptions
               loadOptions={loadOptions}
               defaultOptions={keysData}
               isClearable={true}
               onChange={(e: any) => setSelectedRegion(e)}
+              menuPortalTarget={document.body}
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                control: (base) => ({ ...base, minHeight: '40px', width: '100%' }),
+                container: (base) => ({ ...base, width: '100%' })
+              }}
             />
           </div>
 
@@ -92,6 +101,7 @@ export default function TopBar({ menuData }: ITopBar) {
             className="theme-toggle-btn"
             aria-label="Toggle theme"
             title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            style={{ flexShrink: 0 }}
           >
             {isDarkMode ? <FaSun size={18} /> : <FaMoon size={18} />}
           </button>

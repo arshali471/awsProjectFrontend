@@ -8,6 +8,8 @@ const Auth = {
     signout() {
         this.isAuthenticated = false;
         sessionStorage.removeItem("authKey");
+        sessionStorage.removeItem("role");
+        sessionStorage.removeItem("username");
     },
     getAuth() {
         return this.isAuthenticated;

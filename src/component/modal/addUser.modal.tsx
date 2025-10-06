@@ -1,7 +1,24 @@
 import { useState } from "react";
-import { Button, Form, Offcanvas } from "react-bootstrap";
 import { AdminService } from "../services/admin.service";
 import toast from "react-hot-toast";
+import {
+    Drawer,
+    Box,
+    Typography,
+    IconButton,
+    TextField,
+    Button,
+    Switch,
+    FormControlLabel,
+    Divider,
+    InputAdornment,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 interface IAddUserModal {
     show: any,
@@ -10,7 +27,8 @@ interface IAddUserModal {
 
 export default function AddUserModal({ show, handleClose }: IAddUserModal) {
 
-    const [data, setData] = useState<any>();
+    const [data, setData] = useState<any>({});
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChangeValue = (e: any) => {
         setData({ ...data, [e.target.name]: e.target.value })
@@ -21,46 +39,306 @@ export default function AddUserModal({ show, handleClose }: IAddUserModal) {
     }
 
     const handleUserSubmission = async () => {
+        if (!data?.username || !data?.password) {
+            toast.error("Please fill all required fields");
+            return;
+        }
+
         await AdminService.createUser(data).then((res) => {
             if (res.status === 200) {
+                setData({});
                 handleClose();
-                toast.success("User Created")
+                toast.success("User Created Successfully")
             }
         }).catch(err => {
             toast.error(err.response.data)
         })
     }
 
-    console.log(data)
-
     return (
-        <Offcanvas show={show} onHide={handleClose} backdrop="static" placement="end">
-            <Offcanvas.Header closeButton>
-                <Offcanvas.Title>Add User</Offcanvas.Title>
-            </Offcanvas.Header>
-            <Offcanvas.Body>
-                <div style={{ height: "85vh" }}>
-                    <Form.Group className="mb-3">
-                        <Form.Label style={{ fontWeight: "500" }}>Username</Form.Label>
-                        <Form.Control type="text" name="username" onChange={(e: any) => handleChangeValue(e)} />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                        <Form.Label style={{ fontWeight: "500" }}>Password</Form.Label>
-                        <Form.Control type="password" name="password" onChange={(e: any) => handleChangeValue(e)} />
-                    </Form.Group>
-                    <Form.Group className="d-flex mb-3">
-                        <Form.Switch name="addAWSKey" onChange={(e: any) => handleToggleValue(e)} />
-                        <Form.Label className="ms-3" style={{ fontWeight: "500" }}>Add AWS Key</Form.Label>
-                    </Form.Group>
-                    <Form.Group className="d-flex mb-3">
-                        <Form.Switch name="addUser" onChange={(e: any) => handleToggleValue(e)} />
-                        <Form.Label className="ms-3" style={{ fontWeight: "500" }}>Add Users</Form.Label>
-                    </Form.Group>
-                </div>
-                <Button className="w-100" onClick={handleUserSubmission}>
-                    Add User
+        <Drawer
+            anchor="right"
+            open={show}
+            onClose={handleClose}
+            PaperProps={{
+                sx: {
+                    width: { xs: '100%', sm: 480 },
+                    background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
+                }
+            }}
+        >
+            {/* Header */}
+            <Box
+                sx={{
+                    p: 3,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+                }}
+            >
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Box
+                            sx={{
+                                width: 48,
+                                height: 48,
+                                background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                            }}
+                        >
+                            <PersonAddIcon sx={{ fontSize: 24 }} />
+                        </Box>
+                        <Box>
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    fontWeight: 700,
+                                    color: '#232f3e',
+                                }}
+                            >
+                                Add New User
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: '#6c757d',
+                                    mt: 0.5,
+                                }}
+                            >
+                                Create a new user account
+                            </Typography>
+                        </Box>
+                    </Box>
+                    <IconButton
+                        onClick={handleClose}
+                        sx={{
+                            color: '#6c757d',
+                            '&:hover': {
+                                background: 'rgba(0, 0, 0, 0.04)',
+                            }
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                </Box>
+            </Box>
+
+            {/* Form Content */}
+            <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {/* Username */}
+                    <TextField
+                        fullWidth
+                        required
+                        label="Username"
+                        name="username"
+                        value={data?.username || ''}
+                        onChange={handleChangeValue}
+                        placeholder="Enter username"
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <AccountCircleIcon sx={{ color: '#6c757d' }} />
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                background: 'white',
+                                '&:hover fieldset': {
+                                    borderColor: '#0073bb',
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#0073bb',
+                                    borderWidth: '2px',
+                                }
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#0073bb',
+                            }
+                        }}
+                    />
+
+                    {/* Password */}
+                    <TextField
+                        fullWidth
+                        required
+                        label="Password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        value={data?.password || ''}
+                        onChange={handleChangeValue}
+                        placeholder="Enter password"
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <LockIcon sx={{ color: '#6c757d' }} />
+                                </InputAdornment>
+                            ),
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        edge="end"
+                                        sx={{ color: '#6c757d' }}
+                                    >
+                                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                background: 'white',
+                                '&:hover fieldset': {
+                                    borderColor: '#0073bb',
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#0073bb',
+                                    borderWidth: '2px',
+                                }
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#0073bb',
+                            }
+                        }}
+                    />
+
+                    <Divider sx={{ my: 1 }} />
+
+                    {/* Permissions Section */}
+                    <Typography variant="subtitle1" fontWeight={600} color="#232f3e">
+                        Permissions
+                    </Typography>
+
+                    <Box
+                        sx={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            p: 2,
+                            border: '1px solid rgba(0, 0, 0, 0.06)',
+                        }}
+                    >
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    name="addAWSKey"
+                                    onChange={handleToggleValue}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#0073bb',
+                                        },
+                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                            backgroundColor: '#0073bb',
+                                        },
+                                    }}
+                                />
+                            }
+                            label={
+                                <Box>
+                                    <Typography variant="body1" fontWeight={500}>
+                                        Add AWS Key
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Allow user to manage AWS credentials
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    </Box>
+
+                    <Box
+                        sx={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            p: 2,
+                            border: '1px solid rgba(0, 0, 0, 0.06)',
+                        }}
+                    >
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    name="addUser"
+                                    onChange={handleToggleValue}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#0073bb',
+                                        },
+                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                            backgroundColor: '#0073bb',
+                                        },
+                                    }}
+                                />
+                            }
+                            label={
+                                <Box>
+                                    <Typography variant="body1" fontWeight={500}>
+                                        Add Users
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Allow user to create and manage other users
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    </Box>
+                </Box>
+            </Box>
+
+            {/* Footer Actions */}
+            <Box
+                sx={{
+                    p: 3,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+                    display: 'flex',
+                    gap: 2,
+                }}
+            >
+                <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={handleClose}
+                    sx={{
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        py: 1.2,
+                        borderColor: '#e0e0e0',
+                        color: '#6c757d',
+                        '&:hover': {
+                            borderColor: '#bdbdbd',
+                            background: 'rgba(0, 0, 0, 0.02)',
+                        }
+                    }}
+                >
+                    Cancel
                 </Button>
-            </Offcanvas.Body>
-        </Offcanvas>
+                <Button
+                    fullWidth
+                    variant="contained"
+                    onClick={handleUserSubmission}
+                    sx={{
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        py: 1.2,
+                        background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                        boxShadow: '0 4px 12px rgba(0, 115, 187, 0.3)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #005a9e 0%, #0073bb 100%)',
+                            boxShadow: '0 6px 16px rgba(0, 115, 187, 0.4)',
+                        }
+                    }}
+                >
+                    Create User
+                </Button>
+            </Box>
+        </Drawer>
     )
 }

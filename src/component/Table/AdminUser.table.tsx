@@ -14,6 +14,7 @@ interface IUsersTable {
 export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
 
     const [showConfirmationModal, setShowConfirmationModal] = useState<any | undefined>(undefined)
+    const [selectedUser, setSelectedUser] = useState<any>(null)
 
     const [showChangePasswordModal, setShowChangePasswordModal] = useState<any>(undefined)
 
@@ -34,12 +35,18 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
         await AdminService.deleteUser(userId).then((res) => {
             if (res.status === 200) {
                 reload();
-                toast.success("User Deletd")
+                toast.success("User Deleted")
                 setShowConfirmationModal(false)
+                setSelectedUser(null)
             }
         }).catch(err => {
             toast.error(err.response.data)
         })
+    }
+
+    const openDeleteModal = (user: any) => {
+        setSelectedUser(user)
+        setShowConfirmationModal(user._id)
     }
 
 
@@ -78,7 +85,7 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
                                 </td>
                                 <td style={{ fontSize: 12 }}>
                                     <TbPasswordFingerprint className="text-primary me-3" size={18} onClick={() => setShowChangePasswordModal(data._id)} />
-                                    <FaRegTrashAlt className="text-danger" onClick={() => setShowConfirmationModal(data._id)} />
+                                    <FaRegTrashAlt className="text-danger" onClick={() => openDeleteModal(data)} />
                                 </td>
                             </tr>
                         )
@@ -88,8 +95,11 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
 
             <ConfirmationModal
                 show={showConfirmationModal}
-                handleClose={() => setShowConfirmationModal(undefined)}
-                label="Are your sure you want to delete this User."
+                handleClose={() => {
+                    setShowConfirmationModal(undefined)
+                    setSelectedUser(null)
+                }}
+                username={selectedUser?.username}
                 onClick={handleDeleteUser}
             />
 
