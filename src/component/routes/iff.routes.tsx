@@ -17,6 +17,8 @@ import VolumesIndex from "../View/Private/Volumes/Volumes"
 import { RxDashboard } from "react-icons/rx";
 import IffDashboard from "../View/Private/IffDashboard/IffDashboard"
 import ZabbixStatus from "../View/Private/ZabbixStatus/ZabbixStatus"
+import CompleteCostDashboard from "../View/Private/CostDashboard/CompleteCostDashboard"
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney"
 
 export default interface IIFFRouter {
     path: string
@@ -83,6 +85,13 @@ export const iffRoutes: IIFFRouter[] = [
                 element: <RDSIndex />,
                 name: "RDS",
                 icon: SiAmazonrds
+            },
+            {
+                path: "cost",
+                navbarShow: true,
+                element: <CompleteCostDashboard />,
+                name: "Cost Analysis",
+                icon: AttachMoneyIcon
             },
         ],
     },

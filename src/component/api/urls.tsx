@@ -32,6 +32,16 @@ const url = {
         deleteSshKey: "/aws/deleteSshKey",
         getZabbixStatus:"/aws/getZabbixStatus",
         getClusterName: "/aws/getEksClusterName",
+    },
+
+    cost: {
+        getCostDashboard: "/aws/cost/dashboard",
+        getCostByService: "/aws/cost/by-service",
+        getCostByResource: "/aws/cost/by-resource",
+        getEC2InstanceCosts: "/aws/cost/ec2-instances",
+        getCostForecast: "/aws/cost/forecast",
+        compareCosts: "/aws/cost/compare",
+        getTopServices: "/aws/cost/top-services",
     }
 
 };

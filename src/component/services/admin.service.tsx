@@ -187,6 +187,83 @@ export class AdminService {
         return await makeUploadRequest(url.eksToken.deleteSshKey + "/" + sshId, RequestMethods.DELETE)
     }
 
-    
-    
+    // Cost Dashboard Methods
+    static async getCostDashboard(keyId: any, days: number = 30) {
+        const params = makeParams([
+            {
+                index: "days",
+                value: days
+            }
+        ])
+        return await makeRequest(url.cost.getCostDashboard + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    static async getCostByService(keyId: any, startDate?: string, endDate?: string, granularity: string = 'DAILY') {
+        const params = makeParams([
+            {
+                index: "startDate",
+                value: startDate
+            },
+            {
+                index: "endDate",
+                value: endDate
+            },
+            {
+                index: "granularity",
+                value: granularity
+            }
+        ])
+        return await makeRequest(url.cost.getCostByService + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    static async getCostByResource(keyId: any, startDate?: string, endDate?: string) {
+        const params = makeParams([
+            {
+                index: "startDate",
+                value: startDate
+            },
+            {
+                index: "endDate",
+                value: endDate
+            }
+        ])
+        return await makeRequest(url.cost.getCostByResource + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    static async getEC2InstanceCosts(keyId: any) {
+        return await makeRequest(url.cost.getEC2InstanceCosts + "/" + keyId, RequestMethods.GET)
+    }
+
+    static async getCostForecast(keyId: any) {
+        return await makeRequest(url.cost.getCostForecast + "/" + keyId, RequestMethods.GET)
+    }
+
+    static async compareCosts(keyId: any, currentStart?: string, currentEnd?: string) {
+        const params = makeParams([
+            {
+                index: "currentStart",
+                value: currentStart
+            },
+            {
+                index: "currentEnd",
+                value: currentEnd
+            }
+        ])
+        return await makeRequest(url.cost.compareCosts + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    static async getTopServices(keyId: any, limit: number = 5, days: number = 30) {
+        const params = makeParams([
+            {
+                index: "limit",
+                value: limit
+            },
+            {
+                index: "days",
+                value: days
+            }
+        ])
+        return await makeRequest(url.cost.getTopServices + "/" + keyId + params, RequestMethods.GET)
+    }
+
 }

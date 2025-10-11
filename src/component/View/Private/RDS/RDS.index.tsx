@@ -4,8 +4,9 @@ import { AdminService } from "../../../services/admin.service";
 import RDSTable from "../../../Table/RDS.table";
 import { FaDatabase, FaSearch } from "react-icons/fa";
 import { MdCloudQueue } from "react-icons/md";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, IconButton, CircularProgress } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import "../SharedPage.css";
 
 export default function RDSIndex() {
@@ -15,9 +16,14 @@ export default function RDSIndex() {
     const [rdsData, setRdsData] = useState<any>([]);
     const [filteredData, setFilteredData] = useState<any>([]);
     const [searchText, setSearchText] = useState<string>('');
+    const [refreshing, setRefreshing] = useState(false);
 
-    const getAllRDSData = async () => {
-        setLoading(true);
+    const getAllRDSData = async (showRefreshing = false) => {
+        if (showRefreshing) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
         try {
             const res = await AdminService.getAllRDSData(selectedRegion.value);
             if (res.status === 200) {
@@ -27,7 +33,15 @@ export default function RDSIndex() {
         } catch (error) {
             console.error("Error fetching RDS data", error);
         }
-        setLoading(false);
+        if (showRefreshing) {
+            setRefreshing(false);
+        } else {
+            setLoading(false);
+        }
+    };
+
+    const handleRefresh = () => {
+        getAllRDSData(true);
     };
 
     useEffect(() => {
@@ -60,48 +74,72 @@ export default function RDSIndex() {
         <div className="page-wrapper">
             {/* Page Header - Matching Dashboard Style */}
             <Box sx={{ mb: 3 }}>
-                <Box display="flex" alignItems="center" gap={2}>
-                    <Box
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Box
+                            sx={{
+                                width: 56,
+                                height: 56,
+                                background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                borderRadius: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                boxShadow: '0 4px 16px rgba(0, 115, 187, 0.3)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 8px 20px rgba(0, 115, 187, 0.4)',
+                                }
+                            }}
+                        >
+                            <StorageIcon sx={{ fontSize: 32 }} />
+                        </Box>
+                        <Box>
+                            <Typography
+                                variant="h4"
+                                sx={{
+                                    fontWeight: 700,
+                                    color: '#232f3e',
+                                    letterSpacing: '-0.5px',
+                                }}
+                            >
+                                RDS Databases
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: '#6c757d',
+                                    mt: 0.5,
+                                }}
+                            >
+                                Manage and monitor your Amazon RDS database instances
+                            </Typography>
+                        </Box>
+                    </Box>
+                    <IconButton
+                        onClick={handleRefresh}
+                        disabled={refreshing}
                         sx={{
-                            width: 56,
-                            height: 56,
-                            background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
-                            borderRadius: '16px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            background: 'linear-gradient(135deg, #527fff 0%, #1a8cd8 100%)',
                             color: 'white',
-                            boxShadow: '0 4px 16px rgba(0, 115, 187, 0.3)',
-                            transition: 'all 0.3s ease',
+                            width: 48,
+                            height: 48,
                             '&:hover': {
-                                transform: 'translateY(-2px)',
-                                boxShadow: '0 8px 20px rgba(0, 115, 187, 0.4)',
+                                background: 'linear-gradient(135deg, #3d5fd9 0%, #0073bb 100%)',
+                                transform: 'rotate(180deg)',
+                            },
+                            transition: 'all 0.3s ease',
+                            '&.Mui-disabled': {
+                                background: 'linear-gradient(135deg, #527fff 0%, #1a8cd8 100%)',
+                                color: 'white',
+                                opacity: 0.7,
                             }
                         }}
                     >
-                        <StorageIcon sx={{ fontSize: 32 }} />
-                    </Box>
-                    <Box>
-                        <Typography
-                            variant="h4"
-                            sx={{
-                                fontWeight: 700,
-                                color: '#232f3e',
-                                letterSpacing: '-0.5px',
-                            }}
-                        >
-                            RDS Databases
-                        </Typography>
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                color: '#6c757d',
-                                mt: 0.5,
-                            }}
-                        >
-                            Manage and monitor your Amazon RDS database instances
-                        </Typography>
-                    </Box>
+                        {refreshing ? <CircularProgress size={24} sx={{ color: 'white' }} /> : <RefreshIcon />}
+                    </IconButton>
                 </Box>
             </Box>
 

@@ -4,6 +4,8 @@ import { AdminService } from "../../../services/admin.service";
 import VolumesTable from "../../../Table/Volumes.table";
 import { FaHdd, FaSearch } from "react-icons/fa";
 import { MdCloudQueue, MdCheckCircle, MdCancel } from "react-icons/md";
+import { IconButton, CircularProgress } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import "../SharedPage.css";
 
 export default function VolumesIndex() {
@@ -13,9 +15,14 @@ export default function VolumesIndex() {
     const [volumesData, setVolumesData] = useState<any>([]);
     const [filteredData, setFilteredData] = useState<any>([]);
     const [searchText, setSearchText] = useState<string>('');
+    const [refreshing, setRefreshing] = useState(false);
 
-    const getVolumes = async () => {
-        setLoading(true);
+    const getVolumes = async (showRefreshing = false) => {
+        if (showRefreshing) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
         try {
             const res = await AdminService.getAllVolumesData(selectedRegion.value);
             if (res.status === 200) {
@@ -25,7 +32,15 @@ export default function VolumesIndex() {
         } catch (error) {
             console.error("Error fetching Volumes data", error);
         }
-        setLoading(false);
+        if (showRefreshing) {
+            setRefreshing(false);
+        } else {
+            setLoading(false);
+        }
+    };
+
+    const handleRefresh = () => {
+        getVolumes(true);
     };
 
     useEffect(() => {
@@ -45,6 +60,7 @@ export default function VolumesIndex() {
             setSearchText("");
             getVolumes();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedRegion?.value]);
 
     // Calculate stats
@@ -56,14 +72,38 @@ export default function VolumesIndex() {
     return (
         <div className="page-wrapper">
             {/* Page Header */}
-            <div className="page-header">
-                <h1 className="page-title">
-                    <div className="page-title-icon">
-                        <FaHdd />
-                    </div>
-                    EBS Volumes
-                </h1>
-                <p className="page-subtitle">Manage and monitor your Amazon EBS storage volumes</p>
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h1 className="page-title">
+                        <div className="page-title-icon">
+                            <FaHdd />
+                        </div>
+                        EBS Volumes
+                    </h1>
+                    <p className="page-subtitle">Manage and monitor your Amazon EBS storage volumes</p>
+                </div>
+                <IconButton
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    sx={{
+                        background: 'linear-gradient(135deg, #ff9900 0%, #ffb84d 100%)',
+                        color: 'white',
+                        width: 48,
+                        height: 48,
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #e68a00 0%, #ff9900 100%)',
+                            transform: 'rotate(180deg)',
+                        },
+                        transition: 'all 0.3s ease',
+                        '&.Mui-disabled': {
+                            background: 'linear-gradient(135deg, #ff9900 0%, #ffb84d 100%)',
+                            color: 'white',
+                            opacity: 0.7,
+                        }
+                    }}
+                >
+                    {refreshing ? <CircularProgress size={24} sx={{ color: 'white' }} /> : <RefreshIcon />}
+                </IconButton>
             </div>
 
             {/* Stats Cards */}

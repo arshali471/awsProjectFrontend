@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, useGridApiRef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import { Button, Box } from '@mui/material';
 import { saveAs } from 'file-saver';
@@ -11,6 +11,7 @@ interface IVolumesTable {
 }
 
 export default function VolumesTable({ tableData, loading = false }: IVolumesTable) {
+    const apiRef = useGridApiRef();
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
 
     const columns: GridColDef[] = [
@@ -47,9 +48,14 @@ export default function VolumesTable({ tableData, loading = false }: IVolumesTab
     }));
 
     const handleExport = () => {
+        const selectedIDs = new Set(apiRef.current.getSelectedRows().keys());
+        const exportRows = selectedIDs.size > 0
+            ? rows.filter(row => selectedIDs.has(row.id))
+            : rows;
+
         const csvContent = [
             columns.map(col => col.headerName).join(','),
-            ...rows.map(row =>
+            ...exportRows.map(row =>
                 columns.map(col => {
                     const val = row[col.field as keyof typeof row];
                     return typeof val === 'string' ? `"${val}"` : val;
@@ -96,14 +102,16 @@ export default function VolumesTable({ tableData, loading = false }: IVolumesTab
                 }}
             >
                 <DataGrid
+                    apiRef={apiRef}
                     rows={rows}
                     columns={columns}
                     loading={loading}
+                    checkboxSelection
+                    disableRowSelectionOnClick
                     pagination
                     paginationModel={paginationModel}
                     onPaginationModelChange={setPaginationModel}
                     pageSizeOptions={[10, 25, 50, 100]}
-                    disableRowSelectionOnClick
                     autoHeight
                     sx={{
                         border: 0,
