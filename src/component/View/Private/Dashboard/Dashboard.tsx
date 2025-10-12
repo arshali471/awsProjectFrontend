@@ -6,7 +6,7 @@ import { Container } from "react-bootstrap";
 import InstanceTable from "../../../Table/Instance.table";
 import './Dashboard.css';
 import moment from "moment";
-import { TextField, InputAdornment, IconButton, Box, Chip, Stack, Button as MuiButton, Paper, Grid, Card, CardContent, Typography, Collapse } from "@mui/material";
+import { TextField, InputAdornment, IconButton, Box, Chip, Stack, Button as MuiButton, Paper, Grid, Card, CardContent, Typography, Collapse, Select, MenuItem, FormControl } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import SearchIcon from "@mui/icons-material/Search";
@@ -33,6 +33,7 @@ export default function Dashboard() {
     const [startDate, setStartDate] = useState<Date | null>(new Date());
     const [showAllStats, setShowAllStats] = useState(false);
     const [isGlobal, setIsGlobal] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<string>("all"); // all, running, stopped
 
     // Fetch region data
     const getAllInstance = async () => {
@@ -93,22 +94,32 @@ export default function Dashboard() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedRegion, startDate]);
 
-    // Local multi-chip filter (all chips must match in row, AND)
+    // Local multi-chip filter (all chips must match in row, AND) + status filter
     const filteredInstanceData = useMemo(() => {
-        if (isGlobal) return displayData;
-        if (!chips.length) return instanceData;
-        const flatten = (obj: any): string[] =>
-            Object.values(obj).flatMap(val => {
-                if (val == null) return [];
-                if (Array.isArray(val)) return val.map(flatten).flat();
-                if (typeof val === "object") return flatten(val);
-                return String(val);
+        let data = isGlobal ? displayData : instanceData;
+
+        // Apply chip filters
+        if (chips.length > 0 && !isGlobal) {
+            const flatten = (obj: any): string[] =>
+                Object.values(obj).flatMap(val => {
+                    if (val == null) return [];
+                    if (Array.isArray(val)) return val.map(flatten).flat();
+                    if (typeof val === "object") return flatten(val);
+                    return String(val);
+                });
+            data = data.filter((item: any) => {
+                const values = flatten(item).join(" ").toLowerCase();
+                return chips.every(term => values.includes(term.toLowerCase()));
             });
-        return instanceData.filter((item: any) => {
-            const values = flatten(item).join(" ").toLowerCase();
-            return chips.every(term => values.includes(term.toLowerCase()));
-        });
-    }, [instanceData, chips, isGlobal, displayData]);
+        }
+
+        // Apply status filter
+        if (statusFilter !== "all") {
+            data = data.filter((item: any) => item?.State?.Name === statusFilter);
+        }
+
+        return data;
+    }, [instanceData, chips, isGlobal, displayData, statusFilter]);
 
     // Stats calculation (on current view)
     const totalCount = filteredInstanceData.length;
@@ -199,24 +210,47 @@ export default function Dashboard() {
                 </Box>
             </Box>
 
-            {/* Stats Cards */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+            {/* Stats Cards - Improved Design */}
+            <Grid container spacing={2.5} sx={{ mb: 4 }}>
                 {/* Total Instances */}
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card className="stat-card-elegant" elevation={0}>
-                        <CardContent sx={{ p: 2.5 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                                <Box>
-                                    <Typography variant="caption" className="stat-label-elegant">
-                                        Total Instances
-                                    </Typography>
-                                    <Typography variant="h4" className="stat-value-elegant">
-                                        {totalCount}
-                                    </Typography>
+                    <Card
+                        elevation={0}
+                        sx={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            height: '120px',
+                            '&:hover': {
+                                transform: 'translateY(-4px)',
+                                boxShadow: '0 12px 24px rgba(102, 126, 234, 0.3)',
+                            },
+                            transition: 'all 0.3s ease',
+                        }}
+                    >
+                        <CardContent sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <Box display="flex" alignItems="center" gap={1.5}>
+                                <Box
+                                    sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: '8px',
+                                        background: 'rgba(255, 255, 255, 0.2)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <CloudQueueIcon sx={{ fontSize: 22, color: '#ffffff' }} />
                                 </Box>
-                                <Box className="stat-icon-elegant">
-                                    <CloudQueueIcon />
-                                </Box>
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '12px', fontWeight: 500 }}>
+                                    TOTAL INSTANCES
+                                </Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="center">
+                                <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 700, fontSize: '36px', lineHeight: 1 }}>
+                                    {totalCount}
+                                </Typography>
                             </Box>
                         </CardContent>
                     </Card>
@@ -224,20 +258,43 @@ export default function Dashboard() {
 
                 {/* Running */}
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card className="stat-card-elegant stat-card-success" elevation={0}>
-                        <CardContent sx={{ p: 2.5 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                                <Box>
-                                    <Typography variant="caption" className="stat-label-elegant stat-label-white">
-                                        Running
-                                    </Typography>
-                                    <Typography variant="h4" className="stat-value-elegant stat-value-white">
-                                        {runningCount}
-                                    </Typography>
+                    <Card
+                        elevation={0}
+                        sx={{
+                            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            height: '120px',
+                            '&:hover': {
+                                transform: 'translateY(-4px)',
+                                boxShadow: '0 12px 24px rgba(17, 153, 142, 0.3)',
+                            },
+                            transition: 'all 0.3s ease',
+                        }}
+                    >
+                        <CardContent sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <Box display="flex" alignItems="center" gap={1.5}>
+                                <Box
+                                    sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: '8px',
+                                        background: 'rgba(255, 255, 255, 0.2)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <PlayCircleOutlineIcon sx={{ fontSize: 22, color: '#ffffff' }} />
                                 </Box>
-                                <Box className="stat-icon-elegant stat-icon-white">
-                                    <PlayCircleOutlineIcon />
-                                </Box>
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '12px', fontWeight: 500 }}>
+                                    RUNNING
+                                </Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="center">
+                                <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 700, fontSize: '36px', lineHeight: 1 }}>
+                                    {runningCount}
+                                </Typography>
                             </Box>
                         </CardContent>
                     </Card>
@@ -245,20 +302,43 @@ export default function Dashboard() {
 
                 {/* Stopped */}
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card className="stat-card-elegant stat-card-danger" elevation={0}>
-                        <CardContent sx={{ p: 2.5 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                                <Box>
-                                    <Typography variant="caption" className="stat-label-elegant stat-label-white">
-                                        Stopped
-                                    </Typography>
-                                    <Typography variant="h4" className="stat-value-elegant stat-value-white">
-                                        {stoppedCount}
-                                    </Typography>
+                    <Card
+                        elevation={0}
+                        sx={{
+                            background: 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            height: '120px',
+                            '&:hover': {
+                                transform: 'translateY(-4px)',
+                                boxShadow: '0 12px 24px rgba(238, 9, 121, 0.3)',
+                            },
+                            transition: 'all 0.3s ease',
+                        }}
+                    >
+                        <CardContent sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <Box display="flex" alignItems="center" gap={1.5}>
+                                <Box
+                                    sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: '8px',
+                                        background: 'rgba(255, 255, 255, 0.2)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <StopCircleOutlinedIcon sx={{ fontSize: 22, color: '#ffffff' }} />
                                 </Box>
-                                <Box className="stat-icon-elegant stat-icon-white">
-                                    <StopCircleOutlinedIcon />
-                                </Box>
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '12px', fontWeight: 500 }}>
+                                    STOPPED
+                                </Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="center">
+                                <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 700, fontSize: '36px', lineHeight: 1 }}>
+                                    {stoppedCount}
+                                </Typography>
                             </Box>
                         </CardContent>
                     </Card>
@@ -266,20 +346,43 @@ export default function Dashboard() {
 
                 {/* Filtered Results */}
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card className="stat-card-elegant" elevation={0}>
-                        <CardContent sx={{ p: 2.5 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                                <Box>
-                                    <Typography variant="caption" className="stat-label-elegant">
-                                        Filtered Results
-                                    </Typography>
-                                    <Typography variant="h4" className="stat-value-elegant">
-                                        {filteredInstanceData.length}
-                                    </Typography>
+                    <Card
+                        elevation={0}
+                        sx={{
+                            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            height: '120px',
+                            '&:hover': {
+                                transform: 'translateY(-4px)',
+                                boxShadow: '0 12px 24px rgba(79, 172, 254, 0.3)',
+                            },
+                            transition: 'all 0.3s ease',
+                        }}
+                    >
+                        <CardContent sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <Box display="flex" alignItems="center" gap={1.5}>
+                                <Box
+                                    sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: '8px',
+                                        background: 'rgba(255, 255, 255, 0.2)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <SearchIcon sx={{ fontSize: 22, color: '#ffffff' }} />
                                 </Box>
-                                <Box className="stat-icon-elegant">
-                                    <SearchIcon />
-                                </Box>
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '12px', fontWeight: 500 }}>
+                                    FILTERED RESULTS
+                                </Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="center">
+                                <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 700, fontSize: '36px', lineHeight: 1 }}>
+                                    {filteredInstanceData.length}
+                                </Typography>
                             </Box>
                         </CardContent>
                     </Card>
@@ -339,14 +442,25 @@ export default function Dashboard() {
                 </Paper>
             )}
 
-            {/* Search & Filters */}
-            <Paper className="search-paper-elegant" elevation={0} sx={{ mb: 3, p: 3 }}>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={6}>
+            {/* Search & Filters - Elegant Design */}
+            <Paper
+                className="search-paper-elegant"
+                elevation={0}
+                sx={{
+                    mb: 3,
+                    p: 3,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    border: '1px solid #e9ecef',
+                    borderRadius: '16px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+                }}
+            >
+                <Grid container spacing={2.5}>
+                    {/* Search Bar Row - Wider */}
+                    <Grid item xs={12} md={8}>
                         <TextField
                             fullWidth
                             variant="outlined"
-                            size="small"
                             placeholder="Search by instance name, ID, IP, tags... (Press Enter/Space/Comma/Tab to add filter)"
                             value={input}
                             onChange={handleInputChange}
@@ -354,7 +468,7 @@ export default function Dashboard() {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <SearchIcon sx={{ color: '#0073bb' }} />
+                                        <SearchIcon sx={{ color: '#0073bb', fontSize: '26px' }} />
                                     </InputAdornment>
                                 ),
                                 endAdornment: input && (
@@ -367,85 +481,266 @@ export default function Dashboard() {
                             }}
                             sx={{
                                 '& .MuiOutlinedInput-root': {
-                                    borderRadius: '10px',
+                                    borderRadius: '12px',
                                     bgcolor: '#ffffff',
-                                    '&:hover fieldset': {
-                                        borderColor: '#0073bb',
+                                    height: '56px',
+                                    fontSize: '15px',
+                                    border: '2px solid #e9ecef',
+                                    paddingLeft: '16px',
+                                    paddingRight: '16px',
+                                    '& input': {
+                                        color: '#000000',
+                                        WebkitTextFillColor: '#000000',
+                                        padding: '0',
                                     },
-                                    '&.Mui-focused fieldset': {
+                                    '& .MuiInputAdornment-root': {
+                                        marginRight: '8px',
+                                    },
+                                    '& fieldset': {
+                                        border: 'none',
+                                    },
+                                    '&:hover': {
                                         borderColor: '#0073bb',
-                                        borderWidth: '2px',
+                                        boxShadow: '0 0 0 3px rgba(0, 115, 187, 0.1)',
+                                    },
+                                    '&.Mui-focused': {
+                                        borderColor: '#0073bb',
+                                        boxShadow: '0 0 0 4px rgba(0, 115, 187, 0.2)',
                                     }
                                 }
                             }}
                         />
                     </Grid>
 
-                    <Grid item xs={12} sm={6} md={3}>
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                            <DatePicker
-                                label="Select Date"
-                                value={startDate}
-                                onChange={setStartDate}
-                                maxDate={new Date()}
-                                slotProps={{
-                                    textField: {
-                                        fullWidth: true,
-                                        size: 'small',
+                    {/* Status Dropdown */}
+                    <Grid item xs={12} sm={6} md={2}>
+                        <Box
+                            sx={{
+                                width: '100%',
+                                borderRadius: '12px',
+                                bgcolor: '#ffffff',
+                                height: '56px',
+                                border: '2px solid #e9ecef',
+                                display: 'flex',
+                                alignItems: 'center',
+                                px: 2,
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    borderColor: '#0073bb',
+                                    boxShadow: '0 0 0 3px rgba(0, 115, 187, 0.1)',
+                                },
+                            }}
+                        >
+                            <Select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                displayEmpty
+                                variant="standard"
+                                disableUnderline
+                                renderValue={(value) => {
+                                    if (value === 'all') {
+                                        return (
+                                            <Box display="flex" alignItems="center" gap={1.5}>
+                                                <ComputerIcon sx={{ fontSize: '20px', color: '#0073bb' }} />
+                                                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: '#000000' }}>All Instances</Typography>
+                                            </Box>
+                                        );
+                                    }
+                                    if (value === 'running') {
+                                        return (
+                                            <Box display="flex" alignItems="center" gap={1.5}>
+                                                <PlayCircleOutlineIcon sx={{ fontSize: '20px', color: '#28a745' }} />
+                                                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: '#000000' }}>Running</Typography>
+                                            </Box>
+                                        );
+                                    }
+                                    if (value === 'stopped') {
+                                        return (
+                                            <Box display="flex" alignItems="center" gap={1.5}>
+                                                <StopCircleOutlinedIcon sx={{ fontSize: '20px', color: '#dc3545' }} />
+                                                <Typography sx={{ fontSize: '15px', fontWeight: 500, color: '#000000' }}>Stopped</Typography>
+                                            </Box>
+                                        );
+                                    }
+                                    return null;
+                                }}
+                                sx={{
+                                    width: '100%',
+                                    color: '#000000',
+                                    '& .MuiSelect-select': {
+                                        padding: 0,
+                                        paddingRight: '32px !important',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        '&:focus': {
+                                            backgroundColor: 'transparent',
+                                        }
+                                    },
+                                    '& .MuiSelect-icon': {
+                                        color: '#6c757d',
+                                        right: 0,
+                                    }
+                                }}
+                                MenuProps={{
+                                    PaperProps: {
                                         sx: {
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '10px',
-                                                bgcolor: '#ffffff',
+                                            bgcolor: '#ffffff',
+                                            border: '1px solid #e9ecef',
+                                            borderRadius: '12px',
+                                            mt: 1,
+                                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+                                            '& .MuiList-root': {
+                                                padding: '8px',
+                                            },
+                                            '& .MuiMenuItem-root': {
+                                                color: '#000000',
+                                                fontSize: '15px',
+                                                padding: '12px 16px',
+                                                borderRadius: '8px',
+                                                '&:hover': {
+                                                    bgcolor: 'rgba(0, 115, 187, 0.1)',
+                                                },
+                                                '&.Mui-selected': {
+                                                    bgcolor: 'rgba(0, 115, 187, 0.15)',
+                                                    '&:hover': {
+                                                        bgcolor: 'rgba(0, 115, 187, 0.2)',
+                                                    }
+                                                }
                                             }
                                         }
                                     }
                                 }}
-                            />
-                        </LocalizationProvider>
+                            >
+                                <MenuItem value="all">
+                                    <Box display="flex" alignItems="center" gap={1.5}>
+                                        <ComputerIcon sx={{ fontSize: '20px', color: '#0073bb' }} />
+                                        <Typography sx={{ fontSize: '15px' }}>All Instances</Typography>
+                                    </Box>
+                                </MenuItem>
+                                <MenuItem value="running">
+                                    <Box display="flex" alignItems="center" gap={1.5}>
+                                        <PlayCircleOutlineIcon sx={{ fontSize: '20px', color: '#28a745' }} />
+                                        <Typography sx={{ fontSize: '15px' }}>Running</Typography>
+                                    </Box>
+                                </MenuItem>
+                                <MenuItem value="stopped">
+                                    <Box display="flex" alignItems="center" gap={1.5}>
+                                        <StopCircleOutlinedIcon sx={{ fontSize: '20px', color: '#dc3545' }} />
+                                        <Typography sx={{ fontSize: '15px' }}>Stopped</Typography>
+                                    </Box>
+                                </MenuItem>
+                            </Select>
+                        </Box>
                     </Grid>
 
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Box display="flex" gap={1}>
+                    {/* Date Picker */}
+                    <Grid item xs={12} sm={6} md={2}>
+                        <input
+                            type="date"
+                            value={startDate ? moment(startDate).format('YYYY-MM-DD') : ''}
+                            onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
+                            max={moment(new Date()).format('YYYY-MM-DD')}
+                            style={{
+                                width: '100%',
+                                height: '56px',
+                                padding: '14px 16px',
+                                borderRadius: '12px',
+                                border: '2px solid #e9ecef',
+                                background: '#ffffff',
+                                color: '#000000',
+                                fontSize: '15px',
+                                fontFamily: 'inherit',
+                                outline: 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#0073bb';
+                                e.target.style.boxShadow = '0 0 0 4px rgba(0, 115, 187, 0.2)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = '#e9ecef';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                            onMouseEnter={(e) => {
+                                if (document.activeElement !== e.target) {
+                                    e.target.style.borderColor = '#0073bb';
+                                    e.target.style.boxShadow = '0 0 0 3px rgba(0, 115, 187, 0.1)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (document.activeElement !== e.target) {
+                                    e.target.style.borderColor = '#e9ecef';
+                                    e.target.style.boxShadow = 'none';
+                                }
+                            }}
+                        />
+                    </Grid>
+
+                    {/* Global Search Button */}
+                    <Grid item xs={12}>
+                        <Box display="flex" gap={2} alignItems="center">
                             <MuiButton
-                                fullWidth
                                 variant="contained"
                                 disabled={!globalIP}
                                 onClick={handleGlobalSearch}
                                 startIcon={<PublicIcon />}
                                 sx={{
-                                    borderRadius: '10px',
+                                    borderRadius: '12px',
                                     textTransform: 'none',
                                     fontWeight: 600,
-                                    py: 0.75,
+                                    px: 3,
+                                    py: 1.5,
+                                    fontSize: '15px',
                                     background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
-                                    boxShadow: '0 2px 8px rgba(0, 115, 187, 0.3)',
+                                    boxShadow: '0 4px 12px rgba(0, 115, 187, 0.3)',
                                     '&:hover': {
                                         background: 'linear-gradient(135deg, #005a92 0%, #0073bb 100%)',
-                                        boxShadow: '0 4px 12px rgba(0, 115, 187, 0.4)',
+                                        boxShadow: '0 6px 16px rgba(0, 115, 187, 0.4)',
+                                        transform: 'translateY(-2px)',
                                     },
                                     '&:disabled': {
                                         background: '#e0e0e0',
-                                    }
+                                        color: '#adb5bd',
+                                    },
+                                    transition: 'all 0.3s ease',
                                 }}
                             >
-                                Global Search
+                                Global Search by IP
                             </MuiButton>
-                            {(input || chips.length > 0) && (
+
+                            {(input || chips.length > 0 || statusFilter !== "all") && (
                                 <MuiButton
                                     variant="outlined"
-                                    onClick={handleClear}
+                                    onClick={() => {
+                                        setInput("");
+                                        setChips([]);
+                                        setStatusFilter("all");
+                                        setIsGlobal(false);
+                                        setDisplayData(instanceData);
+                                    }}
                                     sx={{
-                                        borderRadius: '10px',
+                                        borderRadius: '12px',
                                         textTransform: 'none',
+                                        fontWeight: 600,
+                                        px: 3,
+                                        py: 1.5,
+                                        fontSize: '15px',
                                         borderColor: '#dc3545',
                                         color: '#dc3545',
+                                        borderWidth: '2px',
                                         '&:hover': {
                                             borderColor: '#c82333',
+                                            borderWidth: '2px',
                                             bgcolor: '#fff5f5',
-                                        }
+                                            transform: 'translateY(-2px)',
+                                            boxShadow: '0 4px 12px rgba(220, 53, 69, 0.3)',
+                                        },
+                                        transition: 'all 0.3s ease',
                                     }}
                                 >
-                                    Clear
+                                    Clear All Filters
                                 </MuiButton>
                             )}
                         </Box>

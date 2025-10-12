@@ -6,9 +6,7 @@ import { AdminService } from '../services/admin.service';
 import { useContext, useEffect, useState } from 'react';
 import AsyncSelect from 'react-select/async';
 import { SelectedRegionContext } from '../context/context';
-import { ThemeContext } from '../context/ThemeContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaMoon, FaSun } from 'react-icons/fa';
 import LogoImage from "../../assets/IFF.png"
 
 interface ITopBar {
@@ -21,7 +19,6 @@ export default function TopBar({ menuData }: ITopBar) {
   const location = useLocation();
 
   const { selectedRegion, setSelectedRegion }: any = useContext(SelectedRegionContext);
-  const { isDarkMode, toggleTheme } = useContext(ThemeContext);
 
   const [keysData, setKeysData] = useState<any>();
 
@@ -94,17 +91,6 @@ export default function TopBar({ menuData }: ITopBar) {
               }}
             />
           </div>
-
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle-btn"
-            aria-label="Toggle theme"
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            style={{ flexShrink: 0 }}
-          >
-            {isDarkMode ? <FaSun size={18} /> : <FaMoon size={18} />}
-          </button>
         </div>
       </div>
     </>
