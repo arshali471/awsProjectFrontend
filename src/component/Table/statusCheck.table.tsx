@@ -4,6 +4,8 @@ import Paper from '@mui/material/Paper';
 import { Button, Box, CircularProgress } from '@mui/material';
 import { saveAs } from 'file-saver';
 import { Spinner } from 'react-bootstrap';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 interface IStatusCheckTable {
     tableData: any[];
@@ -124,7 +126,35 @@ export default function StatusCheckTable({ tableData, loading, fetchData }: ISta
             <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} p={2}>
                 <Button
                     variant="contained"
+                    onClick={fetchData}
+                    disabled={loading}
+                    startIcon={<RefreshIcon />}
+                    sx={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        fontWeight: 500,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #5568d3 0%, #6a3f92 100%)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                        },
+                        '&:disabled': {
+                            background: 'rgba(0, 0, 0, 0.12)',
+                            color: 'rgba(0, 0, 0, 0.26)',
+                        },
+                        transition: 'all 0.3s ease'
+                    }}
+                >
+                    {loading ? 'Fetching...' : 'Fetch Agent Status'}
+                </Button>
+                <Button
+                    variant="contained"
                     onClick={handleExport}
+                    startIcon={<FileDownloadIcon />}
                     sx={{
                         background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
                         color: 'white',

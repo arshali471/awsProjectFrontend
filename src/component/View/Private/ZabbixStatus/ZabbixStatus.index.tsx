@@ -2,12 +2,12 @@ import { useContext, useState, useEffect, useMemo } from 'react';
 import { LoadingContext, SelectedRegionContext } from '../../../context/context';
 import { AdminService } from '../../../services/admin.service';
 import Select from 'react-select';
-import { Form, Col, Row } from 'react-bootstrap';
+import { Form, Col, Row, Button } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import DatePicker from "react-datepicker";
 import StatusCheckTable from '../../../Table/statusCheck.table';
 import { FaServer, FaCheckCircle, FaTimesCircle, FaSearch } from "react-icons/fa";
-import { MdCloudQueue } from "react-icons/md";
+import { MdCloudQueue, MdRefresh } from "react-icons/md";
 import "../SharedPage.css";
 
 export default function ZabbixStatusIndex() {
@@ -220,24 +220,23 @@ export default function ZabbixStatusIndex() {
                 maxDate={new Date()}
                 isClearable
                 placeholderText="Select date range"
-                style={{ borderRadius: '8px' }}
               />
             </Form.Group>
           </Col>
         </Row>
+      </div>
 
-        {/* Search Bar */}
-        <div className="action-bar-left" style={{ width: '100%' }}>
-          <div className="search-box">
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search by name, ID, IP, status, version..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </div>
+      {/* Search Bar */}
+      <div className="action-bar" style={{ marginTop: '1rem' }}>
+        <div className="search-box">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search by name, ID, IP, status, version..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
         </div>
       </div>
 
