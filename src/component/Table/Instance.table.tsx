@@ -437,7 +437,12 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
         },
         { field: 'instanceName', headerName: 'Instance Name', width: 200 },
         { field: 'instanceId', headerName: 'Instance ID', width: 200 },
-        { field: "publicIp", headerName: 'Public IP', width: 150 },
+        {
+            field: "publicIp",
+            headerName: 'Public IP',
+            width: 150,
+            renderCell: (params) => params.value || 'N/A'
+        },
         { field: 'privateIp', headerName: 'Private IP', width: 150 },
         { field: 'instanceType', headerName: 'Instance Type', width: 150 },
         { field: 'imageId', headerName: 'Image ID', width: 200 },
@@ -480,7 +485,7 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
         keyName: data?.KeyName,
         launchTime: moment(data?.LaunchTime).format("DD MMM YYYY hh:mm A"),
         privateIp: data?.PrivateIpAddress,
-        publicIp: data?.PublicIpAddress || "N/A",
+        publicIp: data?.PublicIpAddress || null, // Keep null for fallback to privateIp
         platformDetails: data?.PlatformDetails,
         subnetId: data?.SubnetId,
         vpcId: data?.VpcId,

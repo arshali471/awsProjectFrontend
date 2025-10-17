@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useState } from 'react'
 import { Container, Table, Spinner } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom';

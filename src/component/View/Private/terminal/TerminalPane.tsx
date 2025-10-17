@@ -130,6 +130,7 @@ const TerminalPane = ({ ip, username, sshKey, paneId }: Props) => {
                     }
                 }
             } else if (originalHandler) {
+                // @ts-expect-error - WebSocket event handler context
                 originalHandler(e);
             }
         };

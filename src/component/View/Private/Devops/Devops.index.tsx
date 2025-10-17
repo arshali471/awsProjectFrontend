@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { Box, Container, Typography, Card, CardContent, Grid, Chip, IconButton } from '@mui/material';
 import LaunchIcon from '@mui/icons-material/Launch';

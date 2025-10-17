@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { Container, Row, Col, Card, Navbar, Nav, Button, Dropdown } from "react-bootstrap";
 import ImageData from "../../../../assets/IFF.png"

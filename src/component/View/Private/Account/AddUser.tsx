@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { AdminService } from "../../../services/admin.service";

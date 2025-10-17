@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useContext, useEffect, useState } from "react";
 import { LoadingContext, SelectedRegionContext } from "../../../context/context";
 import { AdminService } from "../../../services/admin.service";

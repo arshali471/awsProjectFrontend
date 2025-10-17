@@ -329,14 +329,16 @@ export default function ConnectModal({ instance, onClose }) {
                             <Divider />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                                    IP Address
+                                    {instance.publicIp ? 'Public IP' : 'Private IP'}
                                 </Typography>
                                 <Chip
-                                    label={instance.publicIp || instance.privateIp}
+                                    label={instance.publicIp || instance.privateIp || 'N/A'}
                                     size="small"
                                     sx={{
                                         fontWeight: 600,
-                                        background: 'linear-gradient(135deg, #0073bb 0%, #005a94 100%)',
+                                        background: instance.publicIp
+                                            ? 'linear-gradient(135deg, #0073bb 0%, #005a94 100%)'
+                                            : 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
                                         color: 'white',
                                     }}
                                 />
