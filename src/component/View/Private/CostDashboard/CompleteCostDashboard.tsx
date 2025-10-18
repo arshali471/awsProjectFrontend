@@ -29,6 +29,7 @@ import {
   TableHead,
   TableRow,
   TablePagination,
+  Button,
 } from "@mui/material";
 import {
   PieChart,
@@ -97,6 +98,9 @@ export default function CompleteCostDashboard() {
   const [comparisonData, setComparisonData] = useState<any>(null);
   const [topServicesData, setTopServicesData] = useState<any>(null);
   const [dateRange, setDateRange] = useState<DateRangeOption>("30");
+  const [useCustomRange, setUseCustomRange] = useState(false);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
@@ -109,12 +113,40 @@ export default function CompleteCostDashboard() {
   const fetchAllData = async (showLoader: boolean = true) => {
     if (!selectedRegion?.value) return;
 
+    // Validate custom date range if selected
+    if (useCustomRange) {
+      if (!startDate || !endDate) {
+        toast.error("Please select both start and end dates");
+        return;
+      }
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (end <= start) {
+        toast.error("End date must be after start date");
+        return;
+      }
+
+      if (end > new Date()) {
+        toast.error("End date cannot be in the future");
+        return;
+      }
+    }
+
     if (showLoader) setLoading(true);
     setRefreshing(true);
     setError(null);
 
     try {
-      const days = parseInt(dateRange);
+      let days = parseInt(dateRange);
+
+      // Calculate days from custom date range
+      if (useCustomRange && startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      }
 
       // Fetch all data in parallel
       const [dashRes, compRes, topRes] = await Promise.all([
@@ -155,7 +187,7 @@ export default function CompleteCostDashboard() {
   };
 
   useEffect(() => {
-    if (selectedRegion?.value) {
+    if (selectedRegion?.value && !useCustomRange) {
       fetchAllData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -422,7 +454,7 @@ export default function CompleteCostDashboard() {
             </Box>
           </Box>
 
-          <Box display="flex" gap={2} alignItems="center">
+          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
             <FormControl
               size="small"
               sx={{
@@ -435,16 +467,87 @@ export default function CompleteCostDashboard() {
             >
               <InputLabel>Date Range</InputLabel>
               <Select
-                value={dateRange}
+                value={useCustomRange ? "custom" : dateRange}
                 label="Date Range"
-                onChange={(e) => setDateRange(e.target.value as DateRangeOption)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "custom") {
+                    setUseCustomRange(true);
+                  } else {
+                    setUseCustomRange(false);
+                    setDateRange(value as DateRangeOption);
+                  }
+                }}
               >
                 <MenuItem value="7">Last 7 Days</MenuItem>
-                <MenuItem value="30">Last 30 Days</MenuItem>
-                <MenuItem value="60">Last 60 Days</MenuItem>
-                <MenuItem value="90">Last 90 Days</MenuItem>
+                <MenuItem value="30">Last 30 Days (This Month)</MenuItem>
+                <MenuItem value="60">Last 60 Days (2 Months)</MenuItem>
+                <MenuItem value="90">Last 90 Days (3 Months)</MenuItem>
+                <MenuItem value="120">Last 120 Days (4 Months)</MenuItem>
+                <MenuItem value="180">Last 180 Days (6 Months)</MenuItem>
+                <MenuItem value="365">Last 365 Days (1 Year)</MenuItem>
+                <MenuItem value="custom">Custom Date Range</MenuItem>
               </Select>
             </FormControl>
+
+            {useCustomRange && (
+              <>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  max={endDate || new Date().toISOString().split('T')[0]}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "12px",
+                    border: "1px solid var(--border-color)",
+                    fontSize: "14px",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+                <Typography sx={{ color: "var(--text-secondary)", fontWeight: 500 }}>to</Typography>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate}
+                  max={new Date().toISOString().split('T')[0]}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "12px",
+                    border: "1px solid var(--border-color)",
+                    fontSize: "14px",
+                    backgroundColor: "var(--bg-primary)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={() => fetchAllData()}
+                  disabled={!startDate || !endDate || refreshing}
+                  sx={{
+                    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                    color: "white",
+                    borderRadius: "12px",
+                    px: 3,
+                    fontWeight: 600,
+                    textTransform: "none",
+                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+                    "&:hover": {
+                      background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                      boxShadow: "0 6px 16px rgba(16, 185, 129, 0.4)",
+                    },
+                    "&:disabled": {
+                      background: "#ccc",
+                      color: "#666",
+                    },
+                  }}
+                >
+                  Apply
+                </Button>
+              </>
+            )}
 
             <IconButton
               onClick={() => fetchAllData(false)}
