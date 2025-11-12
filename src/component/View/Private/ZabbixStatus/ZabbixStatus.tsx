@@ -353,29 +353,6 @@ export default function ZabbixStatus() {
             placeholderText="Select date range (optional)"
             popperClassName="date-picker-popper"
             popperPlacement="bottom-start"
-            popperModifiers={[
-              {
-                name: 'offset',
-                options: {
-                  offset: [0, 8],
-                },
-              },
-              {
-                name: 'preventOverflow',
-                options: {
-                  rootBoundary: 'viewport',
-                  tether: false,
-                  altAxis: true,
-                },
-              },
-            ]}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid var(--border-color)',
-              fontSize: '14px',
-              minWidth: '250px'
-            }}
           />
           <small style={{ color: 'var(--text-secondary)', fontSize: '12px', marginLeft: '0.5rem' }}>
             Leave empty for latest data

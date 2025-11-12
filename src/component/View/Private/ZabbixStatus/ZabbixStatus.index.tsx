@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import StatusCheckTable from '../../../Table/statusCheck.table';
 import { FaServer, FaCheckCircle, FaTimesCircle, FaSearch, FaShieldAlt } from "react-icons/fa";
 import { MdCloudQueue, MdSecurity } from "react-icons/md";
-import { SiCrowdstrike } from "react-icons/si";
 import "../SharedPage.css";
 
 export default function ZabbixStatusIndex() {
@@ -180,7 +179,7 @@ export default function ZabbixStatusIndex() {
             <div className="stat-card-header">
               <span className="stat-card-title">CrowdStrike</span>
               <div className="stat-card-icon" style={{ color: '#e84545' }}>
-                <SiCrowdstrike />
+                <FaShieldAlt />
               </div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
