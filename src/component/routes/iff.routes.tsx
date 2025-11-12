@@ -19,6 +19,10 @@ import IffDashboard from "../View/Private/IffDashboard/IffDashboard"
 import ZabbixStatus from "../View/Private/ZabbixStatus/ZabbixStatus"
 import CompleteCostDashboard from "../View/Private/CostDashboard/CompleteCostDashboard"
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"
+import EC2AllRegionsIndex from "../View/Private/EC2AllRegions/EC2AllRegions.index"
+import CloudIcon from "@mui/icons-material/Cloud"
+import EKSInstancesIndex from "../View/Private/EKSInstances/EKSInstances.index"
+import DnsIcon from "@mui/icons-material/Dns"
 
 export default interface IIFFRouter {
     path: string
@@ -57,6 +61,20 @@ export const iffRoutes: IIFFRouter[] = [
                 element: <Dashboard />,
                 name: "EC2",
                 icon: SiAmazonec2
+            },
+            {
+                path: "ec2-all-regions",
+                navbarShow: true,
+                element: <EC2AllRegionsIndex />,
+                name: "EC2 - All Regions",
+                icon: CloudIcon
+            },
+            {
+                path: "eks-instances",
+                navbarShow: true,
+                element: <EKSInstancesIndex />,
+                name: "EKS EC2 Instances",
+                icon: DnsIcon
             },
             {
                 path: "Volumes",

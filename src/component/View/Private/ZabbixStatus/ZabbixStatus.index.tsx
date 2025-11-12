@@ -1,13 +1,11 @@
-import { useContext, useState, useEffect, useMemo } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { LoadingContext, SelectedRegionContext } from '../../../context/context';
 import { AdminService } from '../../../services/admin.service';
-import Select from 'react-select';
-import { Form, Col, Row, Button } from 'react-bootstrap';
 import toast from 'react-hot-toast';
-import DatePicker from "react-datepicker";
 import StatusCheckTable from '../../../Table/statusCheck.table';
-import { FaServer, FaCheckCircle, FaTimesCircle, FaSearch } from "react-icons/fa";
-import { MdCloudQueue, MdRefresh } from "react-icons/md";
+import { FaServer, FaCheckCircle, FaTimesCircle, FaSearch, FaShieldAlt } from "react-icons/fa";
+import { MdCloudQueue, MdSecurity } from "react-icons/md";
+import { SiCrowdstrike } from "react-icons/si";
 import "../SharedPage.css";
 
 export default function ZabbixStatusIndex() {
@@ -17,35 +15,17 @@ export default function ZabbixStatusIndex() {
   const [statusData, setStatusData] = useState<any[]>([]);
   const [searchText, setSearchText] = useState<string>('');
   const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [dateRange, setDateRange] = useState<any>([null, null]);
-  const [sshUsername, setSshUsername] = useState<string>('');
-  const [operatingSystem, setOperatingSystem] = useState<string>('');
-  const [sshKeyPath, setSshKeyPath] = useState<any>(null);
-  const [sshKeys, setSshKeys] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
 
-  const [startDate, endDate] = dateRange;
-
+  // Auto-fetch data when region changes
   useEffect(() => {
-    const getAllSshKey = async () => {
-      try {
-        const res = await AdminService.getSshKey("", 1, 999);
-        if (res.status === 200) {
-          setSshKeys(
-            res.data.data.map((data: any) => ({
-              label: data?.sshKeyName,
-              value: data?._id,
-            }))
-          );
-        }
-      } catch (error) {
-        console.error('Error fetching SSH keys:', error);
-      }
-    };
+    if (selectedRegion?.value) {
+      fetchAgentStatusDashboard();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRegion?.value]);
 
-    getAllSshKey();
-  }, []);
-
-  const handleSubmit = async () => {
+  const fetchAgentStatusDashboard = async () => {
     if (!selectedRegion?.value) {
       toast.error("Please select a region first.");
       return;
@@ -53,21 +33,19 @@ export default function ZabbixStatusIndex() {
 
     setLoading(true);
     try {
-      const res = await AdminService.getZabbixStatus(
-        selectedRegion.value,
-        sshUsername,
-        sshKeyPath?.value,
-        operatingSystem,
-        startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
-        endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined
-      );
+      const res = await AdminService.getAgentStatusDashboard(selectedRegion.value);
 
-      if (res.status === 200) {
-        setStatusData(res.data?.results || []);
-        setFilteredData(res.data?.results || []);
+      if (res.status === 200 && res.data.success) {
+        const { stats, records } = res.data.data;
+        setDashboardStats(stats);
+        setStatusData(records || []);
+        setFilteredData(records || []);
+        toast.success(`Loaded ${records.length} agent status records`);
+      } else {
+        toast.error(res.data.message || "Failed to fetch agent status");
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Something went wrong");
+      toast.error(err?.response?.data?.message || "Error fetching agent status");
       console.error(err);
     } finally {
       setLoading(false);
@@ -102,11 +80,6 @@ export default function ZabbixStatusIndex() {
     setFilteredData(filtered);
   }, [searchText, statusData]);
 
-  // Calculate stats
-  const totalInstances = filteredData.length;
-  const activeCount = filteredData.filter((item: any) => item?.state?.toLowerCase() === 'running').length;
-  const inactiveCount = totalInstances - activeCount;
-
   return (
     <div className="page-wrapper">
       {/* Page Header */}
@@ -115,40 +88,50 @@ export default function ZabbixStatusIndex() {
           <div className="page-title-icon">
             <FaServer />
           </div>
-          Agent Status Inventory
+          Agent Status Dashboard
         </h1>
-        <p className="page-subtitle">Check and monitor agent status across EC2 instances</p>
+        <p className="page-subtitle">Live monitoring of security agents across all EC2 instances</p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Main Stats Cards - Total Servers */}
       <div className="stats-container">
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Total Checked</span>
+            <span className="stat-card-title">Total Servers</span>
             <div className="stat-card-icon">
-              <MdCloudQueue />
+              <FaServer />
             </div>
           </div>
-          <h2 className="stat-card-value">{totalInstances}</h2>
+          <h2 className="stat-card-value">{dashboardStats?.totalServers || 0}</h2>
+          <p className="stat-card-subtitle">Monitored instances</p>
         </div>
+
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Active</span>
+            <span className="stat-card-title">Running Instances</span>
             <div className="stat-card-icon" style={{ color: '#28a745' }}>
               <FaCheckCircle />
             </div>
           </div>
-          <h2 className="stat-card-value" style={{ color: '#28a745' }}>{activeCount}</h2>
+          <h2 className="stat-card-value" style={{ color: '#28a745' }}>
+            {dashboardStats?.byState?.running || 0}
+          </h2>
+          <p className="stat-card-subtitle">Active EC2 instances</p>
         </div>
+
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Inactive</span>
+            <span className="stat-card-title">Stopped Instances</span>
             <div className="stat-card-icon" style={{ color: '#dc3545' }}>
               <FaTimesCircle />
             </div>
           </div>
-          <h2 className="stat-card-value" style={{ color: '#dc3545' }}>{inactiveCount}</h2>
+          <h2 className="stat-card-value" style={{ color: '#dc3545' }}>
+            {dashboardStats?.byState?.stopped || 0}
+          </h2>
+          <p className="stat-card-subtitle">Inactive instances</p>
         </div>
+
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Filtered Results</span>
@@ -157,83 +140,126 @@ export default function ZabbixStatusIndex() {
             </div>
           </div>
           <h2 className="stat-card-value">{filteredData.length}</h2>
+          <p className="stat-card-subtitle">Current view</p>
         </div>
       </div>
 
-      {/* Filters Section */}
-      <div className="action-bar" style={{ flexDirection: 'column', gap: '1rem' }}>
-        <Row>
-          <Col md={3}>
-            <Form.Group>
-              <Form.Label style={{ fontWeight: 500, color: 'var(--text-primary)' }}>SSH Username</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter SSH username"
-                value={sshUsername}
-                onChange={(e) => setSshUsername(e.target.value)}
-                style={{ borderRadius: '8px' }}
-              />
-            </Form.Group>
-          </Col>
+      {/* Agent Stats Cards */}
+      <div style={{ marginTop: '2rem' }}>
+        <h3 style={{ color: 'var(--text-primary)', marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 600 }}>
+          Security Agents Status
+        </h3>
+        <div className="stats-container">
+          {/* Zabbix Agent */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">Zabbix Agent</span>
+              <div className="stat-card-icon" style={{ color: '#d32f2f' }}>
+                <MdCloudQueue />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.zabbixAgent?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.zabbixAgent?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
 
-          <Col md={3}>
-            <Form.Group>
-              <Form.Label style={{ fontWeight: 500, color: 'var(--text-primary)' }}>Operating System</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="e.g., ubuntu, rhel"
-                value={operatingSystem}
-                onChange={(e) => setOperatingSystem(e.target.value)}
-                style={{ borderRadius: '8px' }}
-              />
-            </Form.Group>
-          </Col>
+          {/* CrowdStrike */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">CrowdStrike</span>
+              <div className="stat-card-icon" style={{ color: '#e84545' }}>
+                <SiCrowdstrike />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.crowdStrike?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.crowdStrike?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
 
-          <Col md={3}>
-            <Form.Group>
-              <Form.Label style={{ fontWeight: 500, color: 'var(--text-primary)' }}>SSH Key</Form.Label>
-              <Select
-                options={sshKeys}
-                placeholder="Select SSH Key"
-                isClearable
-                isSearchable
-                value={sshKeyPath}
-                onChange={(selectedOption) => setSshKeyPath(selectedOption)}
-              />
-            </Form.Group>
-          </Col>
+          {/* Qualys */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">Qualys</span>
+              <div className="stat-card-icon" style={{ color: '#ff6b35' }}>
+                <FaShieldAlt />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.qualys?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.qualys?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
 
-          <Col md={3}>
-            <Form.Group>
-              <Form.Label style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
-                Date Range
-                <small style={{ color: '#dc3545', fontSize: '11px', marginLeft: '4px' }}>
-                  (Clear for live data)
-                </small>
-              </Form.Label>
-              <DatePicker
-                selectsRange
-                startDate={startDate}
-                endDate={endDate}
-                onChange={(update) => setDateRange(update)}
-                className="form-control"
-                maxDate={new Date()}
-                isClearable
-                placeholderText="Select date range"
-              />
-            </Form.Group>
-          </Col>
-        </Row>
+          {/* CloudWatch */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">CloudWatch</span>
+              <div className="stat-card-icon" style={{ color: '#ff9900' }}>
+                <MdSecurity />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.cloudWatch?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.cloudWatch?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Search Bar */}
-      <div className="action-bar" style={{ marginTop: '1rem' }}>
+      <div className="action-bar" style={{ marginTop: '2rem' }}>
         <div className="search-box">
           <FaSearch className="search-icon" />
           <input
             type="text"
             className="search-input"
-            placeholder="Search by name, ID, IP, status, version..."
+            placeholder="Search by name, ID, IP, status, version, OS..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
@@ -245,7 +271,7 @@ export default function ZabbixStatusIndex() {
         <StatusCheckTable
           tableData={filteredData}
           loading={loading}
-          fetchData={handleSubmit}
+          fetchData={fetchAgentStatusDashboard}
         />
       </div>
     </div>

@@ -19,6 +19,10 @@ const url = {
         getAllInstance: "/aws/getAllInstance",
         getAllVolumesData: "/aws/getVolumes",
         getGlobalInstance: "/aws/getInstanceDetailsByGlobalSearch",
+        getAllInstancesFromAllRegions: "/aws/getAllInstancesFromAllRegions",
+        exportAllInstancesToExcel: "/aws/exportAllInstancesToExcel",
+        getAllEKSEC2InstancesFromAllRegions: "/aws/getAllEKSEC2InstancesFromAllRegions",
+        exportAllEKSInstancesToExcel: "/aws/exportAllEKSInstancesToExcel",
     },
 
     eksToken: {
@@ -30,6 +34,7 @@ const url = {
         addSshKey: "/aws/addSshKey",
         getSshKey: "/aws/getSshKey",
         deleteSshKey: "/aws/deleteSshKey",
+        getAgentStatusDashboard: "/aws/getAgentStatusDashboard",
         getZabbixStatus:"/aws/getZabbixStatus",
         getClusterName: "/aws/getEksClusterName",
     },

@@ -21,7 +21,7 @@ export default function DevopsIndex() {
 
     const apps = [
         {
-            url: "https://jenkins-prod.iff.com",
+            url: "https://jenkins-ca-prod.global.iff.com",
             name: "Jenkins Production",
             icon: JenkinsImage,
             description: "CI/CD Pipeline",

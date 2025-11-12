@@ -156,6 +156,21 @@ export class AdminService {
         return await makeRequest(url.eksToken.getSshKey + params, RequestMethods.GET)
     }
 
+    // NEW: Get agent status dashboard with stats (supports optional date range)
+    static async getAgentStatusDashboard(keyId: any, startDate?: any, endDate?: any) {
+        const params = makeParams([
+            {
+                index: "startDate",
+                value: startDate
+            },
+            {
+                index: "endDate",
+                value: endDate
+            },
+        ])
+        return await makeRequest(url.eksToken.getAgentStatusDashboard + "/" + keyId + params, RequestMethods.GET)
+    }
+
     static async getZabbixStatus(keyId: any, sshUsername: any, sshKeyPath: any,operatingSystem: any, startDate:any, endDate: any ) {
         const params = makeParams([
             {
@@ -264,6 +279,76 @@ export class AdminService {
             }
         ])
         return await makeRequest(url.cost.getTopServices + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    // NEW: EC2 All Regions Methods
+    static async getAllInstancesFromAllRegions() {
+        return await makeRequest(url.instance.getAllInstancesFromAllRegions, RequestMethods.GET)
+    }
+
+    static async exportAllInstancesToExcel() {
+        const response = await fetch(
+            (import.meta.env.VITE_REACT_APP_API_URL || '') +
+            (import.meta.env.VITE_REACT_APP_API_VER || '') +
+            url.instance.exportAllInstancesToExcel,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': sessionStorage.getItem('authKey') || '',
+                },
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Failed to export instances');
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `EC2_Instances_All_Regions_${moment().format('YYYY-MM-DD_HHmmss')}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+        return { success: true, message: 'Export successful' };
+    }
+
+    // NEW: EKS EC2 Instances Methods
+    static async getAllEKSEC2InstancesFromAllRegions() {
+        return await makeRequest(url.instance.getAllEKSEC2InstancesFromAllRegions, RequestMethods.GET)
+    }
+
+    static async exportAllEKSInstancesToExcel() {
+        const response = await fetch(
+            (import.meta.env.VITE_REACT_APP_API_URL || '') +
+            (import.meta.env.VITE_REACT_APP_API_VER || '') +
+            url.instance.exportAllEKSInstancesToExcel,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': sessionStorage.getItem('authKey') || '',
+                },
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Failed to export EKS instances');
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `EKS_EC2_Instances_${moment().format('YYYY-MM-DD_HHmmss')}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+        return { success: true, message: 'Export successful' };
     }
 
 }

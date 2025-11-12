@@ -1,20 +1,88 @@
-import { useContext, useState, useEffect, useMemo } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { LoadingContext, SelectedRegionContext } from '../../../context/context';
 import { AdminService } from '../../../services/admin.service';
-import Select from 'react-select';
-import {
-  Container,
-  Row,
-  Col,
-  Form,
-  Button,
-  InputGroup,
-} from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import StatusCheckTable from '../../../Table/statusCheck.table';
-import { Box, Typography } from '@mui/material';
-import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
+import { FaServer, FaCheckCircle, FaTimesCircle, FaSearch, FaShieldAlt, FaBug, FaCalendarAlt } from "react-icons/fa";
+import { MdCloudQueue, MdSecurity } from "react-icons/md";
+import "../SharedPage.css";
+
+// Custom styles for date picker
+const datePickerStyles = `
+  .react-datepicker-popper {
+    z-index: 9999 !important;
+  }
+  .react-datepicker {
+    z-index: 9999 !important;
+    font-family: inherit !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  }
+  .date-picker-popper {
+    z-index: 9999 !important;
+  }
+  .react-datepicker__header {
+    background-color: var(--primary-color) !important;
+    border-bottom: none !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 16px 0 !important;
+  }
+  .react-datepicker__current-month {
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+  }
+  .react-datepicker__day-name {
+    color: white !important;
+    font-weight: 500 !important;
+  }
+  .react-datepicker__day {
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    margin: 2px !important;
+  }
+  .react-datepicker__day:hover {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+  }
+  .react-datepicker__day--selected,
+  .react-datepicker__day--in-range,
+  .react-datepicker__day--in-selecting-range {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    font-weight: 600 !important;
+  }
+  .react-datepicker__day--keyboard-selected {
+    background-color: rgba(0, 115, 187, 0.2) !important;
+    color: var(--text-primary) !important;
+  }
+  .react-datepicker__day--disabled {
+    color: #ccc !important;
+    cursor: not-allowed !important;
+  }
+  .react-datepicker__navigation {
+    top: 16px !important;
+  }
+  .react-datepicker__navigation-icon::before {
+    border-color: white !important;
+  }
+  .react-datepicker__triangle {
+    display: none !important;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleTag = document.createElement('style');
+  styleTag.innerHTML = datePickerStyles;
+  if (!document.head.querySelector('style[data-datepicker]')) {
+    styleTag.setAttribute('data-datepicker', 'true');
+    document.head.appendChild(styleTag);
+  }
+}
 
 export default function ZabbixStatus() {
   const { selectedRegion }: any = useContext(SelectedRegionContext);
@@ -22,39 +90,20 @@ export default function ZabbixStatus() {
 
   const [statusData, setStatusData] = useState<any[]>([]);
   const [searchText, setSearchText] = useState<string>('');
-  const [paginatedData, setPaginatedData] = useState<any[]>([]);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [perPage, setPerPage] = useState<number>(10);
-  const [dateRange, setDateRange] = useState([null, null]);
-  const [sshUsername, setSshUsername] = useState<string>('');
-  const [operatingSystem, setOperatingSystem] = useState<string>('');
-  const [sshKeyPath, setSshKeyPath] = useState<any>(null);
-  const [data, setData] = useState<any[]>([]);
-
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [dateRange, setDateRange] = useState<any>([null, null]);
   const [startDate, endDate] = dateRange;
 
+  // Auto-fetch data when region changes
   useEffect(() => {
-    const getAllSshKey = async () => {
-      try {
-        const res = await AdminService.getSshKey("", 1, 999);
-        if (res.status === 200) {
-          setData(
-            res.data.data.map((data: any) => ({
-              label: data?.sshKeyName,
-              value: data?._id,
-            }))
-          );
-        }
-      } catch (error) {
-        console.error('Error fetching SSH keys:', error);
-      }
-    };
+    if (selectedRegion?.value) {
+      fetchAgentStatusDashboard();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRegion?.value]);
 
-    getAllSshKey();
-  }, []);
-
-  const handleSubmit = async () => {
+  const fetchAgentStatusDashboard = async () => {
     if (!selectedRegion?.value) {
       toast.error("Please select a region first.");
       return;
@@ -62,212 +111,298 @@ export default function ZabbixStatus() {
 
     setLoading(true);
     try {
-      const res = await AdminService.getZabbixStatus(
+      const res = await AdminService.getAgentStatusDashboard(
         selectedRegion.value,
-        sshUsername,
-        sshKeyPath?.value,
-        operatingSystem,
         startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
         endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined
       );
 
-      if (res.status === 200) {
-        setStatusData(res.data?.results || []);
-        setCurrentPage(1); // reset to page 1 on new data
+      if (res.status === 200 && res.data.success) {
+        const { stats, records } = res.data.data;
+        setDashboardStats(stats);
+        setStatusData(records || []);
+        setFilteredData(records || []);
+        const dateRangeMsg = startDate && endDate
+          ? ` from ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`
+          : '';
+        toast.success(`Loaded ${records.length} agent status records${dateRangeMsg}`);
+      } else {
+        toast.error(res.data.message || "Failed to fetch agent status");
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Something went wrong");
+      toast.error(err?.response?.data?.message || "Error fetching agent status");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredStatusData = useMemo(() => {
-    const search = searchText.toLowerCase();
-    return statusData?.filter((item: any) => (
-      (
-        item?.instanceName?.toLowerCase().includes(search) ||
-        item?.instanceId?.toLowerCase().includes(search) ||
-        item?.ip?.toLowerCase().includes(search) ||
-        item?.versions?.cloudWatch?.toLowerCase().includes(search) ||
-        item?.versions?.crowdStrike?.toLowerCase().includes(search) ||
-        item?.versions?.qualys?.toLowerCase().includes(search) ||
-        item?.versions?.zabbixAgent?.toLowerCase().includes(search) ||
-        item?.platform?.toLowerCase().includes(search) ||
-        item?.state?.toLowerCase().includes(search)
-      ) ||
-      (
-        item?.os?.toLowerCase() === search ||
-        item?.services?.cloudWatch?.toLowerCase() === search ||
-        item?.services?.crowdStrike?.toLowerCase() === search ||
-        item?.services?.qualys?.toLowerCase() === search ||
-        item?.services?.zabbixAgent?.toLowerCase() === search
-      )
-    ));
-  }, [statusData, searchText]);
-
-  const statusCSVData = useMemo(() =>
-    filteredStatusData?.map((item: any, index: number) => ({
-      "Sr.No": index + 1,
-      "Instance Name": item?.instanceName || "--",
-      "Instance ID": item?.instanceId || "--",
-      "IP": item?.ip || "--",
-      "OS": item?.os || "--",
-      "Cloud Watch Status": item?.services?.cloudWatch || "--",
-      "Crowd Strike Status": item?.services?.crowdStrike || "--",
-      "Qualys Status": item?.services?.qualys || "--",
-      "Zabbix agent Status": item?.services?.zabbixAgent || "--",
-      "Cloud Watch Version": item?.versions?.cloudWatch || "--",
-      "Crowd Strike Version": item?.versions?.crowdStrike || "--",
-      "Qualys Version": item?.versions?.qualys || "--",
-      "Zabbix agent Version": item?.versions?.zabbixAgent || "--",
-      "Platform": item?.platform || "--",
-      "State": item?.state || "--",
-      "Error": item?.error || "--",
-      "Date": item?.createdAt
-        ? new Date(item.createdAt).toLocaleString('en-IN')
-        : "--"
-    })), [filteredStatusData]);
-
+  // Multi-field search
   useEffect(() => {
-    const startIndex = (currentPage - 1) * perPage;
-    const pageData = filteredStatusData.slice(startIndex, startIndex + perPage);
-    setPaginatedData(filteredStatusData);
-    setTotalCount(filteredStatusData.length);
-  }, [filteredStatusData, currentPage, perPage]);
+    if (!searchText.trim()) {
+      setFilteredData(statusData);
+      return;
+    }
+
+    const search = searchText.toLowerCase();
+    const filtered = statusData.filter((item: any) => (
+      item?.instanceName?.toLowerCase().includes(search) ||
+      item?.instanceId?.toLowerCase().includes(search) ||
+      item?.ip?.toLowerCase().includes(search) ||
+      item?.versions?.cloudWatch?.toLowerCase().includes(search) ||
+      item?.versions?.crowdStrike?.toLowerCase().includes(search) ||
+      item?.versions?.qualys?.toLowerCase().includes(search) ||
+      item?.versions?.zabbixAgent?.toLowerCase().includes(search) ||
+      item?.platform?.toLowerCase().includes(search) ||
+      item?.state?.toLowerCase().includes(search) ||
+      item?.os?.toLowerCase().includes(search) ||
+      item?.services?.cloudWatch?.toLowerCase().includes(search) ||
+      item?.services?.crowdStrike?.toLowerCase().includes(search) ||
+      item?.services?.qualys?.toLowerCase().includes(search) ||
+      item?.services?.zabbixAgent?.toLowerCase().includes(search)
+    ));
+
+    setFilteredData(filtered);
+  }, [searchText, statusData]);
 
   return (
-    <>
-      {/* Page Header - Matching Dashboard Style */}
-      <Box sx={{ mb: 3, mt: 3 }}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              boxShadow: '0 4px 16px rgba(0, 115, 187, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 8px 20px rgba(0, 115, 187, 0.4)',
-              }
-            }}
-          >
-            <MonitorHeartIcon sx={{ fontSize: 32 }} />
-          </Box>
-          <Box>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: '#232f3e',
-                letterSpacing: '-0.5px',
-              }}
-            >
-              Agent Status Check
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: '#6c757d',
-                mt: 0.5,
-              }}
-            >
-              Monitor Zabbix, CloudWatch, CrowdStrike, and Qualys agent status
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+    <div className="page-wrapper">
+      {/* Page Header */}
+      <div className="page-header">
+        <h1 className="page-title">
+          <div className="page-title-icon">
+            <FaServer />
+          </div>
+          Agent Status Dashboard
+        </h1>
+        <p className="page-subtitle">Live monitoring of security agents across all EC2 instances</p>
+      </div>
 
-      <Row className="mt-3">
-        <Col md={3}>
-          <Form.Group className="mb-3">
-            <Form.Label>Search</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Search by name, ID, or IP..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </Form.Group>
-        </Col>
-
-        <Col md={3}>
-          <Form.Group className="mb-3">
-            <Form.Label>SSH Username</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Enter SSH username"
-              value={sshUsername}
-              onChange={(e) => setSshUsername(e.target.value)}
-            />
-          </Form.Group>
-        </Col>
-
-        <Col md={3}>
-          <Form.Group className="mb-3">
-            <Form.Label>Operating System</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Enter operating system"
-              value={operatingSystem}
-              onChange={(e) => setOperatingSystem(e.target.value)}
-            />
-          </Form.Group>
-        </Col>
-
-        <Col md={3}>
-          <Form.Group className="mb-3">
-            <Form.Label>SSH Key</Form.Label>
-            <Select
-              options={data}
-              placeholder="Select SSH Key"
-              isClearable
-              isSearchable
-              value={sshKeyPath}
-              onChange={(selectedOption) => setSshKeyPath(selectedOption)}
-            />
-          </Form.Group>
-        </Col>
-
-        <Col md={6}>
-          <Form.Group className="mb-3">
-            <div className="d-flex align-items-center mb-2">
-              <Form.Label className="mb-0">Start Date - End Date</Form.Label>
-              <small className="text-danger ms-1" style={{ fontSize: '12px' }}>
-                (Note: To fetch live data, clear date filter)
-              </small>
+      {/* Main Stats Cards - Total Servers */}
+      <div className="stats-container">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total Servers</span>
+            <div className="stat-card-icon">
+              <FaServer />
             </div>
-            <InputGroup>
-              <DatePicker
-                selectsRange
-                startDate={startDate}
-                endDate={endDate}
-                onChange={(update) => setDateRange(update)}
-                className="w-100 form-control"
-                maxDate={new Date()}
-                isClearable
-                withPortal
-              />
-            </InputGroup>
-          </Form.Group>
-        </Col>
-      </Row>
+          </div>
+          <h2 className="stat-card-value">{dashboardStats?.totalServers || 0}</h2>
+          <p className="stat-card-subtitle">Monitored instances</p>
+        </div>
 
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Running Instances</span>
+            <div className="stat-card-icon" style={{ color: '#28a745' }}>
+              <FaCheckCircle />
+            </div>
+          </div>
+          <h2 className="stat-card-value" style={{ color: '#28a745' }}>
+            {dashboardStats?.byState?.running || 0}
+          </h2>
+          <p className="stat-card-subtitle">Active EC2 instances</p>
+        </div>
 
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Stopped Instances</span>
+            <div className="stat-card-icon" style={{ color: '#dc3545' }}>
+              <FaTimesCircle />
+            </div>
+          </div>
+          <h2 className="stat-card-value" style={{ color: '#dc3545' }}>
+            {dashboardStats?.byState?.stopped || 0}
+          </h2>
+          <p className="stat-card-subtitle">Inactive instances</p>
+        </div>
 
-      <StatusCheckTable
-        tableData={paginatedData}
-        loading={loading}
-        fetchData={handleSubmit}
-      />
-    </>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Filtered Results</span>
+            <div className="stat-card-icon">
+              <FaSearch />
+            </div>
+          </div>
+          <h2 className="stat-card-value">{filteredData.length}</h2>
+          <p className="stat-card-subtitle">Current view</p>
+        </div>
+      </div>
+
+      {/* Agent Stats Cards */}
+      <div style={{ marginTop: '2rem' }}>
+        <h3 style={{ color: 'var(--text-primary)', marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 600 }}>
+          Security Agents Status
+        </h3>
+        <div className="stats-container">
+          {/* Zabbix Agent */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">Zabbix Agent</span>
+              <div className="stat-card-icon" style={{ color: '#d32f2f' }}>
+                <MdCloudQueue />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.zabbixAgent?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.zabbixAgent?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
+
+          {/* CrowdStrike */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">CrowdStrike</span>
+              <div className="stat-card-icon" style={{ color: '#e84545' }}>
+                <FaBug />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.crowdStrike?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.crowdStrike?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Qualys */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">Qualys</span>
+              <div className="stat-card-icon" style={{ color: '#ff6b35' }}>
+                <FaShieldAlt />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.qualys?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.qualys?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
+
+          {/* CloudWatch */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">CloudWatch</span>
+              <div className="stat-card-icon" style={{ color: '#ff9900' }}>
+                <MdSecurity />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.cloudWatch?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.cloudWatch?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Date Range Filter & Search Bar */}
+      <div className="action-bar" style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', position: 'relative', zIndex: 10 }}>
+        {/* Date Range Picker */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative', zIndex: 100 }}>
+          <FaCalendarAlt style={{ color: 'var(--primary-color)' }} />
+          <DatePicker
+            selectsRange
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(update) => setDateRange(update)}
+            className="form-control"
+            maxDate={new Date()}
+            isClearable
+            placeholderText="Select date range (optional)"
+            popperClassName="date-picker-popper"
+            popperPlacement="bottom-start"
+            popperModifiers={[
+              {
+                name: 'offset',
+                options: {
+                  offset: [0, 8],
+                },
+              },
+              {
+                name: 'preventOverflow',
+                options: {
+                  rootBoundary: 'viewport',
+                  tether: false,
+                  altAxis: true,
+                },
+              },
+            ]}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)',
+              fontSize: '14px',
+              minWidth: '250px'
+            }}
+          />
+          <small style={{ color: 'var(--text-secondary)', fontSize: '12px', marginLeft: '0.5rem' }}>
+            Leave empty for latest data
+          </small>
+        </div>
+
+        {/* Search Box */}
+        <div className="search-box" style={{ flex: 1, minWidth: '300px' }}>
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search by name, ID, IP, status, version, OS..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="table-container">
+        <StatusCheckTable
+          tableData={filteredData}
+          loading={loading}
+          fetchData={fetchAgentStatusDashboard}
+        />
+      </div>
+    </div>
   );
 }
