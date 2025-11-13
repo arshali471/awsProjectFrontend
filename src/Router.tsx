@@ -68,18 +68,6 @@ export default function Router() {
                         <Route index element={<DevopsIndex />} />
                     </Route>
 
-                    <Route
-                        path="/eks"
-                        element={
-                            <PrivateRouter>
-                                <KubernetesIndex />
-                            </PrivateRouter>
-                        }
-
-                    >
-                        <Route index element={<DevopsIndex />} />
-                    </Route>
-
                     {/* AI Chat route */}
                     <Route
                         path="/ai-chat"

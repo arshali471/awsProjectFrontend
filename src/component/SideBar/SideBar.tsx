@@ -140,7 +140,14 @@ export default function SideBar({ menuData }: ISideBar) {
                                                         <Nav.Link
                                                             as="div"
                                                             className={`d-flex align-items-center gap-3 ${isActive(subRoute.path) ? 'active' : 'inactive'}`}
-                                                            onClick={() => navigate(`/${route.path}/${subRoute.path}`)}
+                                                            onClick={() => {
+                                                                if (subRoute.externalLink) {
+                                                                    // Open external link in new tab (both http URLs and internal routes like /eks)
+                                                                    window.open(subRoute.externalLink, '_blank', 'noopener,noreferrer');
+                                                                } else {
+                                                                    navigate(`/${route.path}/${subRoute.path}`);
+                                                                }
+                                                            }}
                                                             style={{
                                                                 justifyContent: 'center',
                                                                 overflow: 'hidden'
@@ -184,7 +191,14 @@ export default function SideBar({ menuData }: ISideBar) {
                                                     <Nav.Link
                                                         as={'div'}
                                                         className={`d-flex align-items-center gap-3 ps-4 ${isActive(subRoute.path) ? 'active' : 'inactive'}`}
-                                                        onClick={() => navigate(`/${route.path}/${subRoute.path}`)}
+                                                        onClick={() => {
+                                                            if (subRoute.externalLink) {
+                                                                // Open external link in new tab (both http URLs and internal routes like /eks)
+                                                                window.open(subRoute.externalLink, '_blank', 'noopener,noreferrer');
+                                                            } else {
+                                                                navigate(`/${route.path}/${subRoute.path}`);
+                                                            }
+                                                        }}
                                                     >
                                                         {subRoute.icon && <subRoute.icon className="sidebar-icon me-3" />}
                                                         <span style={{ fontSize: 12 }}>{subRoute.name}</span>

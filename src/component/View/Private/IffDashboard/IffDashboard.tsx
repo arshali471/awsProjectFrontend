@@ -24,14 +24,14 @@ import "./IffDashboard.css";
 
 const apps = [
   { url: "/platform/agent-status", name: "IFF Inventory", icon: ImageData, isExternal: false, isIconComponent: false },
-  { url: "/eks", name: "EKS Inventory", icon: EksInvImage, isExternal: false, isIconComponent: false },
+  { url: "https://iffcloud-conductor.global.iff.com", name: "EKS Inventory", icon: EksInvImage, isExternal: true, isIconComponent: false },
   { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage, isExternal: true, isIconComponent: false },
   { url: "https://app.powerbi.com/reportEmbed?reportId=df62f352-c99d-45a2-bd91-8c81aab7dff9&autoAuth=true&ctid=a2a9bf31-fc44-425c-a6d2-3ae9379573ea", name: "Report", icon: ReportImage, isExternal: true, isIconComponent: false },
   { url: "/platform/ec2", name: "Ticketing", icon: TicktImage, isExternal: false, isIconComponent: false },
   { url: "https://app.finout.io/app/dashboards/50c3fb57-3fac-4b47-9ad5-8a3fc8e16fc4", name: "Cost", icon: CostImage, isExternal: true, isIconComponent: false },
   { url: "/devops", name: "DevOps", icon: DevopsImage, isExternal: false, isIconComponent: false },
   { url: "/kubebot", name: "Kubebot", icon: Kubebot, isExternal: false, isIconComponent: false },
-  { url: "/ai-chat", name: "AI Cloud Chat", icon: SmartToyIcon, isExternal: false, isIconComponent: true },
+  { url: "/ai-chat", name: "CloudTrail AI Chat", icon: SmartToyIcon, isExternal: false, isIconComponent: true },
   { url: "/ssh-terminal", name: "SSH Terminal", icon: TerminalIcon, isExternal: false, isIconComponent: true },
 ];
 

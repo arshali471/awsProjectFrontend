@@ -23,6 +23,7 @@ import EC2AllRegionsIndex from "../View/Private/EC2AllRegions/EC2AllRegions.inde
 import CloudIcon from "@mui/icons-material/Cloud"
 import EKSInstancesIndex from "../View/Private/EKSInstances/EKSInstances.index"
 import DnsIcon from "@mui/icons-material/Dns"
+import EKSInventoryRedirect from "../View/Private/Kubernetes/EKSInventoryRedirect"
 
 export default interface IIFFRouter {
     path: string
@@ -31,6 +32,7 @@ export default interface IIFFRouter {
     name: string
     icon?: any
     children?: any[]
+    externalLink?: string  // For links that navigate outside the current route structure
 }
 
 
@@ -90,13 +92,6 @@ export const iffRoutes: IIFFRouter[] = [
                 name: "S3",
                 icon: SiAmazons3
             },
-            // {
-            //     path: "eks",
-            //     navbarShow: true,
-            //     element: <Kubernetes />,
-            //     name: "Kubernetes",
-            //     icon: SiAmazoneks
-            // },
             {
                 path: "rds",
                 navbarShow: true,
@@ -112,6 +107,14 @@ export const iffRoutes: IIFFRouter[] = [
                 icon: AttachMoneyIcon
             },
         ],
+    },
+
+    {
+        path: "eks",
+        navbarShow: false,
+        element: <EKSInventoryRedirect />,
+        name: "EKS Inventory",
+        icon: SiAmazoneks
     },
 
     // {
