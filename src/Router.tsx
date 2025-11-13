@@ -24,6 +24,7 @@ import SshKey from "./component/View/Private/Account/SshKey";
 import TerminalPage from "./component/View/Private/terminal/terminalPage";
 import RdpPage from "./component/View/Private/rdp/RdpPage";
 import AIChat from "./component/View/Private/AIChat/AIChat";
+import KubeBot from "./component/View/Private/KubeBot/KubeBot";
 import SSHTerminal from "./component/View/Private/SSHTerminal/SSHTerminal";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
@@ -74,6 +75,16 @@ export default function Router() {
                         element={
                             <PrivateRouter>
                                 <AIChat />
+                            </PrivateRouter>
+                        }
+                    />
+
+                    {/* KubeBot route */}
+                    <Route
+                        path="/kubebot"
+                        element={
+                            <PrivateRouter>
+                                <KubeBot />
                             </PrivateRouter>
                         }
                     />

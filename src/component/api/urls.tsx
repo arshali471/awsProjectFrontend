@@ -47,6 +47,20 @@ const url = {
         getCostForecast: "/aws/cost/forecast",
         compareCosts: "/aws/cost/compare",
         getTopServices: "/aws/cost/top-services",
+    },
+
+    aiChat: {
+        baseUrl: import.meta.env.VITE_AI_CHAT_API_URL || "http://10.35.58.168:8000",
+        query: "/query",
+        queryStream: "/query/stream",
+        serverName: "awslabs.cloudtrail-mcp-server"
+    },
+
+    kubeBot: {
+        baseUrl: import.meta.env.VITE_KUBEBOT_API_URL || "http://10.35.58.168:8001",
+        query: "/query",
+        queryStream: "/query/stream",
+        serverName: "kubernetes-mcp-server"
     }
 
 };
