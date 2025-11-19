@@ -96,6 +96,8 @@ export default function ZabbixStatus() {
   const [startDate, endDate] = dateRange;
   const [allRegionsMode, setAllRegionsMode] = useState<boolean>(false);
   const [awsKeys, setAwsKeys] = useState<any[]>([]);
+  const [windowsUsername, setWindowsUsername] = useState<string>('');
+  const [windowsPassword, setWindowsPassword] = useState<string>('');
 
   // Load AWS keys on component mount
   useEffect(() => {
@@ -146,7 +148,9 @@ export default function ZabbixStatus() {
           AdminService.getAgentStatusDashboard(
             key._id,
             startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
-            endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined
+            endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined,
+            windowsUsername || undefined,
+            windowsPassword || undefined
           )
         );
 
@@ -188,7 +192,9 @@ export default function ZabbixStatus() {
         const res = await AdminService.getAgentStatusDashboard(
           selectedRegion.value,
           startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
-          endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined
+          endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined,
+          windowsUsername || undefined,
+          windowsPassword || undefined
         );
 
         if (res.status === 200 && res.data.success) {
@@ -496,6 +502,43 @@ export default function ZabbixStatus() {
           />
           <small style={{ color: 'var(--text-secondary)', fontSize: '12px', marginLeft: '0.5rem' }}>
             Leave empty for latest data
+          </small>
+        </div>
+
+        {/* Windows Credentials */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+          <input
+            type="text"
+            placeholder="Windows Username (optional)"
+            value={windowsUsername}
+            onChange={(e) => setWindowsUsername(e.target.value)}
+            style={{
+              padding: '0.5rem',
+              border: '1px solid var(--border-color)',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              width: '150px',
+              background: 'var(--card-bg)',
+              color: 'var(--text-primary)'
+            }}
+          />
+          <input
+            type="password"
+            placeholder="Windows Password (optional)"
+            value={windowsPassword}
+            onChange={(e) => setWindowsPassword(e.target.value)}
+            style={{
+              padding: '0.5rem',
+              border: '1px solid var(--border-color)',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              width: '150px',
+              background: 'var(--card-bg)',
+              color: 'var(--text-primary)'
+            }}
+          />
+          <small style={{ color: 'var(--text-secondary)', fontSize: '12px', whiteSpace: 'nowrap' }}>
+            For Windows servers
           </small>
         </div>
 

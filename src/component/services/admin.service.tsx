@@ -160,8 +160,8 @@ export class AdminService {
         return await makeRequest(url.eksToken.getSshKey + params, RequestMethods.GET)
     }
 
-    // NEW: Get agent status dashboard with stats (supports optional date range)
-    static async getAgentStatusDashboard(keyId: any, startDate?: any, endDate?: any) {
+    // NEW: Get agent status dashboard with stats (supports optional date range and Windows credentials)
+    static async getAgentStatusDashboard(keyId: any, startDate?: any, endDate?: any, windowsUsername?: string, windowsPassword?: string) {
         const params = makeParams([
             {
                 index: "startDate",
@@ -172,7 +172,13 @@ export class AdminService {
                 value: endDate
             },
         ])
-        return await makeRequest(url.eksToken.getAgentStatusDashboard + "/" + keyId + params, RequestMethods.GET)
+
+        // Use POST to send Windows credentials in body
+        const body: any = {};
+        if (windowsUsername) body.windowsUsername = windowsUsername;
+        if (windowsPassword) body.windowsPassword = windowsPassword;
+
+        return await makeRequest(url.eksToken.getAgentStatusDashboard + "/" + keyId + params, RequestMethods.POST, body)
     }
 
     static async getZabbixStatus(keyId: any, sshUsername: any, sshKeyPath: any,operatingSystem: any, startDate:any, endDate: any ) {
