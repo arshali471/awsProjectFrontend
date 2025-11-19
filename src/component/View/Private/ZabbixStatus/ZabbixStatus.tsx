@@ -94,43 +94,136 @@ export default function ZabbixStatus() {
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [dateRange, setDateRange] = useState<any>([null, null]);
   const [startDate, endDate] = dateRange;
+  const [allRegionsMode, setAllRegionsMode] = useState<boolean>(false);
+  const [awsKeys, setAwsKeys] = useState<any[]>([]);
 
-  // Auto-fetch data when region changes
+  // Load AWS keys on component mount
   useEffect(() => {
-    if (selectedRegion?.value) {
+    const loadAwsKeys = async () => {
+      try {
+        const res = await AdminService.getAllAwsKey();
+        if (res.status === 200) {
+          setAwsKeys(res.data);
+        }
+      } catch (error) {
+        console.error('Failed to load AWS keys:', error);
+      }
+    };
+    loadAwsKeys();
+  }, []);
+
+  // Auto-fetch data when region changes or mode changes
+  useEffect(() => {
+    if (allRegionsMode || selectedRegion?.value) {
       fetchAgentStatusDashboard();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRegion?.value]);
+  }, [selectedRegion?.value, allRegionsMode]);
 
   const fetchAgentStatusDashboard = async () => {
-    if (!selectedRegion?.value) {
-      toast.error("Please select a region first.");
+    if (!allRegionsMode && !selectedRegion?.value) {
+      toast.error("Please select a region first or enable 'All Regions' mode.");
       return;
     }
 
     setLoading(true);
-    try {
-      const res = await AdminService.getAgentStatusDashboard(
-        selectedRegion.value,
-        startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
-        endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined
-      );
 
-      if (res.status === 200 && res.data.success) {
-        const { stats, records } = res.data.data;
-        setDashboardStats(stats);
-        setStatusData(records || []);
-        setFilteredData(records || []);
-        const dateRangeMsg = startDate && endDate
-          ? ` from ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`
-          : '';
-        toast.success(`Loaded ${records.length} agent status records${dateRangeMsg}`);
+    // Show different loading message based on whether we're fetching live data
+    const isLiveFetch = !startDate && !endDate;
+    const regionsText = allRegionsMode ? 'all regions' : 'selected region';
+
+    if (isLiveFetch) {
+      toast.loading(`Fetching live agent status from ${regionsText} via SSH. This may take a few moments...`, { id: 'liveStatus' });
+    }
+
+    try {
+      let allRecords: any[] = [];
+      let combinedStats: any = null;
+
+      if (allRegionsMode) {
+        // Fetch from all regions
+        const promises = awsKeys.map(key =>
+          AdminService.getAgentStatusDashboard(
+            key._id,
+            startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
+            endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined
+          )
+        );
+
+        const results = await Promise.allSettled(promises);
+
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled' && result.value.status === 200 && result.value.data.success) {
+            const { stats, records } = result.value.data.data;
+            // Add region info to each record
+            const recordsWithRegion = records.map((record: any) => ({
+              ...record,
+              regionInfo: awsKeys[index].enviroment,
+              region: awsKeys[index].region
+            }));
+            allRecords = allRecords.concat(recordsWithRegion);
+
+            // Combine stats
+            if (!combinedStats) {
+              combinedStats = { ...stats };
+            } else {
+              combinedStats.totalServers += stats.totalServers;
+              ['zabbixAgent', 'crowdStrike', 'qualys', 'cloudWatch', 'alloy'].forEach(agent => {
+                combinedStats[agent].active += stats[agent].active;
+                combinedStats[agent].inactive += stats[agent].inactive;
+                combinedStats[agent].total += stats[agent].total;
+              });
+              // Merge byOS and byState
+              Object.keys(stats.byOS || {}).forEach(os => {
+                combinedStats.byOS[os] = (combinedStats.byOS[os] || 0) + stats.byOS[os];
+              });
+              Object.keys(stats.byState || {}).forEach(state => {
+                combinedStats.byState[state] = (combinedStats.byState[state] || 0) + stats.byState[state];
+              });
+            }
+          }
+        });
       } else {
-        toast.error(res.data.message || "Failed to fetch agent status");
+        // Fetch from single region
+        const res = await AdminService.getAgentStatusDashboard(
+          selectedRegion.value,
+          startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
+          endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined
+        );
+
+        if (res.status === 200 && res.data.success) {
+          const { stats, records } = res.data.data;
+          allRecords = records || [];
+          combinedStats = stats;
+        } else {
+          throw new Error(res.data.message || "Failed to fetch agent status");
+        }
+      }
+
+      if (isLiveFetch) {
+        toast.dismiss('liveStatus');
+      }
+
+      setDashboardStats(combinedStats);
+      setStatusData(allRecords);
+      setFilteredData(allRecords);
+
+      const dateRangeMsg = startDate && endDate
+        ? ` from ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`
+        : '';
+
+      if (allRecords.length > 0) {
+        const dataSource = isLiveFetch ? ' (live data)' : dateRangeMsg;
+        const regionMsg = allRegionsMode ? ` across ${awsKeys.length} regions` : '';
+        toast.success(`Loaded ${allRecords.length} agent status records${dataSource}${regionMsg}`);
+      } else {
+        toast.error("No instances found.");
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Error fetching agent status");
+      if (isLiveFetch) {
+        toast.dismiss('liveStatus');
+      }
+      toast.error(err?.response?.data?.message || err?.message || "Error fetching agent status");
       console.error(err);
     } finally {
       setLoading(false);
@@ -153,13 +246,15 @@ export default function ZabbixStatus() {
       item?.versions?.crowdStrike?.toLowerCase().includes(search) ||
       item?.versions?.qualys?.toLowerCase().includes(search) ||
       item?.versions?.zabbixAgent?.toLowerCase().includes(search) ||
+      item?.versions?.alloy?.toLowerCase().includes(search) ||
       item?.platform?.toLowerCase().includes(search) ||
       item?.state?.toLowerCase().includes(search) ||
       item?.os?.toLowerCase().includes(search) ||
       item?.services?.cloudWatch?.toLowerCase().includes(search) ||
       item?.services?.crowdStrike?.toLowerCase().includes(search) ||
       item?.services?.qualys?.toLowerCase().includes(search) ||
-      item?.services?.zabbixAgent?.toLowerCase().includes(search)
+      item?.services?.zabbixAgent?.toLowerCase().includes(search) ||
+      item?.services?.alloy?.toLowerCase().includes(search)
     ));
 
     setFilteredData(filtered);
@@ -175,7 +270,12 @@ export default function ZabbixStatus() {
           </div>
           Agent Status Dashboard
         </h1>
-        <p className="page-subtitle">Live monitoring of security agents across all EC2 instances</p>
+        <p className="page-subtitle">
+          {!startDate && !endDate
+            ? "Fetching live agent status directly from EC2 instances via SSH"
+            : "Viewing historical agent status from database"
+          }
+        </p>
       </div>
 
       {/* Main Stats Cards - Total Servers */}
@@ -334,11 +434,51 @@ export default function ZabbixStatus() {
               </div>
             </div>
           </div>
+
+          {/* Alloy */}
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">Alloy</span>
+              <div className="stat-card-icon" style={{ color: '#00b8d4' }}>
+                <MdCloudQueue />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: '#28a745', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.alloy?.active || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'var(--border-color)' }} />
+              <div>
+                <h3 style={{ color: '#dc3545', fontSize: '1.5rem', margin: 0 }}>
+                  {dashboardStats?.alloy?.inactive || 0}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Inactive</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Date Range Filter & Search Bar */}
       <div className="action-bar" style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', position: 'relative', zIndex: 10 }}>
+        {/* All Regions Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0 }}>
+            <input
+              type="checkbox"
+              checked={allRegionsMode}
+              onChange={(e) => setAllRegionsMode(e.target.checked)}
+              style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+            />
+            <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+              All Regions
+            </span>
+          </label>
+        </div>
+
         {/* Date Range Picker */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative', zIndex: 100 }}>
           <FaCalendarAlt style={{ color: 'var(--primary-color)' }} />
@@ -359,6 +499,39 @@ export default function ZabbixStatus() {
           </small>
         </div>
 
+        {/* Refresh Button */}
+        <button
+          onClick={fetchAgentStatusDashboard}
+          disabled={loading || (!allRegionsMode && !selectedRegion?.value)}
+          style={{
+            padding: '0.625rem 1.25rem',
+            background: loading ? 'var(--border-color)' : 'linear-gradient(135deg, var(--primary-color) 0%, #0056a3 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: loading || (!allRegionsMode && !selectedRegion?.value) ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            fontSize: '0.875rem',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            opacity: loading || (!allRegionsMode && !selectedRegion?.value) ? 0.6 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (!loading && (allRegionsMode || selectedRegion?.value)) {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 115, 187, 0.3)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          {loading ? 'Loading...' : 'Refresh Data'}
+        </button>
+
         {/* Search Box */}
         <div className="search-box" style={{ flex: 1, minWidth: '300px' }}>
           <FaSearch className="search-icon" />
@@ -378,6 +551,8 @@ export default function ZabbixStatus() {
           tableData={filteredData}
           loading={loading}
           fetchData={fetchAgentStatusDashboard}
+          allRegionsMode={allRegionsMode}
+          regionName={selectedRegion?.label || ''}
         />
       </div>
     </div>

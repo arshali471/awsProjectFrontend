@@ -4,6 +4,9 @@ import Paper from '@mui/material/Paper';
 import { Button, Box } from '@mui/material';
 import { saveAs } from 'file-saver';
 import moment from 'moment';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import TableViewIcon from '@mui/icons-material/TableView';
+import * as XLSX from 'xlsx';
 
 interface IS3Table {
     tableData: any[];
@@ -58,16 +61,21 @@ export default function S3Table({ tableData, loading = false }: IS3Table) {
         size: data?.size || "N/A",
     }));
 
-    const handleExport = () => {
+    const handleExportCSV = () => {
         const selectedIDs = new Set(apiRef.current.getSelectedRows().keys());
         const exportRows = selectedIDs.size > 0
             ? rows.filter(row => selectedIDs.has(row.id))
             : rows;
 
+        const visibleColumns = columns.filter(col =>
+            apiRef.current.getColumn(col.field)?.computedWidth > 0
+        );
+        const columnsToExport = visibleColumns.length > 0 ? visibleColumns : columns;
+
         const csvContent = [
-            columns.map(col => col.headerName).join(','),
+            columnsToExport.map(col => col.headerName).join(','),
             ...exportRows.map(row =>
-                columns.map(col => {
+                columnsToExport.map(col => {
                     const val = row[col.field as keyof typeof row];
                     return typeof val === 'string' ? `"${val}"` : val;
                 }).join(',')
@@ -75,15 +83,47 @@ export default function S3Table({ tableData, loading = false }: IS3Table) {
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        saveAs(blob, 's3_buckets.csv');
+        const timestamp = new Date().toISOString().split('T')[0];
+        saveAs(blob, `S3_Buckets_${timestamp}.csv`);
+    };
+
+    const handleExportExcel = () => {
+        const selectedIDs = new Set(apiRef.current.getSelectedRows().keys());
+        const exportRows = selectedIDs.size > 0
+            ? rows.filter(row => selectedIDs.has(row.id))
+            : rows;
+
+        const visibleColumns = columns.filter(col =>
+            apiRef.current.getColumn(col.field)?.computedWidth > 0
+        );
+        const columnsToExport = visibleColumns.length > 0 ? visibleColumns : columns;
+
+        const excelData = exportRows.map(row => {
+            const rowData: any = {};
+            columnsToExport.forEach(col => {
+                rowData[col.headerName] = row[col.field as keyof typeof row];
+            });
+            return rowData;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'S3 Buckets');
+
+        const colWidths = columnsToExport.map(col => ({ wch: Math.max(col.width / 10, 10) }));
+        worksheet['!cols'] = colWidths;
+
+        const timestamp = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(workbook, `S3_Buckets_${timestamp}.xlsx`);
     };
 
     return (
         <div>
-            <Box display="flex" justifyContent="flex-end" p={2}>
+            <Box display="flex" justifyContent="flex-end" gap={2} p={2}>
                 <Button
                     variant="contained"
-                    onClick={handleExport}
+                    onClick={handleExportCSV}
+                    startIcon={<FileDownloadIcon />}
                     sx={{
                         background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
                         color: 'white',
@@ -100,7 +140,29 @@ export default function S3Table({ tableData, loading = false }: IS3Table) {
                         transition: 'all 0.3s ease'
                     }}
                 >
-                    Export to CSV
+                    Export CSV
+                </Button>
+                <Button
+                    variant="contained"
+                    onClick={handleExportExcel}
+                    startIcon={<TableViewIcon />}
+                    sx={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: 'white',
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        fontWeight: 500,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                        },
+                        transition: 'all 0.3s ease'
+                    }}
+                >
+                    Export Excel
                 </Button>
             </Box>
 

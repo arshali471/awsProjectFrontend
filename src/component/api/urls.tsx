@@ -1,6 +1,7 @@
 const url = {
     login: "/user/login",
     getAllAwsKey: "/awsKey/getAllAWSKey",
+    getAwsKeyById: "/awsKey/getAWSKeyById",
     getAllS3Data: "/aws/getS3Bucket",
     getUserData: "/user/getUserById",
     getAllUsers: "/user/getAllUser",

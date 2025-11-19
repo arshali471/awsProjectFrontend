@@ -394,7 +394,9 @@ import RdpConnectModal from '../modal/RdpConnect.modal';
 import LinkIcon from '@mui/icons-material/Link';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import TableViewIcon from '@mui/icons-material/TableView';
 import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
+import * as XLSX from 'xlsx';
 
 interface IInstanceTable {
     tableData: any[];
@@ -531,16 +533,22 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
         }
     };
 
-    const handleExport = () => {
+    const handleExportCSV = () => {
         const selectedIDs = rowSelectionModel.ids || new Set();
         const exportRows = selectedIDs.size > 0
             ? rows.filter(row => selectedIDs.has(row.id))
             : rows;
 
+        // Get visible columns from the DataGrid
+        const visibleColumns = columns.filter(col =>
+            apiRef.current.getColumn(col.field)?.computedWidth > 0
+        );
+        const columnsToExport = visibleColumns.length > 0 ? visibleColumns : columns;
+
         const csvContent = [
-            columns.map(col => col.headerName).join(','),
+            columnsToExport.map(col => col.headerName).join(','),
             ...exportRows.map(row =>
-                columns.map(col => {
+                columnsToExport.map(col => {
                     const val = row[col.field as keyof typeof row];
                     return typeof val === 'string' ? `"${val}"` : val;
                 }).join(',')
@@ -548,7 +556,46 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        saveAs(blob, 'instanceData.csv');
+        const timestamp = new Date().toISOString().split('T')[0];
+        saveAs(blob, `EC2_Instances_${timestamp}.csv`);
+    };
+
+    const handleExportExcel = () => {
+        const selectedIDs = rowSelectionModel.ids || new Set();
+        const exportRows = selectedIDs.size > 0
+            ? rows.filter(row => selectedIDs.has(row.id))
+            : rows;
+
+        // Get visible columns from the DataGrid
+        const visibleColumns = columns.filter(col =>
+            apiRef.current.getColumn(col.field)?.computedWidth > 0
+        );
+        const columnsToExport = visibleColumns.length > 0 ? visibleColumns : columns;
+
+        // Prepare data for Excel export
+        const excelData = exportRows.map(row => {
+            const rowData: any = {};
+            columnsToExport.forEach(col => {
+                rowData[col.headerName] = row[col.field as keyof typeof row];
+            });
+            return rowData;
+        });
+
+        // Create worksheet and workbook
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'EC2 Instances');
+
+        // Set column widths
+        const colWidths = columnsToExport.map(col => ({ wch: Math.max(col.width / 10, 10) }));
+        worksheet['!cols'] = colWidths;
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `EC2_Instances_${timestamp}.xlsx`;
+
+        // Export to Excel
+        XLSX.writeFile(workbook, filename);
     };
 
     const handleRowDoubleClick = (params: any) => {
@@ -604,7 +651,7 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
                     {loading ? 'Fetching...' : 'Fetch Data'}
                 </Button>
                 <Button
-                    onClick={handleExport}
+                    onClick={handleExportCSV}
                     variant="contained"
                     startIcon={<FileDownloadIcon />}
                     sx={{
@@ -613,13 +660,31 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
                         fontWeight: 600,
                         px: 3,
                         py: 1,
-                        background: 'linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%)',
+                        background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
                         '&:hover': {
-                            background: 'linear-gradient(135deg, #5a32a3 0%, #4a2885 100%)',
+                            background: 'linear-gradient(135deg, #005a92 0%, #0073bb 100%)',
                         },
                     }}
                 >
                     Export CSV
+                </Button>
+                <Button
+                    onClick={handleExportExcel}
+                    variant="contained"
+                    startIcon={<TableViewIcon />}
+                    sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1,
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                        },
+                    }}
+                >
+                    Export Excel
                 </Button>
             </Box>
 

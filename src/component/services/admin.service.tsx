@@ -9,6 +9,10 @@ export class AdminService {
         return await makeRequest(url.getAllAwsKey, RequestMethods.GET)
     }
 
+    static async getAwsKeyById(keyId: string) {
+        return await makeRequest(url.getAwsKeyById + "/" + keyId, RequestMethods.GET)
+    }
+
     static async getUserData() {
         return await makeRequest(url.getUserData, RequestMethods.GET)
     }
