@@ -336,6 +336,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import MarkdownMessage from './MarkdownMessage';
 import { SelectedRegionContext } from '../../../context/context';
 import { AdminService } from '../../../services/admin.service';
+import { encryptAWSCredentials, decryptAWSCredentials, isCryptoAvailable } from '../../../../utils/crypto';
 
 interface Message {
     id: number;
@@ -442,7 +443,12 @@ export default function AIChat() {
         setIsLoading(false);
 
         try {
-            // First, fetch AWS credentials from backend
+            // Check if crypto is available
+            if (!isCryptoAvailable()) {
+                throw new Error('Encryption not available in this browser. Please use a modern browser with HTTPS.');
+            }
+
+            // First, fetch AWS credentials from backend (now encrypted)
             const awsKeyResponse = await AdminService.getAwsKeyById(selectedKey);
 
             if (awsKeyResponse.status !== 200 || !awsKeyResponse.data) {
@@ -451,7 +457,31 @@ export default function AIChat() {
 
             const awsConfig = awsKeyResponse.data;
 
-            // Now send the request to MCP server with AWS credentials
+            // Decrypt the encrypted credentials from backend
+            let decryptedCredentials;
+            if (awsConfig.encrypted_credentials) {
+                // New encrypted format
+                decryptedCredentials = await decryptAWSCredentials(awsConfig.encrypted_credentials);
+            } else if (awsConfig.credentials) {
+                // Legacy unencrypted format (fallback)
+                console.warn('Received unencrypted credentials from backend - please update backend');
+                decryptedCredentials = {
+                    access_key_id: awsConfig.credentials.accessKeyId,
+                    secret_access_key: awsConfig.credentials.secretAccessKey,
+                    region: selectedAwsRegion
+                };
+            } else {
+                throw new Error('No credentials found in response');
+            }
+
+            // Re-encrypt credentials for sending to MCP server
+            const encryptedCredentials = await encryptAWSCredentials({
+                access_key_id: decryptedCredentials.access_key_id,
+                secret_access_key: decryptedCredentials.secret_access_key,
+                region: selectedAwsRegion
+            });
+
+            // Now send the request to MCP server with ENCRYPTED AWS credentials
             const response = await fetch(`${AI_CHAT_API_URL}/query/stream`, {
                 method: 'POST',
                 mode: 'cors',
@@ -462,11 +492,7 @@ export default function AIChat() {
                     query: currentInput,
                     session_id: sessionId,
                     server_name: AI_CHAT_MCP_SERVER, // MCP server from environment variable
-                    aws_credentials: {
-                        access_key_id: awsConfig.credentials.accessKeyId,
-                        secret_access_key: awsConfig.credentials.secretAccessKey,
-                        region: selectedAwsRegion
-                    }
+                    encrypted_credentials: encryptedCredentials  // Send encrypted credentials
                 }),
             });
 
