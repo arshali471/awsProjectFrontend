@@ -46,7 +46,7 @@ async function deriveKey(keyString: string): Promise<CryptoKey> {
 /**
  * Encrypt data using AES-256-GCM
  * @param data - Data to encrypt (will be JSON stringified if object)
- * @returns Base64 encoded encrypted data with IV prepended
+ * @returns Encrypted string in format "iv:encrypted:authTag" (matching backend format)
  */
 export async function encryptData(data: any): Promise<string> {
   try {
@@ -57,11 +57,35 @@ export async function encryptData(data: any): Promise<string> {
     // Generate a random 12-byte IV (96 bits is recommended for GCM)
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
-    // Derive the encryption key
-    const key = await deriveKey(ENCRYPTION_KEY);
+    // Derive the encryption key using PBKDF2 to match backend
+    const keyBytes = stringToUint8Array(ENCRYPTION_KEY.padEnd(32, '0').substring(0, 32));
+    const salt = stringToUint8Array('aws-credentials-salt');
+
+    // Import password as key material
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      keyBytes,
+      'PBKDF2',
+      false,
+      ['deriveBits', 'deriveKey']
+    );
+
+    // Derive key using PBKDF2 (matching backend's deriveKey function)
+    const key = await window.crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt']
+    );
 
     // Encrypt the data
-    const encryptedData = await window.crypto.subtle.encrypt(
+    const encryptedBuffer = await window.crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
         iv: iv
@@ -70,13 +94,17 @@ export async function encryptData(data: any): Promise<string> {
       dataBytes
     );
 
-    // Combine IV and encrypted data
-    const combined = new Uint8Array(iv.length + encryptedData.byteLength);
-    combined.set(iv, 0);
-    combined.set(new Uint8Array(encryptedData), iv.length);
+    // In GCM mode, the encrypted result contains ciphertext + auth tag (last 16 bytes)
+    const encryptedArray = new Uint8Array(encryptedBuffer);
+    const ciphertext = encryptedArray.slice(0, -16);
+    const authTag = encryptedArray.slice(-16);
 
-    // Return as Base64
-    return uint8ArrayToBase64(combined);
+    // Convert to Base64 and return in backend format: "iv:encrypted:authTag"
+    const ivBase64 = uint8ArrayToBase64(iv);
+    const encryptedBase64 = uint8ArrayToBase64(ciphertext);
+    const authTagBase64 = uint8ArrayToBase64(authTag);
+
+    return `${ivBase64}:${encryptedBase64}:${authTagBase64}`;
   } catch (error) {
     console.error('Encryption error:', error);
     throw new Error('Failed to encrypt data');
@@ -98,20 +126,56 @@ export async function encryptAWSCredentials(credentials: {
 
 /**
  * Decrypt data using AES-256-GCM
- * @param encryptedBase64 - Base64 encoded encrypted data with IV prepended
+ * @param encryptedData - Encrypted string in format "iv:encrypted:authTag" (from backend)
  * @returns Decrypted data as string
  */
-export async function decryptData(encryptedBase64: string): Promise<string> {
+export async function decryptData(encryptedData: string): Promise<string> {
   try {
+    // Backend format: "iv:encrypted:authTag" (all Base64 encoded)
+    const parts = encryptedData.split(':');
+    if (parts.length !== 3) {
+      throw new Error('Invalid encrypted data format - expected "iv:encrypted:authTag"');
+    }
+
+    const [ivBase64, encryptedBase64, authTagBase64] = parts;
+
     // Convert from Base64
-    const combined = base64ToUint8Array(encryptedBase64);
+    const iv = base64ToUint8Array(ivBase64);
+    const encrypted = base64ToUint8Array(encryptedBase64);
+    const authTag = base64ToUint8Array(authTagBase64);
 
-    // Extract IV (first 12 bytes) and ciphertext (rest including auth tag)
-    const iv = combined.slice(0, 12);
-    const ciphertext = combined.slice(12);
+    // Combine encrypted data and auth tag for Web Crypto API
+    // Web Crypto expects ciphertext with auth tag appended
+    const ciphertext = new Uint8Array(encrypted.length + authTag.length);
+    ciphertext.set(encrypted, 0);
+    ciphertext.set(authTag, encrypted.length);
 
-    // Derive the encryption key
-    const key = await deriveKey(ENCRYPTION_KEY);
+    // Derive the encryption key using PBKDF2 to match backend
+    const keyBytes = stringToUint8Array(ENCRYPTION_KEY.padEnd(32, '0').substring(0, 32));
+    const salt = stringToUint8Array('aws-credentials-salt');
+
+    // Import password as key material
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      keyBytes,
+      'PBKDF2',
+      false,
+      ['deriveBits', 'deriveKey']
+    );
+
+    // Derive key using PBKDF2 (matching backend's deriveKey function)
+    const key = await window.crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
 
     // Decrypt the data
     const decryptedData = await window.crypto.subtle.decrypt(
