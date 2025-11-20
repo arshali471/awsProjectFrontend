@@ -222,5 +222,27 @@ export async function decryptAWSCredentials(encryptedCredentials: string): Promi
  * Check if crypto is available in the browser
  */
 export function isCryptoAvailable(): boolean {
-  return !!(window.crypto && window.crypto.subtle);
+  // Check if window and crypto are defined (for SSR compatibility)
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const isAvailable = !!(window.crypto && window.crypto.subtle);
+
+  if (!isAvailable) {
+    console.error('Web Crypto API not available:', {
+      hasCrypto: !!window.crypto,
+      hasSubtle: !!(window.crypto && window.crypto.subtle),
+      protocol: window.location.protocol,
+      hostname: window.location.hostname,
+      isSecureContext: window.isSecureContext
+    });
+
+    // Log suggestion
+    if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      console.error('Web Crypto API requires HTTPS. Please access the application via HTTPS or use localhost.');
+    }
+  }
+
+  return isAvailable;
 }
