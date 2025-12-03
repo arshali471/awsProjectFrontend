@@ -28,10 +28,38 @@ export const setupAxiosInterceptors = () => {
                 else if (error.response.status === 403) {
                     // Check if it's an AWS IAM permission error (don't logout for these)
                     const errorData = error.response.data;
-                    const isAWSPermissionError = errorData?.errorType?.includes('IAM Permission') ||
-                                                 errorData?.errorType?.includes('Access Denied') ||
-                                                 errorData?.message?.includes('IAM') ||
-                                                 errorData?.message?.includes('Cost Explorer');
+                    const errorUrl = error.config?.url || '';
+
+                    console.log('403 Error detected:', { url: errorUrl, errorData });
+
+                    // Check if this is from Cost Explorer endpoints
+                    const isCostEndpoint = errorUrl.includes('/cost/');
+
+                    // Check if error data indicates AWS permission issue
+                    const hasAWSErrorIndicators =
+                        (errorData?.errorType && (
+                            errorData.errorType.includes('IAM Permission') ||
+                            errorData.errorType.includes('Access Denied')
+                        )) ||
+                        (errorData?.message && (
+                            errorData.message.includes('IAM') ||
+                            errorData.message.includes('Cost Explorer') ||
+                            errorData.message.includes('is not authorized') ||
+                            errorData.message.includes('lacks required permissions')
+                        )) ||
+                        (errorData?.details?.error &&
+                            errorData.details.error.includes('is not authorized')
+                        ) ||
+                        errorData?.success === false; // Backend returns success: false for these errors
+
+                    const isAWSPermissionError = isCostEndpoint || hasAWSErrorIndicators;
+
+                    console.log('403 Error Analysis:', {
+                        isCostEndpoint,
+                        hasAWSErrorIndicators,
+                        isAWSPermissionError,
+                        willLogout: !isAWSPermissionError
+                    });
 
                     if (!isAWSPermissionError) {
                         // Only logout for authentication-related 403 errors
@@ -40,7 +68,7 @@ export const setupAxiosInterceptors = () => {
                         window.location.href = '/login';
                     } else {
                         // Just log the AWS permission error, don't logout
-                        console.log('AWS Permission Error - user needs IAM permissions:', errorData?.message);
+                        console.log('AWS Permission Error - keeping user logged in:', errorData?.message);
                     }
                 }
             } else if (error.request) {
