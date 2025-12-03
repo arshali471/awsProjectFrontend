@@ -26,9 +26,22 @@ export const setupAxiosInterceptors = () => {
                 }
                 // Check for 403 Forbidden
                 else if (error.response.status === 403) {
-                    console.log('Forbidden access - logging out...');
-                    Auth.signout();
-                    window.location.href = '/login';
+                    // Check if it's an AWS IAM permission error (don't logout for these)
+                    const errorData = error.response.data;
+                    const isAWSPermissionError = errorData?.errorType?.includes('IAM Permission') ||
+                                                 errorData?.errorType?.includes('Access Denied') ||
+                                                 errorData?.message?.includes('IAM') ||
+                                                 errorData?.message?.includes('Cost Explorer');
+
+                    if (!isAWSPermissionError) {
+                        // Only logout for authentication-related 403 errors
+                        console.log('Forbidden access - logging out...');
+                        Auth.signout();
+                        window.location.href = '/login';
+                    } else {
+                        // Just log the AWS permission error, don't logout
+                        console.log('AWS Permission Error - user needs IAM permissions:', errorData?.message);
+                    }
                 }
             } else if (error.request) {
                 // The request was made but no response was received
