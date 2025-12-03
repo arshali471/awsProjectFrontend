@@ -174,12 +174,21 @@ export default function CompleteCostDashboard() {
       toast.success("Cost data loaded successfully");
     } catch (err: any) {
       console.error("Error fetching cost data", err);
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to fetch cost data. Please try again.";
-      setError(errorMessage);
-      toast.error(errorMessage);
+
+      // Extract detailed error information
+      const errorResponse = err.response?.data;
+      let errorMessage = "Failed to fetch cost data. Please try again.";
+      let errorDetails = null;
+
+      if (errorResponse) {
+        errorMessage = errorResponse.message || errorMessage;
+        errorDetails = errorResponse.details || null;
+      } else {
+        errorMessage = err.message || errorMessage;
+      }
+
+      setError(JSON.stringify({ message: errorMessage, details: errorDetails }));
+      toast.error(errorMessage, { duration: 6000 });
     } finally {
       if (showLoader) setLoading(false);
       setRefreshing(false);
@@ -376,19 +385,91 @@ export default function CompleteCostDashboard() {
 
   // Error state
   if (error && !dashboardData) {
+    let errorObj: any = { message: error, details: null };
+    try {
+      errorObj = JSON.parse(error);
+    } catch (e) {
+      errorObj = { message: error, details: null };
+    }
+
     return (
       <div className="page-wrapper">
         <Alert
           severity="error"
-          sx={{ borderRadius: "16px" }}
+          sx={{ borderRadius: "16px", mb: 2 }}
           action={
             <IconButton color="inherit" size="small" onClick={() => fetchAllData()}>
               <RefreshIcon />
             </IconButton>
           }
         >
-          <Typography variant="h6">Error Loading Cost Data</Typography>
-          <Typography variant="body2">{error}</Typography>
+          <Typography variant="h6" gutterBottom>
+            Error Loading Cost Data
+          </Typography>
+          <Typography variant="body2" sx={{ mb: errorObj.details ? 2 : 0 }}>
+            {errorObj.message}
+          </Typography>
+
+          {errorObj.details && (
+            <Box sx={{ mt: 2 }}>
+              {errorObj.details.error && (
+                <Paper sx={{ p: 2, mb: 2, bgcolor: "#fff3cd", border: "1px solid #ffc107" }}>
+                  <Typography variant="subtitle2" fontWeight={600} color="error" gutterBottom>
+                    AWS Error:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.875rem", whiteSpace: "pre-wrap" }}>
+                    {errorObj.details.error}
+                  </Typography>
+                </Paper>
+              )}
+
+              {errorObj.details.requiredPermissions && (
+                <Paper sx={{ p: 2, mb: 2, bgcolor: "#e3f2fd", border: "1px solid #2196f3" }}>
+                  <Typography variant="subtitle2" fontWeight={600} color="primary" gutterBottom>
+                    Required IAM Permissions:
+                  </Typography>
+                  <Box component="ul" sx={{ pl: 2, my: 1 }}>
+                    {errorObj.details.requiredPermissions.map((perm: string, idx: number) => (
+                      <Typography key={idx} component="li" variant="body2" sx={{ fontFamily: "monospace" }}>
+                        {perm}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Paper>
+              )}
+
+              {errorObj.details.solution && (
+                <Paper sx={{ p: 2, mb: 2, bgcolor: "#f3e5f5", border: "1px solid #9c27b0" }}>
+                  <Typography variant="subtitle2" fontWeight={600} color="secondary" gutterBottom>
+                    Solution:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.875rem", whiteSpace: "pre-wrap", overflowX: "auto" }}>
+                    {errorObj.details.solution}
+                  </Typography>
+                </Paper>
+              )}
+
+              {errorObj.details.awsDocumentation && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  href={errorObj.details.awsDocumentation}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ mt: 1 }}
+                >
+                  View AWS Documentation
+                </Button>
+              )}
+
+              {errorObj.details.hint && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, fontStyle: "italic" }}>
+                  💡 Hint: {errorObj.details.hint}
+                </Typography>
+              )}
+            </Box>
+          )}
         </Alert>
       </div>
     );

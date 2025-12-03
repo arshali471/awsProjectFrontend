@@ -27,7 +27,7 @@ const apps = [
   { url: "https://iffcloud-conductor.global.iff.com", name: "EKS Inventory", icon: EksInvImage, isExternal: true, isIconComponent: false },
   { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage, isExternal: true, isIconComponent: false },
   { url: "https://app.powerbi.com/reportEmbed?reportId=df62f352-c99d-45a2-bd91-8c81aab7dff9&autoAuth=true&ctid=a2a9bf31-fc44-425c-a6d2-3ae9379573ea", name: "Report", icon: ReportImage, isExternal: true, isIconComponent: false },
-  { url: "/platform/ec2", name: "Ticketing", icon: TicktImage, isExternal: false, isIconComponent: false },
+  // { url: "/platform/ec2", name: "Ticketing", icon: TicktImage, isExternal: false, isIconComponent: false },
   { url: "https://app.finout.io/app/dashboards/50c3fb57-3fac-4b47-9ad5-8a3fc8e16fc4", name: "Cost", icon: CostImage, isExternal: true, isIconComponent: false },
   { url: "/devops", name: "DevOps", icon: DevopsImage, isExternal: false, isIconComponent: false },
   { url: "/kubebot", name: "Kubebot", icon: Kubebot, isExternal: false, isIconComponent: false },
