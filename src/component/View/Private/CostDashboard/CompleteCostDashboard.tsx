@@ -148,30 +148,68 @@ export default function CompleteCostDashboard() {
         days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
       }
 
-      // Fetch all data in parallel
-      const [dashRes, compRes, topRes] = await Promise.all([
+      // Fetch all data in parallel with individual error handling
+      const results = await Promise.allSettled([
         AdminService.getCostDashboard(selectedRegion.value, days),
         AdminService.compareCosts(selectedRegion.value),
         AdminService.getTopServices(selectedRegion.value, 10, days),
       ]);
 
-      console.log("DASHBOARD:", dashRes.data);
-      console.log("COMPARISON:", compRes.data);
-      console.log("TOP SERVICES:", topRes.data);
+      const [dashRes, compRes, topRes] = results;
 
-      if (dashRes.status === 200 && dashRes.data.success) {
-        setDashboardData(dashRes.data.data);
+      // Handle dashboard data
+      if (dashRes.status === "fulfilled") {
+        console.log("DASHBOARD:", dashRes.value.data);
+        if (dashRes.value.status === 200 && dashRes.value.data.success) {
+          setDashboardData(dashRes.value.data.data);
+        }
+      } else {
+        console.error("Dashboard error:", dashRes.reason);
       }
 
-      if (compRes.status === 200 && compRes.data.success) {
-        setComparisonData(compRes.data.data);
+      // Handle comparison data
+      if (compRes.status === "fulfilled") {
+        console.log("COMPARISON:", compRes.value.data);
+        if (compRes.value.status === 200 && compRes.value.data.success) {
+          setComparisonData(compRes.value.data.data);
+        }
+      } else {
+        console.error("Comparison error:", compRes.reason);
       }
 
-      if (topRes.status === 200 && topRes.data.success) {
-        setTopServicesData(topRes.data.data);
+      // Handle top services data
+      if (topRes.status === "fulfilled") {
+        console.log("TOP SERVICES:", topRes.value.data);
+        if (topRes.value.status === 200 && topRes.value.data.success) {
+          setTopServicesData(topRes.value.data.data);
+        }
+      } else {
+        console.error("Top services error:", topRes.reason);
       }
 
-      toast.success("Cost data loaded successfully");
+      // Check if all requests failed
+      const allFailed = results.every(result => result.status === "rejected");
+
+      if (allFailed) {
+        // Get the first error for detailed display
+        const firstError = results.find(r => r.status === "rejected") as PromiseRejectedResult;
+        const errorResponse = firstError.reason?.response?.data;
+
+        let errorMessage = "Failed to fetch cost data. Please check AWS IAM permissions.";
+        let errorDetails = null;
+
+        if (errorResponse) {
+          errorMessage = errorResponse.message || errorMessage;
+          errorDetails = errorResponse.details || null;
+        } else if (firstError.reason?.message) {
+          errorMessage = firstError.reason.message;
+        }
+
+        setError(JSON.stringify({ message: errorMessage, details: errorDetails }));
+        toast.error(errorMessage, { duration: 6000 });
+      } else {
+        toast.success("Cost data loaded successfully");
+      }
     } catch (err: any) {
       console.error("Error fetching cost data", err);
 
@@ -385,11 +423,18 @@ export default function CompleteCostDashboard() {
 
   // Error state
   if (error && !dashboardData) {
-    let errorObj: any = { message: error, details: null };
+    let errorObj: any = { message: "An error occurred", details: null };
     try {
-      errorObj = JSON.parse(error);
+      if (typeof error === 'string') {
+        errorObj = JSON.parse(error);
+      } else if (typeof error === 'object') {
+        errorObj = error;
+      } else {
+        errorObj = { message: String(error), details: null };
+      }
     } catch (e) {
-      errorObj = { message: error, details: null };
+      console.error("Error parsing error object:", e);
+      errorObj = { message: String(error), details: null };
     }
 
     return (
@@ -410,9 +455,9 @@ export default function CompleteCostDashboard() {
             {errorObj.message}
           </Typography>
 
-          {errorObj.details && (
+          {errorObj.details && typeof errorObj.details === 'object' && (
             <Box sx={{ mt: 2 }}>
-              {errorObj.details.error && (
+              {errorObj.details.error && typeof errorObj.details.error === 'string' && (
                 <Paper sx={{ p: 2, mb: 2, bgcolor: "#fff3cd", border: "1px solid #ffc107" }}>
                   <Typography variant="subtitle2" fontWeight={600} color="error" gutterBottom>
                     AWS Error:
@@ -423,7 +468,7 @@ export default function CompleteCostDashboard() {
                 </Paper>
               )}
 
-              {errorObj.details.requiredPermissions && (
+              {errorObj.details.requiredPermissions && Array.isArray(errorObj.details.requiredPermissions) && (
                 <Paper sx={{ p: 2, mb: 2, bgcolor: "#e3f2fd", border: "1px solid #2196f3" }}>
                   <Typography variant="subtitle2" fontWeight={600} color="primary" gutterBottom>
                     Required IAM Permissions:
@@ -431,14 +476,14 @@ export default function CompleteCostDashboard() {
                   <Box component="ul" sx={{ pl: 2, my: 1 }}>
                     {errorObj.details.requiredPermissions.map((perm: string, idx: number) => (
                       <Typography key={idx} component="li" variant="body2" sx={{ fontFamily: "monospace" }}>
-                        {perm}
+                        {String(perm)}
                       </Typography>
                     ))}
                   </Box>
                 </Paper>
               )}
 
-              {errorObj.details.solution && (
+              {errorObj.details.solution && typeof errorObj.details.solution === 'string' && (
                 <Paper sx={{ p: 2, mb: 2, bgcolor: "#f3e5f5", border: "1px solid #9c27b0" }}>
                   <Typography variant="subtitle2" fontWeight={600} color="secondary" gutterBottom>
                     Solution:
@@ -449,7 +494,7 @@ export default function CompleteCostDashboard() {
                 </Paper>
               )}
 
-              {errorObj.details.awsDocumentation && (
+              {errorObj.details.awsDocumentation && typeof errorObj.details.awsDocumentation === 'string' && (
                 <Button
                   variant="contained"
                   color="primary"
@@ -463,7 +508,7 @@ export default function CompleteCostDashboard() {
                 </Button>
               )}
 
-              {errorObj.details.hint && (
+              {errorObj.details.hint && typeof errorObj.details.hint === 'string' && (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 2, fontStyle: "italic" }}>
                   💡 Hint: {errorObj.details.hint}
                 </Typography>
