@@ -99,13 +99,6 @@ export const iffRoutes: IIFFRouter[] = [
                 name: "RDS",
                 icon: SiAmazonrds
             },
-            {
-                path: "cost",
-                navbarShow: true,
-                element: <CompleteCostDashboard />,
-                name: "Cost Analysis",
-                icon: AttachMoneyIcon
-            },
         ],
     },
 

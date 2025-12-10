@@ -238,7 +238,18 @@ export default function Documentation() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setUploadFormData({ ...uploadFormData, file: e.target.files[0] });
+            const file = e.target.files[0];
+            const fileName = file.name.toLowerCase();
+            const allowedExtensions = ['.pdf', '.doc', '.docx'];
+            const isAllowed = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+            if (!isAllowed) {
+                toast.error("Only PDF and DOC/DOCX files are allowed");
+                e.target.value = ''; // Clear the file input
+                return;
+            }
+
+            setUploadFormData({ ...uploadFormData, file: file });
         }
     };
 
@@ -289,6 +300,13 @@ export default function Documentation() {
             } else {
                 if (!uploadFormData.externalUrl) {
                     toast.error("Please enter a URL");
+                    setLoading(false);
+                    return;
+                }
+
+                // Validate SharePoint URL
+                if (!uploadFormData.externalUrl.startsWith('https://iff.sharepoint.com')) {
+                    toast.error("Only SharePoint URLs (https://iff.sharepoint.com) are allowed");
                     setLoading(false);
                     return;
                 }
@@ -917,17 +935,30 @@ export default function Documentation() {
                         {uploadTabValue === 0 ? (
                             <Box mt={2}>
                                 <Button variant="outlined" component="label" fullWidth startIcon={<CloudUploadIcon />} sx={{ py: 2 }}>
-                                    {uploadFormData.file ? uploadFormData.file.name : 'Choose File'}
-                                    <input type="file" hidden onChange={handleFileChange} accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.gif" />
+                                    {uploadFormData.file ? uploadFormData.file.name : 'Choose File (PDF or DOC/DOCX only)'}
+                                    <input type="file" hidden onChange={handleFileChange} accept=".pdf,.doc,.docx" />
                                 </Button>
-                                {uploadFormData.file && (
+                                {uploadFormData.file ? (
                                     <Typography variant="caption" display="block" mt={1} color="text.secondary">
                                         Size: {formatFileSize(uploadFormData.file.size)}
+                                    </Typography>
+                                ) : (
+                                    <Typography variant="caption" display="block" mt={1} color="text.secondary">
+                                        Allowed file types: PDF, DOC, DOCX
                                     </Typography>
                                 )}
                             </Box>
                         ) : (
-                            <TextField fullWidth label="External URL" value={uploadFormData.externalUrl} onChange={(e) => setUploadFormData({ ...uploadFormData, externalUrl: e.target.value })} margin="normal" placeholder="https://example.com/document" required />
+                            <TextField
+                                fullWidth
+                                label="SharePoint URL"
+                                value={uploadFormData.externalUrl}
+                                onChange={(e) => setUploadFormData({ ...uploadFormData, externalUrl: e.target.value })}
+                                margin="normal"
+                                placeholder="https://iff.sharepoint.com/..."
+                                required
+                                helperText="Only SharePoint URLs (https://iff.sharepoint.com) are allowed"
+                            />
                         )}
 
                         {/* Visibility & Access Control */}
@@ -954,7 +985,13 @@ export default function Documentation() {
                                     multiple
                                     value={uploadFormData.selectedUsers}
                                     label="Select Users"
-                                    onChange={(e: SelectChangeEvent<string[]>) => setUploadFormData({ ...uploadFormData, selectedUsers: e.target.value as string[] })}
+                                    onChange={(e: SelectChangeEvent<string[]>) => {
+                                        const value = e.target.value;
+                                        setUploadFormData({
+                                            ...uploadFormData,
+                                            selectedUsers: typeof value === 'string' ? value.split(',') : value
+                                        });
+                                    }}
                                     renderValue={(selected) => (
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                             {(selected as string[]).map((email) => {
@@ -963,11 +1000,20 @@ export default function Documentation() {
                                             })}
                                         </Box>
                                     )}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300,
+                                            },
+                                        },
+                                    }}
                                 >
                                     {allUsers.map((user: any) => (
-                                        <MenuItem key={user._id} value={user.email}>
-                                            <Checkbox checked={uploadFormData.selectedUsers.indexOf(user.email) > -1} />
-                                            {user.username} ({user.email})
+                                        <MenuItem key={user._id} value={user.email || user.username}>
+                                            <Checkbox
+                                                checked={uploadFormData.selectedUsers.includes(user.email || user.username)}
+                                            />
+                                            <span>{user.username} {user.email ? `(${user.email})` : ''}</span>
                                         </MenuItem>
                                     ))}
                                 </Select>
@@ -1296,10 +1342,13 @@ export default function Documentation() {
                                     multiple
                                     value={accessControlData.selectedUsers}
                                     label="Select Users"
-                                    onChange={(e: SelectChangeEvent<string[]>) => setAccessControlData({
-                                        ...accessControlData,
-                                        selectedUsers: e.target.value as string[]
-                                    })}
+                                    onChange={(e: SelectChangeEvent<string[]>) => {
+                                        const value = e.target.value;
+                                        setAccessControlData({
+                                            ...accessControlData,
+                                            selectedUsers: typeof value === 'string' ? value.split(',') : value
+                                        });
+                                    }}
                                     renderValue={(selected) => (
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                             {(selected as string[]).map((email) => {
@@ -1308,11 +1357,20 @@ export default function Documentation() {
                                             })}
                                         </Box>
                                     )}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300,
+                                            },
+                                        },
+                                    }}
                                 >
                                     {allUsers.map((user: any) => (
-                                        <MenuItem key={user._id} value={user.email}>
-                                            <Checkbox checked={accessControlData.selectedUsers.indexOf(user.email) > -1} />
-                                            {user.username} ({user.email})
+                                        <MenuItem key={user._id} value={user.email || user.username}>
+                                            <Checkbox
+                                                checked={accessControlData.selectedUsers.includes(user.email || user.username)}
+                                            />
+                                            <span>{user.username} {user.email ? `(${user.email})` : ''}</span>
                                         </MenuItem>
                                     ))}
                                 </Select>
