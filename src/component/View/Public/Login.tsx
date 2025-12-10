@@ -35,15 +35,26 @@ export default function Login() {
                 Auth.authenticate();
                 sessionStorage.setItem("authKey", res.data.token);
                 sessionStorage.setItem("username", res.data.username);
-                sessionStorage.setItem("role", res.data.role || res.data.userType || 'user');
+                sessionStorage.setItem("email", res.data.email);
+                sessionStorage.setItem("admin", res.data.admin ? 'true' : 'false');
+
+                // Set role for admin users (required by some components like AddUser)
+                if (res.data.admin) {
+                    sessionStorage.setItem("role", "admin");
+                }
 
                 if (rememberMe) {
                     localStorage.setItem("rememberedUsername", data.username);
                 }
 
                 toast.success("Login Successful! Redirecting...");
+
+                // Check if there's a redirect URL stored
+                const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+                sessionStorage.removeItem('redirectAfterLogin');
+
                 setTimeout(() => {
-                    navigate('/dashboard');
+                    navigate(redirectUrl || '/dashboard');
                 }, 500);
             }
         } catch (err: any) {

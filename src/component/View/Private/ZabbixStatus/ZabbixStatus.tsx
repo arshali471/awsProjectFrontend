@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import { LoadingContext, SelectedRegionContext } from '../../../context/context';
 import { AdminService } from '../../../services/admin.service';
 import toast from 'react-hot-toast';
@@ -7,6 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import StatusCheckTable from '../../../Table/statusCheck.table';
 import { FaServer, FaCheckCircle, FaTimesCircle, FaSearch, FaShieldAlt, FaBug, FaCalendarAlt } from "react-icons/fa";
 import { MdCloudQueue, MdSecurity } from "react-icons/md";
+import { MdCancel } from "react-icons/md";
 import "../SharedPage.css";
 
 // Custom styles for date picker
@@ -99,6 +100,9 @@ export default function ZabbixStatus() {
   const [windowsUsername, setWindowsUsername] = useState<string>('');
   const [windowsPassword, setWindowsPassword] = useState<string>('');
 
+  // AbortController ref to cancel ongoing requests
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // Load AWS keys on component mount
   useEffect(() => {
     const loadAwsKeys = async () => {
@@ -119,14 +123,41 @@ export default function ZabbixStatus() {
     if (allRegionsMode || selectedRegion?.value) {
       fetchAgentStatusDashboard();
     }
+    // Cleanup: Cancel any ongoing request when component unmounts or dependencies change
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRegion?.value, allRegionsMode]);
+
+  // Function to cancel ongoing request
+  const cancelRequest = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setLoading(false);
+      toast.dismiss('liveStatus');
+      toast.success('Request cancelled successfully');
+    }
+  };
 
   const fetchAgentStatusDashboard = async () => {
     if (!allRegionsMode && !selectedRegion?.value) {
       toast.error("Please select a region first or enable 'All Regions' mode.");
       return;
     }
+
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
     setLoading(true);
 
@@ -150,7 +181,8 @@ export default function ZabbixStatus() {
             startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
             endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined,
             windowsUsername || undefined,
-            windowsPassword || undefined
+            windowsPassword || undefined,
+            signal
           )
         );
 
@@ -194,7 +226,8 @@ export default function ZabbixStatus() {
           startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)).toISOString() : undefined,
           endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)).toISOString() : undefined,
           windowsUsername || undefined,
-          windowsPassword || undefined
+          windowsPassword || undefined,
+          signal
         );
 
         if (res.status === 200 && res.data.success) {
@@ -229,10 +262,19 @@ export default function ZabbixStatus() {
       if (isLiveFetch) {
         toast.dismiss('liveStatus');
       }
+
+      // Don't show error toast for cancelled requests
+      if (err.name === 'CanceledError' || err.message?.includes('canceled')) {
+        console.log('Request was cancelled');
+        return;
+      }
+
       toast.error(err?.response?.data?.message || err?.message || "Error fetching agent status");
       console.error(err);
     } finally {
       setLoading(false);
+      // Clear the abort controller reference after request completes
+      abortControllerRef.current = null;
     }
   };
 
@@ -574,6 +616,38 @@ export default function ZabbixStatus() {
         >
           {loading ? 'Loading...' : 'Refresh Data'}
         </button>
+
+        {/* Cancel Button - only show when loading */}
+        {loading && (
+          <button
+            onClick={cancelRequest}
+            style={{
+              padding: '0.625rem 1.25rem',
+              background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <MdCancel size={18} />
+            Cancel Request
+          </button>
+        )}
 
         {/* Search Box */}
         <div className="search-box" style={{ flex: 1, minWidth: '300px' }}>

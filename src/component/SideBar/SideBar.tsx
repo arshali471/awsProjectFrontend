@@ -40,6 +40,9 @@ export default function SideBar({ menuData }: ISideBar) {
     const handleLogout = () => {
         sessionStorage.removeItem("authKey");
         sessionStorage.removeItem("username");
+        sessionStorage.removeItem("email");
+        sessionStorage.removeItem("admin");
+        sessionStorage.removeItem("role");
         navigate("/login")
     }
 

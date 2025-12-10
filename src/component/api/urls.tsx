@@ -62,6 +62,17 @@ const url = {
         query: "/query",
         queryStream: "/query/stream",
         serverName: "kubernetes-mcp-server"
+    },
+
+    documentation: {
+        upload: "/aws/documentation/upload",
+        getAll: "/aws/documentation",
+        getById: "/aws/documentation",
+        update: "/aws/documentation",
+        delete: "/aws/documentation",
+        categories: "/aws/documentation/categories",
+        share: "/aws/documentation/share",
+        removeShare: "/aws/documentation/share"
     }
 
 };

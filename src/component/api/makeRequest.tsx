@@ -7,8 +7,8 @@ export interface IParams {
 }
 
 
-export default async function makeRequest(url: string, method: Method, inputPayload?: any) {
-    let requestConfig = {
+export default async function makeRequest(url: string, method: Method, inputPayload?: any, signal?: AbortSignal) {
+    let requestConfig: any = {
         baseURL: `${import.meta.env.VITE_REACT_APP_API_URL}${import.meta.env.VITE_REACT_APP_API_VER}`,
         url: url,
         method: method,
@@ -22,10 +22,19 @@ export default async function makeRequest(url: string, method: Method, inputPayl
         requestConfig.data = inputPayload;
     }
 
+    // Add abort signal if provided
+    if (signal) {
+        requestConfig.signal = signal;
+    }
+
     try {
         let response = await axios.request(requestConfig);
         return response;
     } catch (error: any) {
+        // Don't show error handler for aborted requests
+        if (axios.isCancel(error) || error.name === 'CanceledError') {
+            throw error;
+        }
         axiosHandler(error);
         throw error;
     }

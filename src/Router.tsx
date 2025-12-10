@@ -26,10 +26,18 @@ import RdpPage from "./component/View/Private/rdp/RdpPage";
 import AIChat from "./component/View/Private/AIChat/AIChat";
 import KubeBot from "./component/View/Private/KubeBot/KubeBot";
 import SSHTerminal from "./component/View/Private/SSHTerminal/SSHTerminal";
+import CompleteCostDashboard from "./component/View/Private/CostDashboard/CompleteCostDashboard";
+import Documentation from "./component/View/Private/Documentation/Documentation";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
-    return auth ? <>{children}</> : <Navigate to="/login" />;
+    if (!auth) {
+        // Store the current location to redirect back after login
+        const currentPath = window.location.pathname + window.location.search;
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
+        return <Navigate to="/login" />;
+    }
+    return <>{children}</>;
 }
 
 
@@ -95,6 +103,34 @@ export default function Router() {
                         element={
                             <PrivateRouter>
                                 <SSHTerminal />
+                            </PrivateRouter>
+                        }
+                    />
+
+                    {/* Cost Dashboard route */}
+                    <Route
+                        path="/cost"
+                        element={
+                            <PrivateRouter>
+                                <CompleteCostDashboard />
+                            </PrivateRouter>
+                        }
+                    />
+
+                    {/* Documentation routes */}
+                    <Route
+                        path="/documentation"
+                        element={
+                            <PrivateRouter>
+                                <Documentation />
+                            </PrivateRouter>
+                        }
+                    />
+                    <Route
+                        path="/documentation/:id"
+                        element={
+                            <PrivateRouter>
+                                <Documentation />
                             </PrivateRouter>
                         }
                     />

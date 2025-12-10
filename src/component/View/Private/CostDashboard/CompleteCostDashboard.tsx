@@ -3,6 +3,7 @@ import { useContext, useEffect, useState, useMemo } from "react";
 import { LoadingContext, SelectedRegionContext } from "../../../context/context";
 import { AdminService } from "../../../services/admin.service";
 import toast from "react-hot-toast";
+import AsyncSelect from 'react-select/async';
 import {
   Box,
   Card,
@@ -91,7 +92,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export default function CompleteCostDashboard() {
-  const { selectedRegion }: any = useContext(SelectedRegionContext);
+  const { selectedRegion, setSelectedRegion }: any = useContext(SelectedRegionContext);
   const { loading, setLoading }: any = useContext(LoadingContext);
 
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -108,10 +109,51 @@ export default function CompleteCostDashboard() {
   const [ec2RowsPerPage, setEc2RowsPerPage] = useState(10);
   const [resourcePage, setResourcePage] = useState(0);
   const [resourceRowsPerPage, setResourceRowsPerPage] = useState(10);
+  const [keysData, setKeysData] = useState<any>([]);
+
+  // Fetch AWS keys for account selection
+  const getAllAwsKeys = async () => {
+    try {
+      const res = await AdminService.getAllAwsKey();
+      if (res.status === 200) {
+        const mappedKeys = res.data.map((data: any) => ({
+          label: `${data.enviroment} (${data.region})`,
+          value: data._id
+        }));
+        setKeysData(mappedKeys);
+
+        // Auto-select first key if none selected
+        if (!selectedRegion && mappedKeys.length > 0) {
+          setSelectedRegion(mappedKeys[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching AWS keys:", err);
+      toast.error("Failed to load AWS accounts");
+    }
+  };
+
+  const filterKeys = (inputValue: string) => {
+    return keysData.filter((i: any) =>
+      i.label.toLowerCase().includes(inputValue.toLowerCase())
+    );
+  };
+
+  const loadOptions = (
+    inputValue: string,
+    callback: (options: any[]) => void
+  ) => {
+    setTimeout(() => {
+      callback(filterKeys(inputValue));
+    }, 300);
+  };
 
   // Fetch all data
   const fetchAllData = async (showLoader: boolean = true) => {
-    if (!selectedRegion?.value) return;
+    if (!selectedRegion?.value) {
+      toast.error("Please select an AWS account/region");
+      return;
+    }
 
     // Validate custom date range if selected
     if (useCustomRange) {
@@ -233,6 +275,13 @@ export default function CompleteCostDashboard() {
     }
   };
 
+  // Fetch AWS keys on component mount
+  useEffect(() => {
+    getAllAwsKeys();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch data when region or date range changes
   useEffect(() => {
     if (selectedRegion?.value && !useCustomRange) {
       fetchAllData();
@@ -402,6 +451,227 @@ export default function CompleteCostDashboard() {
     exportToCSV(data, "resource-costs");
   };
 
+  // Header component (always visible)
+  const renderHeader = () => (
+    <Box
+      sx={{
+        mb: 4,
+        p: 3,
+        background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)",
+        borderRadius: "24px",
+        border: "1px solid rgba(59, 130, 246, 0.2)",
+      }}
+    >
+      <Box display="flex" alignItems="center" gap={3} justifyContent="space-between" flexWrap="wrap">
+        <Box display="flex" alignItems="center" gap={3}>
+          <Box
+            sx={{
+              width: 72,
+              height: 72,
+              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+              borderRadius: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              boxShadow: "0 8px 32px rgba(59, 130, 246, 0.4)",
+              position: "relative",
+              overflow: "hidden",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: "linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%)",
+              },
+            }}
+          >
+            <AttachMoneyIcon sx={{ fontSize: 40, zIndex: 1 }} />
+          </Box>
+          <Box>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 800,
+                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                letterSpacing: "-1px",
+              }}
+            >
+              Complete Cost Analytics
+            </Typography>
+            <Typography variant="body1" sx={{ color: "var(--text-secondary)", mt: 0.5, fontWeight: 500 }}>
+              {selectedRegion ? `${selectedRegion.label}` : "Select an account to view costs"}
+              {period && ` • ${period.startDate} to ${period.endDate}`}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+          {/* AWS Account Selector */}
+          <Box
+            sx={{
+              minWidth: 250,
+              maxWidth: 300,
+              "& .css-b62m3t-container": {
+                borderRadius: "12px",
+              },
+            }}
+          >
+            <AsyncSelect
+              value={selectedRegion}
+              placeholder="Select AWS Account..."
+              cacheOptions
+              loadOptions={loadOptions}
+              defaultOptions={keysData}
+              isClearable={false}
+              onChange={(e: any) => {
+                setSelectedRegion(e);
+                setDashboardData(null);
+                setComparisonData(null);
+                setTopServicesData(null);
+                setError(null);
+              }}
+              menuPortalTarget={document.body}
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                control: (base) => ({
+                  ...base,
+                  minHeight: '40px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--bg-primary)',
+                  borderColor: 'rgba(59, 130, 246, 0.3)',
+                  '&:hover': {
+                    borderColor: 'rgba(59, 130, 246, 0.5)',
+                  }
+                }),
+                container: (base) => ({ ...base, width: '100%' }),
+              }}
+            />
+          </Box>
+
+          {selectedRegion && (
+            <>
+              <FormControl
+                size="small"
+                sx={{
+                  minWidth: 160,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    bgcolor: "var(--bg-primary)",
+                  },
+                }}
+              >
+                <InputLabel>Date Range</InputLabel>
+                <Select
+                  value={useCustomRange ? "custom" : dateRange}
+                  label="Date Range"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "custom") {
+                      setUseCustomRange(true);
+                    } else {
+                      setUseCustomRange(false);
+                      setDateRange(value as DateRangeOption);
+                    }
+                  }}
+                >
+                  <MenuItem value="7">Last 7 Days</MenuItem>
+                  <MenuItem value="30">Last 30 Days (This Month)</MenuItem>
+                  <MenuItem value="60">Last 60 Days (2 Months)</MenuItem>
+                  <MenuItem value="90">Last 90 Days (3 Months)</MenuItem>
+                  <MenuItem value="120">Last 120 Days (4 Months)</MenuItem>
+                  <MenuItem value="180">Last 180 Days (6 Months)</MenuItem>
+                  <MenuItem value="365">Last 365 Days (1 Year)</MenuItem>
+                  <MenuItem value="custom">Custom Date Range</MenuItem>
+                </Select>
+              </FormControl>
+
+              {useCustomRange && (
+                <>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "12px",
+                      border: "1px solid rgba(59, 130, 246, 0.3)",
+                      fontSize: "14px",
+                    }}
+                  />
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "12px",
+                      border: "1px solid rgba(59, 130, 246, 0.3)",
+                      fontSize: "14px",
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={() => fetchAllData()}
+                    sx={{
+                      borderRadius: "12px",
+                      textTransform: "none",
+                      background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </>
+              )}
+
+              <Tooltip title="Refresh data">
+                <IconButton
+                  onClick={() => fetchAllData()}
+                  disabled={refreshing}
+                  sx={{
+                    background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                    color: "white",
+                    borderRadius: "12px",
+                    "&:hover": {
+                      background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)",
+                    },
+                  }}
+                >
+                  <RefreshIcon className={refreshing ? "spin" : ""} />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  // No account selected state
+  if (!selectedRegion) {
+    return (
+      <div className="page-wrapper">
+        {renderHeader()}
+        <Alert
+          severity="info"
+          sx={{ borderRadius: "16px" }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Select an AWS Account
+          </Typography>
+          <Typography variant="body2">
+            Please select an AWS account from the dropdown above to view cost analytics.
+          </Typography>
+        </Alert>
+      </div>
+    );
+  }
+
   // Loading skeleton
   if (loading && !dashboardData) {
     return (
@@ -522,179 +792,7 @@ export default function CompleteCostDashboard() {
 
   return (
     <div className="page-wrapper">
-      {/* Elegant Header Section */}
-      <Box
-        sx={{
-          mb: 4,
-          p: 3,
-          background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)",
-          borderRadius: "24px",
-          border: "1px solid rgba(59, 130, 246, 0.2)",
-        }}
-      >
-        <Box display="flex" alignItems="center" gap={3} justifyContent="space-between" flexWrap="wrap">
-          <Box display="flex" alignItems="center" gap={3}>
-            <Box
-              sx={{
-                width: 72,
-                height: 72,
-                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                borderRadius: "20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                boxShadow: "0 8px 32px rgba(59, 130, 246, 0.4)",
-                position: "relative",
-                overflow: "hidden",
-                "&::before": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: "linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%)",
-                },
-              }}
-            >
-              <AttachMoneyIcon sx={{ fontSize: 40, zIndex: 1 }} />
-            </Box>
-            <Box>
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 800,
-                  background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  letterSpacing: "-1px",
-                }}
-              >
-                Complete Cost Analytics
-              </Typography>
-              <Typography variant="body1" sx={{ color: "var(--text-secondary)", mt: 0.5, fontWeight: 500 }}>
-                {period && `${period.startDate} to ${period.endDate}`}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
-            <FormControl
-              size="small"
-              sx={{
-                minWidth: 160,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                  bgcolor: "var(--bg-primary)",
-                },
-              }}
-            >
-              <InputLabel>Date Range</InputLabel>
-              <Select
-                value={useCustomRange ? "custom" : dateRange}
-                label="Date Range"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "custom") {
-                    setUseCustomRange(true);
-                  } else {
-                    setUseCustomRange(false);
-                    setDateRange(value as DateRangeOption);
-                  }
-                }}
-              >
-                <MenuItem value="7">Last 7 Days</MenuItem>
-                <MenuItem value="30">Last 30 Days (This Month)</MenuItem>
-                <MenuItem value="60">Last 60 Days (2 Months)</MenuItem>
-                <MenuItem value="90">Last 90 Days (3 Months)</MenuItem>
-                <MenuItem value="120">Last 120 Days (4 Months)</MenuItem>
-                <MenuItem value="180">Last 180 Days (6 Months)</MenuItem>
-                <MenuItem value="365">Last 365 Days (1 Year)</MenuItem>
-                <MenuItem value="custom">Custom Date Range</MenuItem>
-              </Select>
-            </FormControl>
-
-            {useCustomRange && (
-              <>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  max={endDate || new Date().toISOString().split('T')[0]}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--border-color)",
-                    fontSize: "14px",
-                    backgroundColor: "var(--bg-primary)",
-                    color: "var(--text-primary)",
-                  }}
-                />
-                <Typography sx={{ color: "var(--text-secondary)", fontWeight: 500 }}>to</Typography>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  min={startDate}
-                  max={new Date().toISOString().split('T')[0]}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--border-color)",
-                    fontSize: "14px",
-                    backgroundColor: "var(--bg-primary)",
-                    color: "var(--text-primary)",
-                  }}
-                />
-                <Button
-                  variant="contained"
-                  onClick={() => fetchAllData()}
-                  disabled={!startDate || !endDate || refreshing}
-                  sx={{
-                    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                    color: "white",
-                    borderRadius: "12px",
-                    px: 3,
-                    fontWeight: 600,
-                    textTransform: "none",
-                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
-                    "&:hover": {
-                      background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                      boxShadow: "0 6px 16px rgba(16, 185, 129, 0.4)",
-                    },
-                    "&:disabled": {
-                      background: "#ccc",
-                      color: "#666",
-                    },
-                  }}
-                >
-                  Apply
-                </Button>
-              </>
-            )}
-
-            <IconButton
-              onClick={() => fetchAllData(false)}
-              disabled={refreshing}
-              sx={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                color: "white",
-                width: 48,
-                height: 48,
-                "&:hover": {
-                  background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)",
-                  transform: "rotate(180deg)",
-                },
-                transition: "all 0.3s ease",
-              }}
-            >
-              {refreshing ? <CircularProgress size={24} sx={{ color: "white" }} /> : <RefreshIcon />}
-            </IconButton>
-          </Box>
-        </Box>
-      </Box>
+      {renderHeader()}
 
       {/* Cost Comparison Insights */}
       {comparisonData && (

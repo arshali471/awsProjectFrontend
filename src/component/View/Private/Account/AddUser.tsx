@@ -284,7 +284,7 @@ export default function AddUser() {
                     </Box>
                 )}
                 <AddUserModal
-                    showModal={showAddUser}
+                    show={showAddUser}
                     handleClose={() => setShowAddUser(false)}
                     reload={getAllUsers}
                 />

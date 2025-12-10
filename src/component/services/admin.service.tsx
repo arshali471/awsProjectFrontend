@@ -161,7 +161,7 @@ export class AdminService {
     }
 
     // NEW: Get agent status dashboard with stats (supports optional date range and Windows credentials)
-    static async getAgentStatusDashboard(keyId: any, startDate?: any, endDate?: any, windowsUsername?: string, windowsPassword?: string) {
+    static async getAgentStatusDashboard(keyId: any, startDate?: any, endDate?: any, windowsUsername?: string, windowsPassword?: string, signal?: AbortSignal) {
         const params = makeParams([
             {
                 index: "startDate",
@@ -178,7 +178,7 @@ export class AdminService {
         if (windowsUsername) body.windowsUsername = windowsUsername;
         if (windowsPassword) body.windowsPassword = windowsPassword;
 
-        return await makeRequest(url.eksToken.getAgentStatusDashboard + "/" + keyId + params, RequestMethods.POST, body)
+        return await makeRequest(url.eksToken.getAgentStatusDashboard + "/" + keyId + params, RequestMethods.POST, body, signal)
     }
 
     static async getZabbixStatus(keyId: any, sshUsername: any, sshKeyPath: any,operatingSystem: any, startDate:any, endDate: any ) {
@@ -359,6 +359,103 @@ export class AdminService {
         window.URL.revokeObjectURL(downloadUrl);
 
         return { success: true, message: 'Export successful' };
+    }
+
+    // Documentation Management
+    static async uploadDocument(formData: FormData) {
+        return await makeUploadRequest(url.documentation.upload, RequestMethods.POST, formData);
+    }
+
+    static async addDocumentLink(data: any) {
+        // Use the same upload endpoint but with documentType=link
+        const formData = new FormData();
+        formData.append('title', data.title);
+        formData.append('description', data.description);
+        formData.append('category', data.category);
+        formData.append('documentType', 'link');
+        formData.append('referenceUrl', data.externalUrl);
+        return await makeUploadRequest(url.documentation.upload, RequestMethods.POST, formData);
+    }
+
+    static async getAllDocuments(category?: string, search?: string) {
+        const params = makeParams([
+            {
+                index: "category",
+                value: category
+            },
+            {
+                index: "search",
+                value: search
+            }
+        ]);
+        return await makeRequest(url.documentation.getAll + params, RequestMethods.GET);
+    }
+
+    static async getDocumentById(id: string) {
+        return await makeRequest(url.documentation.getById + "/" + id, RequestMethods.GET);
+    }
+
+    static async updateDocument(id: string, data: any) {
+        return await makeRequest(url.documentation.update + "/" + id, RequestMethods.PUT, data);
+    }
+
+    static async deleteDocument(id: string) {
+        return await makeRequest(url.documentation.delete + "/" + id, RequestMethods.DELETE);
+    }
+
+    static async downloadDocument(id: string) {
+        const response = await fetch(
+            (import.meta.env.VITE_REACT_APP_API_URL || '') +
+            (import.meta.env.VITE_REACT_APP_API_VER || '') +
+            url.documentation.getById + "/" + id,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': sessionStorage.getItem('authKey') || '',
+                },
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Failed to download document');
+        }
+
+        const data = await response.json();
+
+        // If it's a link, return the URL for opening in new tab
+        if (data.data.documentType === 'link') {
+            return { data: data.data, status: 200 };
+        }
+
+        // For files, fetch the blob from the signed URL
+        try {
+            const fileResponse = await fetch(data.data.downloadUrl, {
+                method: 'GET',
+                mode: 'cors'
+            });
+
+            if (!fileResponse.ok) {
+                throw new Error(`Failed to fetch file: ${fileResponse.status} ${fileResponse.statusText}`);
+            }
+
+            const blob = await fileResponse.blob();
+            return { data: blob, status: 200 };
+        } catch (error) {
+            console.error('Error fetching file from S3:', error);
+            throw new Error('Failed to download file from storage');
+        }
+    }
+
+    static async shareDocument(id: string, payload: { email: string; permission: string }) {
+        return await makeRequest(url.documentation.share + "/" + id, RequestMethods.POST, payload);
+    }
+
+    static async removeShareAccess(id: string, email: string) {
+        return await makeRequest(url.documentation.removeShare + "/" + id + "/" + encodeURIComponent(email), RequestMethods.DELETE);
+    }
+
+    static async getDocumentCategories() {
+        return await makeRequest(url.documentation.categories, RequestMethods.GET);
     }
 
 }

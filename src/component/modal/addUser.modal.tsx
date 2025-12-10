@@ -22,10 +22,11 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 interface IAddUserModal {
     show: any,
-    handleClose: any
+    handleClose: any,
+    reload?: () => void
 }
 
-export default function AddUserModal({ show, handleClose }: IAddUserModal) {
+export default function AddUserModal({ show, handleClose, reload }: IAddUserModal) {
 
     const [data, setData] = useState<any>({});
     const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +49,10 @@ export default function AddUserModal({ show, handleClose }: IAddUserModal) {
             if (res.status === 200) {
                 setData({});
                 handleClose();
-                toast.success("User Created Successfully")
+                toast.success("User Created Successfully");
+                if (reload) {
+                    reload();
+                }
             }
         }).catch(err => {
             toast.error(err.response.data)

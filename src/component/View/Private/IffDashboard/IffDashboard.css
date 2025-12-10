@@ -70,6 +70,8 @@
     padding: 0.5rem;
     margin-top: 0.5rem;
     min-width: 220px;
+    z-index: 9999 !important;
+    position: absolute !important;
 }
 
 .dropdown-item {

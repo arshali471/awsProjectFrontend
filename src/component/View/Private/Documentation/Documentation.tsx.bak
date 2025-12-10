@@ -1,0 +1,1055 @@
+import { useContext, useEffect, useState } from "react";
+import { LoadingContext } from "../../../context/context";
+import { AdminService } from "../../../services/admin.service";
+import { FaSearch, FaFile, FaLink, FaFileAlt, FaFilter, FaPlus } from "react-icons/fa";
+import { Box, Typography, IconButton, CircularProgress, Button, Modal, Tab, Tabs, TextField, MenuItem, Select, FormControl, InputLabel, SelectChangeEvent, Chip } from "@mui/material";
+import { DataGrid, GridColDef, GridActionsCellItem, useGridApiRef } from '@mui/x-data-grid';
+import Paper from '@mui/material/Paper';
+import DescriptionIcon from "@mui/icons-material/Description";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import PreviewIcon from "@mui/icons-material/Preview";
+import DownloadIcon from "@mui/icons-material/Download";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import LinkIcon from "@mui/icons-material/Link";
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import TableViewIcon from '@mui/icons-material/TableView';
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
+import moment from 'moment';
+import toast from 'react-hot-toast';
+import "../SharedPage.css";
+import "./Documentation.css";
+
+interface DocumentData {
+    _id: string;
+    title: string;
+    description: string;
+    category: string;
+    documentType: 'file' | 'link';
+    fileUrl?: string;
+    fileName?: string;
+    fileSize?: number;
+    fileType?: string;
+    externalUrl?: string;
+    uploadedBy?: string;
+    uploadedAt: string;
+    updatedAt?: string;
+}
+
+interface UploadFormData {
+    title: string;
+    description: string;
+    category: string;
+    file: File | null;
+    externalUrl: string;
+}
+
+export default function Documentation() {
+    const { loading, setLoading }: any = useContext(LoadingContext);
+
+    const [documents, setDocuments] = useState<DocumentData[]>([]);
+    const [filteredData, setFilteredData] = useState<DocumentData[]>([]);
+    const [searchText, setSearchText] = useState<string>('');
+    const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const [refreshing, setRefreshing] = useState(false);
+
+    // Modal states
+    const [uploadModalOpen, setUploadModalOpen] = useState(false);
+    const [previewModalOpen, setPreviewModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+    // Form states
+    const [uploadTabValue, setUploadTabValue] = useState(0);
+    const [uploadFormData, setUploadFormData] = useState<UploadFormData>({
+        title: '',
+        description: '',
+        category: 'General',
+        file: null,
+        externalUrl: ''
+    });
+    const [selectedDocument, setSelectedDocument] = useState<DocumentData | null>(null);
+    const [editFormData, setEditFormData] = useState<Partial<DocumentData>>({});
+
+    const apiRef = useGridApiRef();
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+
+    const categories = ['General', 'Technical', 'User Guide', 'API Documentation', 'Tutorial', 'Policy', 'Other'];
+
+    useEffect(() => {
+        fetchDocuments();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        filterDocuments();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchText, categoryFilter, documents]);
+
+    const fetchDocuments = async (showRefreshing = false) => {
+        if (showRefreshing) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
+        try {
+            const res = await AdminService.getAllDocuments();
+            if (res.status === 200 && res.data.success) {
+                const docs = res.data.data || [];
+                setDocuments(docs);
+                setFilteredData(docs);
+            }
+        } catch (error) {
+            console.error("Error fetching documents", error);
+            toast.error("Failed to fetch documents");
+        }
+        if (showRefreshing) {
+            setRefreshing(false);
+        } else {
+            setLoading(false);
+        }
+    };
+
+    const filterDocuments = () => {
+        let filtered = documents;
+
+        // Category filter
+        if (categoryFilter !== 'all') {
+            filtered = filtered.filter(doc => doc.category === categoryFilter);
+        }
+
+        // Search filter
+        if (searchText) {
+            filtered = filtered.filter(doc => {
+                const searchStr = `${doc.title} ${doc.description} ${doc.category} ${doc.fileName || ''} ${doc.externalUrl || ''}`.toLowerCase();
+                return searchStr.includes(searchText.toLowerCase());
+            });
+        }
+
+        setFilteredData(filtered);
+    };
+
+    const handleRefresh = () => {
+        fetchDocuments(true);
+    };
+
+    const handleUploadModalOpen = () => {
+        setUploadModalOpen(true);
+        setUploadFormData({
+            title: '',
+            description: '',
+            category: 'General',
+            file: null,
+            externalUrl: ''
+        });
+        setUploadTabValue(0);
+    };
+
+    const handleUploadModalClose = () => {
+        setUploadModalOpen(false);
+    };
+
+    const handleUploadTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setUploadTabValue(newValue);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setUploadFormData({ ...uploadFormData, file: e.target.files[0] });
+        }
+    };
+
+    const handleUploadSubmit = async () => {
+        try {
+            setLoading(true);
+
+            if (uploadTabValue === 0) {
+                // File upload
+                if (!uploadFormData.file) {
+                    toast.error("Please select a file");
+                    setLoading(false);
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('title', uploadFormData.title);
+                formData.append('description', uploadFormData.description);
+                formData.append('category', uploadFormData.category);
+                formData.append('file', uploadFormData.file);
+                formData.append('documentType', 'file');
+
+                const res = await AdminService.uploadDocument(formData);
+                if (res.status === 200 || res.status === 201) {
+                    toast.success("Document uploaded successfully");
+                    handleUploadModalClose();
+                    fetchDocuments();
+                }
+            } else {
+                // Link upload
+                if (!uploadFormData.externalUrl) {
+                    toast.error("Please enter a URL");
+                    setLoading(false);
+                    return;
+                }
+
+                const payload = {
+                    title: uploadFormData.title,
+                    description: uploadFormData.description,
+                    category: uploadFormData.category,
+                    externalUrl: uploadFormData.externalUrl,
+                    documentType: 'link'
+                };
+
+                const res = await AdminService.addDocumentLink(payload);
+                if (res.status === 200 || res.status === 201) {
+                    toast.success("Link added successfully");
+                    handleUploadModalClose();
+                    fetchDocuments();
+                }
+            }
+        } catch (error) {
+            console.error("Error uploading document", error);
+            toast.error("Failed to upload document");
+        }
+        setLoading(false);
+    };
+
+    const handlePreview = (doc: DocumentData) => {
+        setSelectedDocument(doc);
+        setPreviewModalOpen(true);
+    };
+
+    const handleDownload = async (doc: DocumentData) => {
+        try {
+            if (doc.documentType === 'link' && doc.externalUrl) {
+                // Open link in new tab
+                window.open(doc.externalUrl, '_blank', 'noopener,noreferrer');
+                toast.success("Opening link in new tab");
+            } else if (doc.documentType === 'file' && doc.fileUrl) {
+                // Download file directly from signed URL
+                const link = document.createElement('a');
+                link.href = doc.fileUrl;
+                link.download = doc.fileName || 'document';
+                link.target = '_blank';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast.success("Download started");
+            }
+        } catch (error) {
+            console.error("Error downloading document", error);
+            toast.error("Failed to download document");
+        }
+    };
+
+    const handleEdit = (doc: DocumentData) => {
+        setSelectedDocument(doc);
+        setEditFormData({
+            title: doc.title,
+            description: doc.description,
+            category: doc.category,
+            externalUrl: doc.externalUrl
+        });
+        setEditModalOpen(true);
+    };
+
+    const handleEditSubmit = async () => {
+        if (!selectedDocument) return;
+
+        try {
+            setLoading(true);
+            const res = await AdminService.updateDocument(selectedDocument._id, editFormData);
+            if (res.status === 200) {
+                toast.success("Document updated successfully");
+                setEditModalOpen(false);
+                fetchDocuments();
+            }
+        } catch (error) {
+            console.error("Error updating document", error);
+            toast.error("Failed to update document");
+        }
+        setLoading(false);
+    };
+
+    const handleDeleteConfirm = (doc: DocumentData) => {
+        setSelectedDocument(doc);
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleDelete = async () => {
+        if (!selectedDocument) return;
+
+        try {
+            setLoading(true);
+            const res = await AdminService.deleteDocument(selectedDocument._id);
+            if (res.status === 200) {
+                toast.success("Document deleted successfully");
+                setDeleteConfirmOpen(false);
+                fetchDocuments();
+            }
+        } catch (error) {
+            console.error("Error deleting document", error);
+            toast.error("Failed to delete document");
+        }
+        setLoading(false);
+    };
+
+    const formatFileSize = (bytes?: number): string => {
+        if (!bytes) return 'N/A';
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        if (bytes === 0) return '0 Bytes';
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
+    };
+
+    const getFileIcon = (doc: DocumentData) => {
+        if (doc.documentType === 'link') {
+            return <LinkIcon sx={{ color: '#0073bb' }} />;
+        }
+
+        const fileType = doc.fileType?.toLowerCase() || '';
+        if (fileType.includes('pdf')) return <FaFileAlt style={{ color: '#dc3545' }} />;
+        if (fileType.includes('image')) return <FaFile style={{ color: '#28a745' }} />;
+        if (fileType.includes('excel') || fileType.includes('spreadsheet')) return <FaFile style={{ color: '#10b981' }} />;
+        if (fileType.includes('word') || fileType.includes('document')) return <FaFile style={{ color: '#0073bb' }} />;
+        return <FaFile style={{ color: '#6c757d' }} />;
+    };
+
+    const columns: GridColDef[] = [
+        {
+            field: 'serialNo',
+            headerName: 'Sr No.',
+            width: 80,
+            align: 'center',
+            headerAlign: 'center'
+        },
+        {
+            field: 'icon',
+            headerName: 'Type',
+            width: 80,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => getFileIcon(params.row.originalData)
+        },
+        {
+            field: 'title',
+            headerName: 'Title',
+            flex: 1,
+            minWidth: 200
+        },
+        {
+            field: 'description',
+            headerName: 'Description',
+            flex: 1,
+            minWidth: 250
+        },
+        {
+            field: 'category',
+            headerName: 'Category',
+            width: 150,
+            renderCell: (params) => (
+                <Chip
+                    label={params.value}
+                    size="small"
+                    sx={{
+                        background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                        color: 'white',
+                        fontWeight: 500
+                    }}
+                />
+            )
+        },
+        {
+            field: 'fileName',
+            headerName: 'File Name',
+            width: 200
+        },
+        {
+            field: 'fileSize',
+            headerName: 'Size',
+            width: 120,
+            align: 'right',
+            headerAlign: 'right'
+        },
+        {
+            field: 'uploadedAt',
+            headerName: 'Uploaded Date',
+            width: 150
+        },
+        {
+            field: 'actions',
+            type: 'actions',
+            headerName: 'Actions',
+            width: 150,
+            getActions: (params) => {
+                const actions = [
+                    <GridActionsCellItem
+                        icon={<PreviewIcon />}
+                        label="Preview"
+                        onClick={() => handlePreview(params.row.originalData)}
+                        showInMenu={false}
+                    />,
+                    <GridActionsCellItem
+                        icon={<DownloadIcon />}
+                        label="Download"
+                        onClick={() => handleDownload(params.row.originalData)}
+                        showInMenu={false}
+                    />,
+                    <GridActionsCellItem
+                        icon={<EditIcon />}
+                        label="Edit"
+                        onClick={() => handleEdit(params.row.originalData)}
+                        showInMenu={false}
+                    />,
+                    <GridActionsCellItem
+                        icon={<DeleteIcon />}
+                        label="Delete"
+                        onClick={() => handleDeleteConfirm(params.row.originalData)}
+                        showInMenu={false}
+                        sx={{ color: '#dc3545' }}
+                    />
+                ];
+                return actions;
+            }
+        }
+    ];
+
+    const rows = filteredData.map((doc, index) => ({
+        id: doc._id || index,
+        serialNo: index + 1,
+        title: doc.title || "N/A",
+        description: doc.description || "N/A",
+        category: doc.category || "General",
+        fileName: doc.documentType === 'file' ? (doc.fileName || "N/A") : (doc.externalUrl || "N/A"),
+        fileSize: formatFileSize(doc.fileSize),
+        uploadedAt: doc.uploadedAt ? moment(doc.uploadedAt).format("DD MMM YYYY") : "N/A",
+        originalData: doc
+    }));
+
+    const handleExportCSV = () => {
+        const selectedIDs = new Set(apiRef.current.getSelectedRows().keys());
+        const exportRows = selectedIDs.size > 0
+            ? rows.filter(row => selectedIDs.has(row.id))
+            : rows;
+
+        const exportColumns = columns.filter(col => col.field !== 'actions' && col.field !== 'icon');
+
+        const csvContent = [
+            exportColumns.map(col => col.headerName).join(','),
+            ...exportRows.map(row =>
+                exportColumns.map(col => {
+                    const val = row[col.field as keyof typeof row];
+                    return typeof val === 'string' ? `"${val}"` : val;
+                }).join(',')
+            )
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const timestamp = new Date().toISOString().split('T')[0];
+        saveAs(blob, `Documentation_${timestamp}.csv`);
+    };
+
+    const handleExportExcel = () => {
+        const selectedIDs = new Set(apiRef.current.getSelectedRows().keys());
+        const exportRows = selectedIDs.size > 0
+            ? rows.filter(row => selectedIDs.has(row.id))
+            : rows;
+
+        const exportColumns = columns.filter(col => col.field !== 'actions' && col.field !== 'icon');
+
+        const excelData = exportRows.map(row => {
+            const rowData: any = {};
+            exportColumns.forEach(col => {
+                rowData[col.headerName] = row[col.field as keyof typeof row];
+            });
+            return rowData;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Documentation');
+
+        const colWidths = exportColumns.map(col => ({ wch: Math.max((col.width || 100) / 10, 10) }));
+        worksheet['!cols'] = colWidths;
+
+        const timestamp = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(workbook, `Documentation_${timestamp}.xlsx`);
+    };
+
+    const renderPreviewContent = () => {
+        if (!selectedDocument) return null;
+
+        if (selectedDocument.documentType === 'link') {
+            return (
+                <div className="preview-link-container">
+                    <LinkIcon sx={{ fontSize: 60, color: '#0073bb', mb: 2 }} />
+                    <Typography variant="h6" gutterBottom>External Link</Typography>
+                    <Typography variant="body2" color="textSecondary" paragraph>
+                        {selectedDocument.externalUrl}
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        startIcon={<LinkIcon />}
+                        onClick={() => window.open(selectedDocument.externalUrl, '_blank', 'noopener,noreferrer')}
+                        sx={{
+                            background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                            mt: 2
+                        }}
+                    >
+                        Open in New Tab
+                    </Button>
+                </div>
+            );
+        }
+
+        const fileType = selectedDocument.fileType?.toLowerCase() || '';
+
+        if (fileType.includes('pdf')) {
+            return (
+                <iframe
+                    src={selectedDocument.fileUrl}
+                    title="PDF Preview"
+                    className="preview-iframe"
+                />
+            );
+        }
+
+        if (fileType.includes('image')) {
+            return (
+                <img
+                    src={selectedDocument.fileUrl}
+                    alt={selectedDocument.title}
+                    className="preview-image"
+                />
+            );
+        }
+
+        return (
+            <div className="preview-download-container">
+                <DescriptionIcon sx={{ fontSize: 60, color: '#0073bb', mb: 2 }} />
+                <Typography variant="h6" gutterBottom>Preview not available</Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                    This file type cannot be previewed in the browser.
+                </Typography>
+                <Button
+                    variant="contained"
+                    startIcon={<DownloadIcon />}
+                    onClick={() => handleDownload(selectedDocument)}
+                    sx={{
+                        background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                        mt: 2
+                    }}
+                >
+                    Download File
+                </Button>
+            </div>
+        );
+    };
+
+    const totalSize = filteredData.reduce((acc, doc) => {
+        return acc + (doc.fileSize || 0);
+    }, 0);
+
+    return (
+        <div className="page-wrapper">
+            {/* Page Header */}
+            <Box sx={{ mb: 3 }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Box
+                            sx={{
+                                width: 56,
+                                height: 56,
+                                background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                borderRadius: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                boxShadow: '0 4px 16px rgba(0, 115, 187, 0.3)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 8px 20px rgba(0, 115, 187, 0.4)',
+                                }
+                            }}
+                        >
+                            <DescriptionIcon sx={{ fontSize: 32 }} />
+                        </Box>
+                        <Box>
+                            <Typography
+                                variant="h4"
+                                sx={{
+                                    fontWeight: 700,
+                                    color: '#232f3e',
+                                    letterSpacing: '-0.5px',
+                                }}
+                            >
+                                Documentation
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: '#6c757d',
+                                    mt: 0.5,
+                                }}
+                            >
+                                Manage and organize your documentation files and links
+                            </Typography>
+                        </Box>
+                    </Box>
+                    <Box display="flex" gap={2}>
+                        <IconButton
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            sx={{
+                                background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                color: 'white',
+                                width: 48,
+                                height: 48,
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #005a94 0%, #1570b8 100%)',
+                                    transform: 'rotate(180deg)',
+                                },
+                                transition: 'all 0.3s ease',
+                                '&.Mui-disabled': {
+                                    background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                    color: 'white',
+                                    opacity: 0.7,
+                                }
+                            }}
+                        >
+                            {refreshing ? <CircularProgress size={24} sx={{ color: 'white' }} /> : <RefreshIcon />}
+                        </IconButton>
+                    </Box>
+                </Box>
+            </Box>
+
+            {/* Stats Cards */}
+            <div className="stats-container">
+                <div className="stat-card">
+                    <div className="stat-card-header">
+                        <span className="stat-card-title">Total Documents</span>
+                        <div className="stat-card-icon">
+                            <FaFileAlt />
+                        </div>
+                    </div>
+                    <h2 className="stat-card-value">{documents.length}</h2>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-card-header">
+                        <span className="stat-card-title">Total Categories</span>
+                        <div className="stat-card-icon">
+                            <FaFilter />
+                        </div>
+                    </div>
+                    <h2 className="stat-card-value">{categories.length}</h2>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-card-header">
+                        <span className="stat-card-title">Filtered Results</span>
+                        <div className="stat-card-icon">
+                            <FaSearch />
+                        </div>
+                    </div>
+                    <h2 className="stat-card-value">{filteredData.length}</h2>
+                </div>
+            </div>
+
+            {/* Search Bar and Filters */}
+            <div className="action-bar">
+                <div className="action-bar-left">
+                    <div className="search-box">
+                        <FaSearch className="search-icon" />
+                        <input
+                            type="text"
+                            className="search-input"
+                            placeholder="Search documents by title, description, category..."
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
+                    </div>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Category</InputLabel>
+                        <Select
+                            value={categoryFilter}
+                            label="Category"
+                            onChange={(e: SelectChangeEvent) => setCategoryFilter(e.target.value)}
+                            sx={{ borderRadius: '10px' }}
+                        >
+                            <MenuItem value="all">All Categories</MenuItem>
+                            {categories.map(cat => (
+                                <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </div>
+                <div className="action-bar-right">
+                    <Button
+                        variant="contained"
+                        startIcon={<FaPlus />}
+                        onClick={handleUploadModalOpen}
+                        sx={{
+                            background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                            color: 'white',
+                            padding: '8px 20px',
+                            borderRadius: '10px',
+                            fontWeight: 500,
+                            textTransform: 'none',
+                            boxShadow: '0 2px 8px rgba(0, 115, 187, 0.3)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #005a92 0%, #0073bb 100%)',
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 4px 12px rgba(0, 115, 187, 0.4)',
+                            },
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        Add Document
+                    </Button>
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="table-container">
+                <Box display="flex" justifyContent="flex-end" gap={2} p={2}>
+                    <Button
+                        variant="contained"
+                        onClick={handleExportCSV}
+                        startIcon={<FileDownloadIcon />}
+                        sx={{
+                            background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                            color: 'white',
+                            padding: '8px 20px',
+                            borderRadius: '8px',
+                            fontWeight: 500,
+                            textTransform: 'none',
+                            boxShadow: '0 2px 8px rgba(0, 115, 187, 0.3)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #005a92 0%, #0073bb 100%)',
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 4px 12px rgba(0, 115, 187, 0.4)',
+                            },
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        Export CSV
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleExportExcel}
+                        startIcon={<TableViewIcon />}
+                        sx={{
+                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            color: 'white',
+                            padding: '8px 20px',
+                            borderRadius: '8px',
+                            fontWeight: 500,
+                            textTransform: 'none',
+                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                            },
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        Export Excel
+                    </Button>
+                </Box>
+
+                <Paper
+                    elevation={0}
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        border: '1px solid #e0e0e0'
+                    }}
+                >
+                    <DataGrid
+                        apiRef={apiRef}
+                        rows={rows}
+                        columns={columns}
+                        loading={loading}
+                        checkboxSelection
+                        disableRowSelectionOnClick
+                        pagination
+                        paginationModel={paginationModel}
+                        onPaginationModelChange={setPaginationModel}
+                        pageSizeOptions={[10, 25, 50, 100]}
+                        autoHeight
+                        sx={{
+                            border: 'none',
+                            '& .MuiDataGrid-cell:focus': {
+                                outline: 'none',
+                            },
+                            '& .MuiDataGrid-row:hover': {
+                                backgroundColor: 'rgba(0, 115, 187, 0.04)',
+                            },
+                        }}
+                    />
+                </Paper>
+            </div>
+
+            {/* Upload/Add Modal */}
+            <Modal
+                open={uploadModalOpen}
+                onClose={handleUploadModalClose}
+                aria-labelledby="upload-modal"
+            >
+                <Box className="modal-container">
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography variant="h5" fontWeight={700}>
+                            Add Documentation
+                        </Typography>
+                        <IconButton onClick={handleUploadModalClose}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+
+                    <Tabs value={uploadTabValue} onChange={handleUploadTabChange} sx={{ mb: 3 }}>
+                        <Tab icon={<CloudUploadIcon />} label="Upload File" iconPosition="start" />
+                        <Tab icon={<LinkIcon />} label="Add Link" iconPosition="start" />
+                    </Tabs>
+
+                    <Box className="modal-form">
+                        <TextField
+                            fullWidth
+                            label="Title"
+                            value={uploadFormData.title}
+                            onChange={(e) => setUploadFormData({ ...uploadFormData, title: e.target.value })}
+                            margin="normal"
+                            required
+                        />
+                        <TextField
+                            fullWidth
+                            label="Description"
+                            value={uploadFormData.description}
+                            onChange={(e) => setUploadFormData({ ...uploadFormData, description: e.target.value })}
+                            margin="normal"
+                            multiline
+                            rows={3}
+                        />
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>Category</InputLabel>
+                            <Select
+                                value={uploadFormData.category}
+                                label="Category"
+                                onChange={(e: SelectChangeEvent) => setUploadFormData({ ...uploadFormData, category: e.target.value })}
+                            >
+                                {categories.map(cat => (
+                                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        {uploadTabValue === 0 ? (
+                            <Box mt={2}>
+                                <Button
+                                    variant="outlined"
+                                    component="label"
+                                    fullWidth
+                                    startIcon={<CloudUploadIcon />}
+                                    sx={{ py: 2 }}
+                                >
+                                    {uploadFormData.file ? uploadFormData.file.name : 'Choose File'}
+                                    <input
+                                        type="file"
+                                        hidden
+                                        onChange={handleFileChange}
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.gif"
+                                    />
+                                </Button>
+                            </Box>
+                        ) : (
+                            <TextField
+                                fullWidth
+                                label="External URL"
+                                value={uploadFormData.externalUrl}
+                                onChange={(e) => setUploadFormData({ ...uploadFormData, externalUrl: e.target.value })}
+                                margin="normal"
+                                placeholder="https://example.com/document"
+                                required
+                            />
+                        )}
+
+                        <Box display="flex" gap={2} mt={3}>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                onClick={handleUploadSubmit}
+                                disabled={loading}
+                                sx={{
+                                    background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                    py: 1.5
+                                }}
+                            >
+                                {loading ? <CircularProgress size={24} /> : (uploadTabValue === 0 ? 'Upload' : 'Add Link')}
+                            </Button>
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                onClick={handleUploadModalClose}
+                                sx={{ py: 1.5 }}
+                            >
+                                Cancel
+                            </Button>
+                        </Box>
+                    </Box>
+                </Box>
+            </Modal>
+
+            {/* Preview Modal */}
+            <Modal
+                open={previewModalOpen}
+                onClose={() => setPreviewModalOpen(false)}
+                aria-labelledby="preview-modal"
+            >
+                <Box className="modal-container modal-large">
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography variant="h5" fontWeight={700}>
+                            {selectedDocument?.title}
+                        </Typography>
+                        <IconButton onClick={() => setPreviewModalOpen(false)}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+                    <Box className="preview-content">
+                        {renderPreviewContent()}
+                    </Box>
+                </Box>
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal
+                open={editModalOpen}
+                onClose={() => setEditModalOpen(false)}
+                aria-labelledby="edit-modal"
+            >
+                <Box className="modal-container">
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography variant="h5" fontWeight={700}>
+                            Edit Document
+                        </Typography>
+                        <IconButton onClick={() => setEditModalOpen(false)}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+
+                    <Box className="modal-form">
+                        <TextField
+                            fullWidth
+                            label="Title"
+                            value={editFormData.title || ''}
+                            onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                            margin="normal"
+                        />
+                        <TextField
+                            fullWidth
+                            label="Description"
+                            value={editFormData.description || ''}
+                            onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                            margin="normal"
+                            multiline
+                            rows={3}
+                        />
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>Category</InputLabel>
+                            <Select
+                                value={editFormData.category || 'General'}
+                                label="Category"
+                                onChange={(e: SelectChangeEvent) => setEditFormData({ ...editFormData, category: e.target.value })}
+                            >
+                                {categories.map(cat => (
+                                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        {selectedDocument?.documentType === 'link' && (
+                            <TextField
+                                fullWidth
+                                label="External URL"
+                                value={editFormData.externalUrl || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, externalUrl: e.target.value })}
+                                margin="normal"
+                            />
+                        )}
+
+                        <Box display="flex" gap={2} mt={3}>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                onClick={handleEditSubmit}
+                                disabled={loading}
+                                sx={{
+                                    background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                    py: 1.5
+                                }}
+                            >
+                                {loading ? <CircularProgress size={24} /> : 'Update'}
+                            </Button>
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                onClick={() => setEditModalOpen(false)}
+                                sx={{ py: 1.5 }}
+                            >
+                                Cancel
+                            </Button>
+                        </Box>
+                    </Box>
+                </Box>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                aria-labelledby="delete-modal"
+            >
+                <Box className="modal-container modal-small">
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography variant="h5" fontWeight={700} color="error">
+                            Delete Document
+                        </Typography>
+                        <IconButton onClick={() => setDeleteConfirmOpen(false)}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+
+                    <Typography variant="body1" mb={3}>
+                        Are you sure you want to delete "{selectedDocument?.title}"? This action cannot be undone.
+                    </Typography>
+
+                    <Box display="flex" gap={2}>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            color="error"
+                            onClick={handleDelete}
+                            disabled={loading}
+                            sx={{ py: 1.5 }}
+                        >
+                            {loading ? <CircularProgress size={24} /> : 'Delete'}
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={() => setDeleteConfirmOpen(false)}
+                            sx={{ py: 1.5 }}
+                        >
+                            Cancel
+                        </Button>
+                    </Box>
+                </Box>
+            </Modal>
+        </div>
+    );
+}
