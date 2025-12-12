@@ -2,7 +2,7 @@ import { Form, Table } from "react-bootstrap"
 import { FaRegTrashAlt } from "react-icons/fa";
 import { AdminService } from "../services/admin.service";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ConfirmationModal from "../modal/Confirmation.modal";
 import { TbPasswordFingerprint } from "react-icons/tb";
 import ChangePaswordModal from "../modal/ChangePassword.modal";
@@ -15,19 +15,34 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
 
     const [showConfirmationModal, setShowConfirmationModal] = useState<any | undefined>(undefined)
     const [selectedUser, setSelectedUser] = useState<any>(null)
+    const [localTableData, setLocalTableData] = useState<any>(tableData)
 
     const [showChangePasswordModal, setShowChangePasswordModal] = useState<any>(undefined)
 
+    // Update local data when tableData prop changes
+    useEffect(() => {
+        setLocalTableData(tableData)
+    }, [tableData])
 
     const handleRoleChange = async (userId: string, payload: any) => {
+        // Optimistically update the local state first
+        setLocalTableData((prevData: any) =>
+            prevData.map((user: any) =>
+                user._id === userId ? { ...user, ...payload } : user
+            )
+        );
+
         await AdminService.updateUser(userId, payload).then(res => {
             if (res.status === 200) {
-                reload();
                 toast.success('Role Updated')
+                // Optionally reload in the background to ensure sync
+                // reload();
             }
         }).catch(e => {
             console.error(e)
             toast.error("Something went wrong while updating roles")
+            // Revert on error
+            setLocalTableData(tableData)
         })
     }
 
@@ -66,7 +81,7 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
                 </thead>
                 <tbody>
 
-                    {tableData && tableData.length > 0 ? tableData.map((data: any, index: number) => {
+                    {localTableData && localTableData.length > 0 ? localTableData.map((data: any, index: number) => {
                         return (
                             <tr key={data._id} style={{ opacity: data.isActive ? 1 : .5 }}>
                                 <td style={{ fontSize: 12 }}>{index + 1}</td>

@@ -168,7 +168,7 @@ export default function AddUser() {
                             }}
                         >
                             <Box sx={{ p: 3 }}>
-                                <UsersTable tableData={usersData} />
+                                <UsersTable tableData={usersData} reload={getAllUsers} />
                             </Box>
                         </Paper>
                     </>
