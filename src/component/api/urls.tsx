@@ -48,6 +48,7 @@ const url = {
         getCostForecast: "/aws/cost/forecast",
         compareCosts: "/aws/cost/compare",
         getTopServices: "/aws/cost/top-services",
+        getBedrockCosts: "/aws/cost/bedrock",
     },
 
     aiChat: {

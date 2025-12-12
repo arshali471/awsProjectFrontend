@@ -110,6 +110,7 @@ export default function CompleteCostDashboard() {
   const [resourcePage, setResourcePage] = useState(0);
   const [resourceRowsPerPage, setResourceRowsPerPage] = useState(10);
   const [keysData, setKeysData] = useState<any>([]);
+  const [bedrockData, setBedrockData] = useState<any>(null);
 
   // Fetch AWS keys for account selection
   const getAllAwsKeys = async () => {
@@ -195,9 +196,10 @@ export default function CompleteCostDashboard() {
         AdminService.getCostDashboard(selectedRegion.value, days),
         AdminService.compareCosts(selectedRegion.value),
         AdminService.getTopServices(selectedRegion.value, 10, days),
+        AdminService.getBedrockCosts(selectedRegion.value, days),
       ]);
 
-      const [dashRes, compRes, topRes] = results;
+      const [dashRes, compRes, topRes, bedrockRes] = results;
 
       // Handle dashboard data
       if (dashRes.status === "fulfilled") {
@@ -227,6 +229,18 @@ export default function CompleteCostDashboard() {
         }
       } else {
         console.error("Top services error:", topRes.reason);
+      }
+
+      // Handle Bedrock data
+      if (bedrockRes.status === "fulfilled") {
+        console.log("BEDROCK:", bedrockRes.value.data);
+        if (bedrockRes.value.status === 200 && bedrockRes.value.data.success) {
+          setBedrockData(bedrockRes.value.data.data);
+        }
+      } else {
+        console.error("Bedrock error:", bedrockRes.reason);
+        // Bedrock might not be used - set empty data instead of failing
+        setBedrockData(null);
       }
 
       // Check if all requests failed
@@ -1080,6 +1094,7 @@ export default function CompleteCostDashboard() {
             {dashboardData?.ec2Analysis && <Tab label="EC2 Analysis" />}
             {dashboardData?.topResources && <Tab label="Top Resources" />}
             {dashboardData?.forecast && !dashboardData.forecast.message && <Tab label="Forecast" />}
+            <Tab label="Bedrock Models" icon={<MemoryIcon />} iconPosition="start" />
           </Tabs>
         </Box>
 
@@ -1649,6 +1664,229 @@ export default function CompleteCostDashboard() {
             </Box>
           </TabPanel>
         )}
+
+        {/* Tab: Bedrock Models Cost */}
+        <TabPanel
+          value={activeTab}
+          index={
+            3 +
+            (topServicesData ? 1 : 0) +
+            (dashboardData?.ec2Analysis ? 1 : 0) +
+            (dashboardData?.topResources ? 1 : 0) +
+            (dashboardData?.forecast && !dashboardData.forecast.message ? 1 : 0)
+          }
+        >
+          <Box p={3}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+              <Box>
+                <Typography variant="h5" fontWeight={700} color="var(--text-primary)">
+                  AWS Bedrock Models Cost Analysis
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mt={1}>
+                  Track spending on AI/ML models powered by AWS Bedrock
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Info Alert when no Bedrock usage */}
+            {bedrockData && bedrockData.models && bedrockData.models.length === 0 && (
+              <Alert
+                severity="info"
+                icon={<MemoryIcon />}
+                sx={{
+                  mb: 3,
+                  borderRadius: 2,
+                  border: '1px solid rgba(0, 115, 187, 0.2)',
+                  '& .MuiAlert-icon': {
+                    fontSize: 28
+                  }
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                  No AWS Bedrock Usage Detected
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  This AWS account hasn't used any Bedrock AI models in the selected time period ({bedrockData.period?.startDate || 'N/A'} to {bedrockData.period?.endDate || 'N/A'}).
+                  <br />
+                  <strong>Cost data will automatically appear here once you start using AWS Bedrock services.</strong>
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mt={1}>
+                  Available models: Claude (Anthropic), Titan (Amazon), Llama (Meta), Stable Diffusion (Stability AI), and more.
+                </Typography>
+              </Alert>
+            )}
+
+            {/* Summary Cards */}
+            <Grid container spacing={3} mb={4}>
+              <Grid item xs={12} md={4}>
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)'
+                }}>
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Box>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                          Total Bedrock Spending
+                        </Typography>
+                        <Typography variant="h4" fontWeight={700} mt={1}>
+                          ${bedrockData?.totalCost || '0.00'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.8 }} mt={1}>
+                          Current billing period
+                        </Typography>
+                      </Box>
+                      <MemoryIcon sx={{ fontSize: 48, opacity: 0.3 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                  color: 'white',
+                  boxShadow: '0 4px 20px rgba(240, 147, 251, 0.3)'
+                }}>
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Box>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                          Estimated Monthly Cost
+                        </Typography>
+                        <Typography variant="h4" fontWeight={700} mt={1}>
+                          ${bedrockData?.estimatedMonthlyCost || '0.00'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.8 }} mt={1}>
+                          Based on current usage
+                        </Typography>
+                      </Box>
+                      <TrendingUpIcon sx={{ fontSize: 48, opacity: 0.3 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                  color: 'white',
+                  boxShadow: '0 4px 20px rgba(79, 172, 254, 0.3)'
+                }}>
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Box>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                          Total API Calls
+                        </Typography>
+                        <Typography variant="h4" fontWeight={700} mt={1}>
+                          {bedrockData?.totalRequests || '0'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.8 }} mt={1}>
+                          This period
+                        </Typography>
+                      </Box>
+                      <ShowChartIcon sx={{ fontSize: 48, opacity: 0.3 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
+            {/* Models Usage Table */}
+            <Paper sx={{ borderRadius: 2, overflow: 'hidden', mb: 3 }}>
+              <Box p={2} bgcolor="var(--card-background)">
+                <Typography variant="h6" fontWeight={600} color="var(--text-primary)">
+                  Model Usage Breakdown
+                </Typography>
+              </Box>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'var(--surface-color)' }}>
+                      <TableCell><strong>Model Name</strong></TableCell>
+                      <TableCell><strong>Provider</strong></TableCell>
+                      <TableCell align="right"><strong>Input Tokens</strong></TableCell>
+                      <TableCell align="right"><strong>Output Tokens</strong></TableCell>
+                      <TableCell align="right"><strong>Total Requests</strong></TableCell>
+                      <TableCell align="right"><strong>Cost</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {bedrockData && bedrockData.models && bedrockData.models.length > 0 ? (
+                      bedrockData.models.map((model: any, index: number) => (
+                        <TableRow key={index} hover>
+                          <TableCell>{model.modelName}</TableCell>
+                          <TableCell>{model.provider}</TableCell>
+                          <TableCell align="right">{model.inputTokens.toLocaleString()}</TableCell>
+                          <TableCell align="right">{model.outputTokens.toLocaleString()}</TableCell>
+                          <TableCell align="right">{model.totalRequests.toLocaleString()}</TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight={600} color="primary">
+                              ${model.totalCost.toFixed(2)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                          <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                            No model usage data available
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+
+            {/* Cost Trend Chart */}
+            <Paper sx={{ borderRadius: 2, p: 3 }}>
+              <Typography variant="h6" fontWeight={600} color="var(--text-primary)" mb={3}>
+                Daily Bedrock Spending Trend
+              </Typography>
+              <ResponsiveContainer width="100%" height={350}>
+                <AreaChart data={bedrockData?.dailyCosts || []}>
+                  <defs>
+                    <linearGradient id="bedrockGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#667eea" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#667eea" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                  <XAxis
+                    dataKey="date"
+                    stroke="var(--text-secondary)"
+                    style={{ fontSize: 12 }}
+                  />
+                  <YAxis
+                    stroke="var(--text-secondary)"
+                    style={{ fontSize: 12 }}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--card-background)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 8
+                    }}
+                    formatter={(value: any) => [`$${value}`, 'Cost']}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="cost"
+                    stroke="#667eea"
+                    strokeWidth={2}
+                    fill="url(#bedrockGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Paper>
+          </Box>
+        </TabPanel>
       </Paper>
     </div>
   );

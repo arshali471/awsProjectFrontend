@@ -291,6 +291,16 @@ export class AdminService {
         return await makeRequest(url.cost.getTopServices + "/" + keyId + params, RequestMethods.GET)
     }
 
+    static async getBedrockCosts(keyId: any, days: number = 30) {
+        const params = makeParams([
+            {
+                index: "days",
+                value: days
+            }
+        ])
+        return await makeRequest(url.cost.getBedrockCosts + "/" + keyId + params, RequestMethods.GET)
+    }
+
     // NEW: EC2 All Regions Methods
     static async getAllInstancesFromAllRegions() {
         return await makeRequest(url.instance.getAllInstancesFromAllRegions, RequestMethods.GET)
