@@ -68,20 +68,37 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
 
                     {tableData && tableData.length > 0 ? tableData.map((data: any, index: number) => {
                         return (
-                            <tr style={{ opacity: data.isActive ? 1 : .5 }}>
+                            <tr key={data._id} style={{ opacity: data.isActive ? 1 : .5 }}>
                                 <td style={{ fontSize: 12 }}>{index + 1}</td>
                                 <td style={{ fontSize: 12 }}>{data?.isActive === false ? <del>{data?.username}</del> : <span>{data?.username}</span>}</td>
                                 <td style={{ fontSize: 12 }}>
-                                    <Form.Switch checked={data?.isActive} name="isActive" onChange={(e: any) => handleRoleChange(data._id, { "isActive": e.target.checked })} />
+                                    <Form.Switch
+                                        id={`active-${data._id}`}
+                                        checked={data?.isActive}
+                                        name="isActive"
+                                        onChange={(e: any) => handleRoleChange(data._id, { "isActive": e.target.checked })}
+                                    />
                                 </td>
                                 <td style={{ fontSize: 12 }}>
-                                    <Form.Switch checked={data?.admin} onChange={(e: any) => handleRoleChange(data._id, { "admin": e.target.checked })} />
+                                    <Form.Switch
+                                        id={`admin-${data._id}`}
+                                        checked={data?.admin}
+                                        onChange={(e: any) => handleRoleChange(data._id, { "admin": e.target.checked })}
+                                    />
                                 </td>
                                 <td style={{ fontSize: 12 }}>
-                                    <Form.Switch checked={data?.addAWSKey} onChange={(e: any) => handleRoleChange(data._id, { "addAWSKey": e.target.checked })} />
+                                    <Form.Switch
+                                        id={`awskey-${data._id}`}
+                                        checked={data?.addAWSKey}
+                                        onChange={(e: any) => handleRoleChange(data._id, { "addAWSKey": e.target.checked })}
+                                    />
                                 </td>
                                 <td style={{ fontSize: 12 }}>
-                                    <Form.Switch checked={data?.addUser} onChange={(e: any) => handleRoleChange(data._id, { "addUser": e.target.checked })} />
+                                    <Form.Switch
+                                        id={`adduser-${data._id}`}
+                                        checked={data?.addUser}
+                                        onChange={(e: any) => handleRoleChange(data._id, { "addUser": e.target.checked })}
+                                    />
                                 </td>
                                 <td style={{ fontSize: 12 }}>
                                     <TbPasswordFingerprint className="text-primary me-3" size={18} onClick={() => setShowChangePasswordModal(data._id)} />
