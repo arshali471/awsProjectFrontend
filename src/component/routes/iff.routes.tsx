@@ -24,6 +24,8 @@ import CloudIcon from "@mui/icons-material/Cloud"
 import EKSInstancesIndex from "../View/Private/EKSInstances/EKSInstances.index"
 import DnsIcon from "@mui/icons-material/Dns"
 import EKSInventoryRedirect from "../View/Private/Kubernetes/EKSInventoryRedirect"
+import ApiLogs from "../View/Private/ApiLogs/ApiLogs"
+import AssessmentIcon from "@mui/icons-material/Assessment"
 
 export default interface IIFFRouter {
     path: string
@@ -45,61 +47,53 @@ export const iffRoutes: IIFFRouter[] = [
     //     element: <IffDashboard />
     // },
     {
-        path: "platform",
+        path: "platform/agent-status",
         navbarShow: true,
-        name: "Platform",
-        icon: FaBullhorn,
-        children: [
-            {
-                path: "agent-status",
-                navbarShow: true,
-                element: <ZabbixStatus />,
-                name: "Agent Status",
-                icon: FaMagento
-            },
-            {
-                path: "ec2",
-                navbarShow: true,
-                element: <Dashboard />,
-                name: "EC2",
-                icon: SiAmazonec2
-            },
-            {
-                path: "ec2-all-regions",
-                navbarShow: true,
-                element: <EC2AllRegionsIndex />,
-                name: "EC2 - All Regions",
-                icon: CloudIcon
-            },
-            {
-                path: "eks-instances",
-                navbarShow: true,
-                element: <EKSInstancesIndex />,
-                name: "EKS EC2 Instances",
-                icon: DnsIcon
-            },
-            {
-                path: "Volumes",
-                navbarShow: true,
-                element: <VolumesIndex />,
-                name: "Volumes",
-                icon: SiAmazondynamodb
-            },
-            {
-                path: "s3",
-                navbarShow: true,
-                element: <S3Index />,
-                name: "S3",
-                icon: SiAmazons3
-            },
-            {
-                path: "rds",
-                navbarShow: true,
-                element: <RDSIndex />,
-                name: "RDS",
-                icon: SiAmazonrds
-            },
-        ],
+        element: <ZabbixStatus />,
+        name: "Agent Status",
+        icon: FaMagento
+    },
+    {
+        path: "platform/ec2",
+        navbarShow: true,
+        element: <Dashboard />,
+        name: "EC2",
+        icon: SiAmazonec2
+    },
+    {
+        path: "platform/ec2-all-regions",
+        navbarShow: true,
+        element: <EC2AllRegionsIndex />,
+        name: "Cloud EC2 Inventory",
+        icon: CloudIcon
+    },
+    {
+        path: "platform/eks-instances",
+        navbarShow: true,
+        element: <EKSInstancesIndex />,
+        name: "Cloud EKS Nodes Inventory",
+        icon: DnsIcon
+    },
+    {
+        path: "platform/Volumes",
+        navbarShow: true,
+        element: <VolumesIndex />,
+        name: "Volumes",
+        icon: SiAmazondynamodb
+    },
+    {
+        path: "platform/s3",
+        navbarShow: true,
+        element: <S3Index />,
+        name: "S3",
+        icon: SiAmazons3
+    },
+    {
+        path: "platform/rds",
+        navbarShow: true,
+        element: <RDSIndex />,
+        name: "RDS Instances",
+        icon: SiAmazonrds
     },
 
     {

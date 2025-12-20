@@ -301,6 +301,22 @@ export class AdminService {
         return await makeRequest(url.cost.getBedrockCosts + "/" + keyId + params, RequestMethods.GET)
     }
 
+    static async getBedrockPricing(keyId: any) {
+        return await makeRequest(url.cost.getBedrockPricing + "/" + keyId, RequestMethods.GET)
+    }
+
+    static async getBedrockCostAnalysis(keyId: any, days: number = 30) {
+        return await makeRequest(url.cost.getBedrockCostAnalysis + "/" + keyId + "?days=" + days, RequestMethods.GET)
+    }
+
+    static async calculateBedrockCost(keyId: any, payload: any) {
+        return await makeRequest(url.cost.calculateBedrockCost + "/" + keyId, RequestMethods.POST, payload)
+    }
+
+    static async clearBedrockPricingCache() {
+        return await makeRequest(url.cost.clearBedrockPricingCache, RequestMethods.POST)
+    }
+
     // NEW: EC2 All Regions Methods
     static async getAllInstancesFromAllRegions() {
         return await makeRequest(url.instance.getAllInstancesFromAllRegions, RequestMethods.GET)
@@ -466,6 +482,36 @@ export class AdminService {
 
     static async getDocumentCategories() {
         return await makeRequest(url.documentation.categories, RequestMethods.GET);
+    }
+
+    // API Logs Methods
+    static async getApiLogs(filters: any = {}) {
+        const params = makeParams([
+            { index: "page", value: filters.page },
+            { index: "limit", value: filters.limit },
+            { index: "method", value: filters.method },
+            { index: "statusCode", value: filters.statusCode },
+            { index: "endpoint", value: filters.endpoint },
+            { index: "username", value: filters.username },
+            { index: "startDate", value: filters.startDate },
+            { index: "endDate", value: filters.endDate }
+        ]);
+        return await makeRequest(url.apiLogs.getLogs + params, RequestMethods.GET);
+    }
+
+    static async getApiStats(filters: any = {}) {
+        const params = makeParams([
+            { index: "startDate", value: filters.startDate },
+            { index: "endDate", value: filters.endDate }
+        ]);
+        return await makeRequest(url.apiLogs.getStats + params, RequestMethods.GET);
+    }
+
+    static async deleteOldApiLogs(days: number = 30) {
+        const params = makeParams([
+            { index: "days", value: days }
+        ]);
+        return await makeRequest(url.apiLogs.deleteOldLogs + params, RequestMethods.DELETE);
     }
 
 }

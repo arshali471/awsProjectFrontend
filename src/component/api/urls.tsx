@@ -49,6 +49,10 @@ const url = {
         compareCosts: "/aws/cost/compare",
         getTopServices: "/aws/cost/top-services",
         getBedrockCosts: "/aws/cost/bedrock",
+        getBedrockPricing: "/aws/cost/bedrock-pricing",
+        getBedrockCostAnalysis: "/aws/cost/bedrock-cost-analysis",
+        calculateBedrockCost: "/aws/cost/bedrock-calculate",
+        clearBedrockPricingCache: "/aws/cost/bedrock-pricing/clear-cache",
     },
 
     aiChat: {
@@ -74,6 +78,12 @@ const url = {
         categories: "/aws/documentation/categories",
         share: "/aws/documentation/share",
         removeShare: "/aws/documentation/share"
+    },
+
+    apiLogs: {
+        getLogs: "/api-logs/logs",
+        getStats: "/api-logs/stats",
+        deleteOldLogs: "/api-logs/old-logs"
     }
 
 };

@@ -20,6 +20,8 @@ import { HiOutlineLogout } from "react-icons/hi";
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import DescriptionIcon from '@mui/icons-material/Description';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import PriceCheckIcon from '@mui/icons-material/PriceCheck';
 
 import "./IffDashboard.css";
 
@@ -27,9 +29,9 @@ const apps = [
   { url: "/platform/agent-status", name: "IFF Inventory", icon: ImageData, isExternal: false, isIconComponent: false },
   { url: "https://iffcloud-conductor.global.iff.com", name: "EKS Inventory", icon: EksInvImage, isExternal: true, isIconComponent: false },
   { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage, isExternal: true, isIconComponent: false },
-  { url: "https://app.powerbi.com/reportEmbed?reportId=df62f352-c99d-45a2-bd91-8c81aab7dff9&autoAuth=true&ctid=a2a9bf31-fc44-425c-a6d2-3ae9379573ea", name: "Report", icon: ReportImage, isExternal: true, isIconComponent: false },
-  // { url: "/platform/ec2", name: "Ticketing", icon: TicktImage, isExternal: false, isIconComponent: false },
   { url: "/cost", name: "Cost", icon: CostImage, isExternal: false, isIconComponent: false },
+  { url: "/bedrock-pricing", name: "Bedrock Pricing", icon: PriceCheckIcon, isExternal: false, isIconComponent: true },
+  { url: "/api-logs", name: "API Logs", icon: AssessmentIcon, isExternal: false, isIconComponent: true },
   { url: "/devops", name: "DevOps", icon: DevopsImage, isExternal: false, isIconComponent: false },
   { url: "/kubebot", name: "Kubebot", icon: Kubebot, isExternal: false, isIconComponent: false },
   { url: "/ai-chat", name: "CloudTrail AI Chat", icon: SmartToyIcon, isExternal: false, isIconComponent: true },
@@ -58,6 +60,16 @@ export default function IffDashboard() {
   };
 
   const username = sessionStorage.getItem("username") || "User";
+  const isAdmin = sessionStorage.getItem("admin") === "true" || sessionStorage.getItem("role") === "admin";
+
+  // Filter apps based on admin status
+  const filteredApps = apps.filter(app => {
+    // Hide API Logs for non-admin users
+    if (app.url === "/api-logs" && !isAdmin) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="dashboard-wrapper">
@@ -115,13 +127,14 @@ export default function IffDashboard() {
 
         {/* Apps Grid */}
         <div className="apps-grid">
-          {apps.map((app, index) => {
+          {filteredApps.map((app) => {
             const IconComponent = app.isIconComponent ? app.icon : null;
             return (
               <div
-                key={index}
+                key={app.url}
                 className="app-card"
                 onClick={() => handleNavigate(app.url, app.isExternal)}
+                style={{ cursor: 'pointer', position: 'relative' }}
               >
                 {app.isExternal && (
                   <div className="external-badge">

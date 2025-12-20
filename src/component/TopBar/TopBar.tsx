@@ -84,10 +84,13 @@ export default function TopBar({ menuData }: ITopBar) {
               isClearable={true}
               onChange={(e: any) => setSelectedRegion(e)}
               menuPortalTarget={document.body}
+              maxMenuHeight={280}
               styles={{
                 menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                 control: (base) => ({ ...base, minHeight: '40px', width: '100%' }),
-                container: (base) => ({ ...base, width: '100%' })
+                container: (base) => ({ ...base, width: '100%' }),
+                menu: (base) => ({ ...base, maxHeight: '280px' }),
+                menuList: (base) => ({ ...base, maxHeight: '280px' })
               }}
             />
           </div>

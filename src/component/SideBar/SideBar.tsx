@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Accordion, Image, Nav, } from "react-bootstrap";
-import { Link, useNavigate } from 'react-router-dom';
+import { Image, Nav } from "react-bootstrap";
+import { useNavigate } from 'react-router-dom';
 import './sidebar.css';
 import { useLocation } from 'react-router-dom';
 import IRouter from '../Interface/IRouter';
 import { iffRoutes } from '../routes/iff.routes';
-import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import LogoImage from "../../assets/IFF.png"
 import { HiOutlineLogout } from "react-icons/hi";
-import { FaBars, FaTimes } from 'react-icons/fa';
 interface ISideBar {
     menuData?: IRouter[],
     panelName?: string,
@@ -74,8 +72,10 @@ export default function SideBar({ menuData }: ISideBar) {
                     style={{
                         position: 'absolute',
                         bottom: '80px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
+                        left: '0',
+                        right: '0',
+                        marginLeft: 'auto',
+                        marginRight: 'auto',
                         background: 'rgba(255, 255, 255, 0.1)',
                         backdropFilter: 'blur(10px)',
                         color: '#ffffff',
@@ -127,103 +127,34 @@ export default function SideBar({ menuData }: ISideBar) {
                         {!isCollapsed && <span style={{ fontSize: '1rem', fontWeight: 600 }}>Cloud Inventory</span>}
                     </div>
 
-                    <Nav className="flex-column mt-3">
-                        <Accordion className="custom-accordion">
-                            {iffRoutes.map((route: any, index: number) => {
-                                if (!route.navbarShow) return null;
+                    <Nav className="flex-column mt-3" style={{ gap: '8px' }}>
+                        {iffRoutes.map((route: any, index: number) => {
+                            if (!route.navbarShow) return null;
 
-                                // When collapsed, show all items flat (including children)
-                                if (isCollapsed) {
-                                    if (route.children) {
-                                        // Show parent and all children as flat list
-                                        return (
-                                            <div key={route.path}>
-                                                {route.children.map((subRoute: any) => (
-                                                    <Nav.Item key={subRoute.path} className="d-flex align-items-center ms-1" title={subRoute.name}>
-                                                        <Nav.Link
-                                                            as="div"
-                                                            className={`d-flex align-items-center gap-3 ${isActive(subRoute.path) ? 'active' : 'inactive'}`}
-                                                            onClick={() => {
-                                                                if (subRoute.externalLink) {
-                                                                    // Open external link in new tab (both http URLs and internal routes like /eks)
-                                                                    window.open(subRoute.externalLink, '_blank', 'noopener,noreferrer');
-                                                                } else {
-                                                                    navigate(`/${route.path}/${subRoute.path}`);
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                justifyContent: 'center',
-                                                                overflow: 'hidden'
-                                                            }}
-                                                        >
-                                                            {subRoute.icon && <subRoute.icon className="sidebar-icon" />}
-                                                        </Nav.Link>
-                                                    </Nav.Item>
-                                                ))}
-                                            </div>
-                                        );
-                                    } else {
-                                        return (
-                                            <Nav.Item key={route.path} className="d-flex align-items-center ms-1" title={route.name}>
-                                                <Nav.Link
-                                                    as="div"
-                                                    className={`d-flex align-items-center gap-3 ${isActive(route.path) ? 'active' : 'inactive'}`}
-                                                    onClick={() => navigate(route.path)}
-                                                    style={{
-                                                        justifyContent: 'center',
-                                                        overflow: 'hidden'
-                                                    }}
-                                                >
-                                                    {route.icon && <route.icon className="sidebar-icon" />}
-                                                </Nav.Link>
-                                            </Nav.Item>
-                                        );
-                                    }
-                                }
-
-                                // When expanded, show accordion for items with children
-                                return route.children ? (
-                                    <Accordion.Item eventKey={index.toString()} key={route.path} style={{ background: "transparent" }}>
-                                        <Accordion.Header className={`d-flex align-items-center me-2 ${isActive(route.path) ? 'active' : 'inactive'}`}>
-                                            {route.icon && <route.icon className="sidebar-icon me-3" />}
-                                            <span style={{ fontSize: 14 }}>{route.name}</span>
-                                        </Accordion.Header>
-                                        <Accordion.Body className="p-0">
-                                            {route.children.map((subRoute: any) => (
-                                                <Nav.Item key={subRoute.path}>
-                                                    <Nav.Link
-                                                        as={'div'}
-                                                        className={`d-flex align-items-center gap-3 ps-4 ${isActive(subRoute.path) ? 'active' : 'inactive'}`}
-                                                        onClick={() => {
-                                                            if (subRoute.externalLink) {
-                                                                // Open external link in new tab (both http URLs and internal routes like /eks)
-                                                                window.open(subRoute.externalLink, '_blank', 'noopener,noreferrer');
-                                                            } else {
-                                                                navigate(`/${route.path}/${subRoute.path}`);
-                                                            }
-                                                        }}
-                                                    >
-                                                        {subRoute.icon && <subRoute.icon className="sidebar-icon me-3" />}
-                                                        <span style={{ fontSize: 12 }}>{subRoute.name}</span>
-                                                    </Nav.Link>
-                                                </Nav.Item>
-                                            ))}
-                                        </Accordion.Body>
-                                    </Accordion.Item>
-                                ) : (
-                                    <Nav.Item key={route.path} className="d-flex align-items-center ms-1">
-                                        <Nav.Link
-                                            as="div"
-                                            className={`d-flex align-items-center gap-3 ${isActive(route.path) ? 'active' : 'inactive'}`}
-                                            onClick={() => navigate(route.path)}
-                                        >
-                                            {route.icon && <route.icon className="sidebar-icon" />}
-                                            <span style={{ fontSize: 14 }}>{route.name}</span>
-                                        </Nav.Link>
-                                    </Nav.Item>
-                                );
-                            })}
-                        </Accordion>
+                            return (
+                                <Nav.Item key={route.path} className="d-flex align-items-center ms-1" title={isCollapsed ? route.name : ''} style={{ marginBottom: '4px' }}>
+                                    <Nav.Link
+                                        as="div"
+                                        className={`d-flex align-items-center gap-3 ${isActive(route.path.split('/').pop()) ? 'active' : 'inactive'}`}
+                                        onClick={() => {
+                                            if (route.externalLink) {
+                                                window.open(route.externalLink, '_blank', 'noopener,noreferrer');
+                                            } else {
+                                                navigate(route.path);
+                                            }
+                                        }}
+                                        style={{
+                                            justifyContent: isCollapsed ? 'center' : 'flex-start',
+                                            overflow: 'hidden',
+                                            padding: '10px 12px'
+                                        }}
+                                    >
+                                        {route.icon && <route.icon className="sidebar-icon" />}
+                                        {!isCollapsed && <span style={{ fontSize: 14 }}>{route.name}</span>}
+                                    </Nav.Link>
+                                </Nav.Item>
+                            );
+                        })}
                     </Nav>
                 </div>
 

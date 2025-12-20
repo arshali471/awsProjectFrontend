@@ -105,7 +105,7 @@ export default function RDSIndex() {
                                     letterSpacing: '-0.5px',
                                 }}
                             >
-                                RDS Databases
+                                RDS Instances
                             </Typography>
                             <Typography
                                 variant="body2"

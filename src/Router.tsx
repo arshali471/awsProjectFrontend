@@ -28,6 +28,8 @@ import KubeBot from "./component/View/Private/KubeBot/KubeBot";
 import SSHTerminal from "./component/View/Private/SSHTerminal/SSHTerminal";
 import CompleteCostDashboard from "./component/View/Private/CostDashboard/CompleteCostDashboard";
 import Documentation from "./component/View/Private/Documentation/Documentation";
+import ApiLogs from "./component/View/Private/ApiLogs/ApiLogs";
+import BedrockPricing from "./component/View/Private/BedrockPricing/BedrockPricing";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
@@ -113,6 +115,26 @@ export default function Router() {
                         element={
                             <PrivateRouter>
                                 <CompleteCostDashboard />
+                            </PrivateRouter>
+                        }
+                    />
+
+                    {/* Bedrock Pricing route */}
+                    <Route
+                        path="/bedrock-pricing"
+                        element={
+                            <PrivateRouter>
+                                <BedrockPricing />
+                            </PrivateRouter>
+                        }
+                    />
+
+                    {/* API Logs route */}
+                    <Route
+                        path="/api-logs"
+                        element={
+                            <PrivateRouter>
+                                <ApiLogs />
                             </PrivateRouter>
                         }
                     />

@@ -183,7 +183,7 @@ export default function EKSInstancesIndex() {
                                     letterSpacing: '-0.5px',
                                 }}
                             >
-                                EKS EC2 Instances
+                                Cloud EKS Nodes Inventory
                             </Typography>
                             <Typography
                                 variant="body2"
