@@ -102,7 +102,7 @@ export default function BedrockPricing() {
 
         try {
             // Fetch all inference models pricing from Pricing API
-            const response = await AdminService.getBedrockPricingSummary(selectedRegion.value);
+            const response = await AdminService.getBedrockPricing(selectedRegion.value);
 
             if (response.status === 200 && response.data?.data) {
                 const data = response.data.data;
