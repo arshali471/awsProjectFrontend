@@ -64,14 +64,14 @@ export const iffRoutes: IIFFRouter[] = [
         path: "platform/ec2-all-regions",
         navbarShow: true,
         element: <EC2AllRegionsIndex />,
-        name: "Cloud EC2 Inventory",
+        name: "EC2 Inventory",
         icon: CloudIcon
     },
     {
         path: "platform/eks-instances",
         navbarShow: true,
         element: <EKSInstancesIndex />,
-        name: "Cloud EKS Nodes Inventory",
+        name: "EKS Nodes Inventory",
         icon: DnsIcon
     },
     {

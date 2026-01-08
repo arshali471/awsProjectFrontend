@@ -23,47 +23,49 @@ export default function DevOpsLayout() {
     return (
         <div className="dashboard-wrapper">
             {/* Modern Navbar - Same as IffDashboard */}
-            <Navbar className="dashboard-navbar">
-                <Container>
+            <Navbar className="dashboard-navbar" style={{ overflow: 'visible', position: 'relative', zIndex: 10000 }}>
+                <Container style={{ overflow: 'visible' }}>
                     <div className="navbar-brand-section">
                         <img src={ImageData} className="navbar-logo" alt="IFF Logo" />
                         <p className="navbar-title">My Apps</p>
                     </div>
 
-                    <Dropdown align="end">
-                        <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                            <div className="user-avatar">
-                                {username.substring(0, 2).toUpperCase()}
-                            </div>
-                        </Dropdown.Toggle>
-
-                        <Dropdown.Menu>
-                            <Dropdown.Item>
-                                <div className="d-flex align-items-center gap-2">
-                                    <div className="user-avatar" style={{ width: 28, height: 28, fontSize: "12px" }}>
-                                        {username.substring(0, 2).toUpperCase()}
-                                    </div>
-                                    <span className="fw-semibold">{username}</span>
+                    <div style={{ position: 'static' }}>
+                        <Dropdown align="end">
+                            <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                <div className="user-avatar">
+                                    {username.substring(0, 2).toUpperCase()}
                                 </div>
-                            </Dropdown.Item>
-                            <Dropdown.Divider />
-                            <Dropdown.Item
-                                className="d-flex align-items-center gap-2"
-                                onClick={() => navigate("/settings")}
-                            >
-                                <IoSettingsSharp />
-                                <span>Settings</span>
-                            </Dropdown.Item>
-                            <Dropdown.Divider />
-                            <Dropdown.Item
-                                className="d-flex align-items-center gap-2 text-danger"
-                                onClick={handleLogout}
-                            >
-                                <HiOutlineLogout />
-                                <span>Logout</span>
-                            </Dropdown.Item>
-                        </Dropdown.Menu>
-                    </Dropdown>
+                            </Dropdown.Toggle>
+
+                            <Dropdown.Menu className="user-dropdown-menu">
+                                <Dropdown.Item disabled>
+                                    <div className="d-flex align-items-center gap-2">
+                                        <div className="user-avatar" style={{ width: 28, height: 28, fontSize: "12px" }}>
+                                            {username.substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <span className="fw-semibold">{username}</span>
+                                    </div>
+                                </Dropdown.Item>
+                                <Dropdown.Divider />
+                                <Dropdown.Item
+                                    className="d-flex align-items-center gap-2"
+                                    onClick={() => navigate("/settings")}
+                                >
+                                    <IoSettingsSharp />
+                                    <span>Settings</span>
+                                </Dropdown.Item>
+                                <Dropdown.Divider />
+                                <Dropdown.Item
+                                    className="d-flex align-items-center gap-2 text-danger"
+                                    onClick={handleLogout}
+                                >
+                                    <HiOutlineLogout />
+                                    <span>Logout</span>
+                                </Dropdown.Item>
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </div>
                 </Container>
             </Navbar>
 

@@ -64,6 +64,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import "../SharedPage.css";
 import "./CostDashboard.css";
+import "../IffDashboard/IffDashboard.css";
 
 import type { DateRangeOption } from "../../../types/cost.types";
 import {
@@ -570,7 +571,7 @@ export default function CompleteCostDashboard() {
               }}
               menuPortalTarget={document.body}
               styles={{
-                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                menuPortal: (base) => ({ ...base, zIndex: 9000 }),
                 control: (base) => ({
                   ...base,
                   minHeight: '40px',
@@ -741,6 +742,7 @@ export default function CompleteCostDashboard() {
 
     return (
       <div className="page-wrapper">
+        {renderHeader()}
         <Alert
           severity="error"
           sx={{ borderRadius: "16px", mb: 2 }}

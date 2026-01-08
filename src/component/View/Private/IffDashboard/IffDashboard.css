@@ -70,8 +70,30 @@
     padding: 0.5rem;
     margin-top: 0.5rem;
     min-width: 220px;
-    z-index: 9999 !important;
+    z-index: 99999 !important;
     position: absolute !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+/* User Dropdown - Highest Z-Index */
+.user-dropdown-menu {
+    z-index: 2147483647 !important;
+    position: fixed !important;
+    top: 60px !important;
+    right: 20px !important;
+}
+
+/* Ensure navbar is on top */
+.dashboard-navbar {
+    position: relative !important;
+    z-index: 10000 !important;
+}
+
+/* Lower z-index for page content */
+.dashboard-wrapper > *:not(.dashboard-navbar) {
+    position: relative;
+    z-index: 1;
 }
 
 .dropdown-item {

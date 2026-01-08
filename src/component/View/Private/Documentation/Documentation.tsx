@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { LoadingContext } from "../../../context/context";
 import { AdminService } from "../../../services/admin.service";
-import { FaSearch, FaFileAlt, FaFilter, FaPlus, FaTh, FaList, FaFilePdf, FaFileImage, FaFileWord, FaFileExcel, FaShareAlt, FaInfoCircle, FaLock } from "react-icons/fa";
+import { FaSearch, FaFileAlt, FaFilter, FaPlus, FaTh, FaList, FaFilePdf, FaFileImage, FaFileWord, FaFileExcel, FaShareAlt, FaInfoCircle, FaLock, FaArrowLeft } from "react-icons/fa";
 import { Box, Typography, IconButton, CircularProgress, Button, Modal, Tab, Tabs, TextField, MenuItem, Select, FormControl, InputLabel, SelectChangeEvent, Chip, Divider, Checkbox, FormControlLabel } from "@mui/material";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -22,6 +22,7 @@ import moment from 'moment';
 import toast from 'react-hot-toast';
 import "../SharedPage.css";
 import "./Documentation.css";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 interface DocumentData {
     _id: string;
@@ -801,6 +802,20 @@ export default function Documentation() {
             <Box sx={{ mb: 3 }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                     <Box display="flex" alignItems="center" gap={2}>
+                        <IconButton
+                        onClick={() => navigate(-1)}
+                        sx={{
+                            background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                            color: 'white',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                transform: 'translateY(-2px)',
+                            },
+                            transition: 'all 0.3s ease',
+                        }}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
                         <Box sx={{ width: 56, height: 56, background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 4px 16px rgba(0, 115, 187, 0.3)' }}>
                             <DescriptionIcon sx={{ fontSize: 32 }} />
                         </Box>
@@ -809,6 +824,7 @@ export default function Documentation() {
                             <Typography variant="body2" sx={{ color: '#6c757d' }}>{filteredData.length} documents</Typography>
                         </Box>
                     </Box>
+
                     <IconButton onClick={handleRefresh} disabled={refreshing} sx={{ background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)', color: 'white', width: 48, height: 48 }}>
                         {refreshing ? <CircularProgress size={24} sx={{ color: 'white' }} /> : <RefreshIcon />}
                     </IconButton>

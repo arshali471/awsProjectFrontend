@@ -104,20 +104,24 @@ export default function Router() {
                         path="/ssh-terminal"
                         element={
                             <PrivateRouter>
-                                <SSHTerminal />
+                                <DevOpsLayout />
                             </PrivateRouter>
                         }
-                    />
+                    >
+                        <Route index element={<SSHTerminal />} />
+                    </Route>
 
                     {/* Cost Dashboard route */}
                     <Route
                         path="/cost"
                         element={
                             <PrivateRouter>
-                                <CompleteCostDashboard />
+                                <DevOpsLayout />
                             </PrivateRouter>
                         }
-                    />
+                    >
+                        <Route index element={<CompleteCostDashboard />} />
+                    </Route>
 
                     {/* Bedrock Pricing route */}
                     <Route
@@ -134,28 +138,25 @@ export default function Router() {
                         path="/api-logs"
                         element={
                             <PrivateRouter>
-                                <ApiLogs />
+                                <DevOpsLayout />
                             </PrivateRouter>
                         }
-                    />
+                    >
+                        <Route index element={<ApiLogs />} />
+                    </Route>
 
                     {/* Documentation routes */}
                     <Route
                         path="/documentation"
                         element={
                             <PrivateRouter>
-                                <Documentation />
+                                <DevOpsLayout />
                             </PrivateRouter>
                         }
-                    />
-                    <Route
-                        path="/documentation/:id"
-                        element={
-                            <PrivateRouter>
-                                <Documentation />
-                            </PrivateRouter>
-                        }
-                    />
+                    >
+                        <Route index element={<Documentation />} />
+                        <Route path=":id" element={<Documentation />} />
+                    </Route>
 
                     {/* Protected settings routes */}
                     <Route

@@ -177,7 +177,7 @@ export default function EC2AllRegionsIndex() {
                                     letterSpacing: '-0.5px',
                                 }}
                             >
-                                Cloud EC2 Inventory
+                                EC2 Inventory
                             </Typography>
                             <Typography
                                 variant="body2"

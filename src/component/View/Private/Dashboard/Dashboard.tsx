@@ -200,20 +200,6 @@ export default function Dashboard() {
             {/* Page Header */}
             <Box className="page-header-elegant" sx={{ mb: 3 }}>
                 <Box display="flex" alignItems="center" gap={2}>
-                    <IconButton
-                        onClick={() => navigate(-1)}
-                        sx={{
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            color: 'white',
-                            '&:hover': {
-                                background: 'linear-gradient(135deg, #5568d3 0%, #6a4193 100%)',
-                                transform: 'translateY(-2px)',
-                            },
-                            transition: 'all 0.3s ease',
-                        }}
-                    >
-                        <ArrowBackIcon />
-                    </IconButton>
                     <Box className="page-icon-elegant">
                         <ComputerIcon sx={{ fontSize: 32 }} />
                     </Box>
