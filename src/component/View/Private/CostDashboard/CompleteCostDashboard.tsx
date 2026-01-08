@@ -126,10 +126,7 @@ export default function CompleteCostDashboard() {
         }));
         setKeysData(mappedKeys);
 
-        // Auto-select first key if none selected
-        if (!selectedRegion && mappedKeys.length > 0) {
-          setSelectedRegion(mappedKeys[0]);
-        }
+        // DO NOT auto-select - user must manually select region
       }
     } catch (err) {
       console.error("Error fetching AWS keys:", err);
@@ -260,6 +257,14 @@ export default function CompleteCostDashboard() {
         if (errorResponse) {
           errorMessage = errorResponse.message || errorMessage;
           errorDetails = errorResponse.details || null;
+
+          // Special handling for AWS credential errors
+          if (errorResponse.errorType === "UnrecognizedClientException" ||
+              errorMessage.includes("security token") ||
+              errorMessage.includes("invalid")) {
+            errorMessage = "AWS credentials are invalid or expired. Please update your AWS access keys in Settings.";
+            errorDetails = "Error: The security token included in the request is invalid.";
+          }
         } else if (firstError.reason?.message) {
           errorMessage = firstError.reason.message;
         }
