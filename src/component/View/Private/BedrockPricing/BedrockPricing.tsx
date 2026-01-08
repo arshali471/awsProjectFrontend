@@ -62,10 +62,7 @@ export default function BedrockPricing() {
                 }));
                 setKeysData(mappedKeys);
 
-                // Auto-select first key if none selected
-                if (!selectedRegion && mappedKeys.length > 0) {
-                    setSelectedRegion(mappedKeys[0]);
-                }
+                // DO NOT auto-select - user must manually select region
             }
         } catch (err) {
             toast.error("Failed to load AWS regions");
