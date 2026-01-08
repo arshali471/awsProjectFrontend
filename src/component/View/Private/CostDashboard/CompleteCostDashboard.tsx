@@ -114,6 +114,7 @@ export default function CompleteCostDashboard() {
   const [resourceRowsPerPage, setResourceRowsPerPage] = useState(10);
   const [keysData, setKeysData] = useState<any>([]);
   const [bedrockData, setBedrockData] = useState<any>(null);
+  const [bedrockPricing, setBedrockPricing] = useState<any>(null);
 
   // Fetch AWS keys for account selection
   const getAllAwsKeys = async () => {
@@ -197,9 +198,10 @@ export default function CompleteCostDashboard() {
         AdminService.compareCosts(selectedRegion.value),
         AdminService.getTopServices(selectedRegion.value, 10, days),
         AdminService.getBedrockCosts(selectedRegion.value, days),
+        AdminService.getBedrockPricing(selectedRegion.value),
       ]);
 
-      const [dashRes, compRes, topRes, bedrockRes] = results;
+      const [dashRes, compRes, topRes, bedrockRes, bedrockPricingRes] = results;
 
       // Handle dashboard data
       if (dashRes.status === "fulfilled") {
@@ -241,6 +243,17 @@ export default function CompleteCostDashboard() {
         console.error("Bedrock error:", bedrockRes.reason);
         // Bedrock might not be used - set empty data instead of failing
         setBedrockData(null);
+      }
+
+      // Handle Bedrock Pricing data
+      if (bedrockPricingRes.status === "fulfilled") {
+        console.log("BEDROCK PRICING:", bedrockPricingRes.value.data);
+        if (bedrockPricingRes.value.status === 200 && bedrockPricingRes.value.data.success) {
+          setBedrockPricing(bedrockPricingRes.value.data.data);
+        }
+      } else {
+        console.error("Bedrock pricing error:", bedrockPricingRes.reason);
+        setBedrockPricing(null);
       }
 
       // Check if all requests failed
@@ -1805,6 +1818,9 @@ export default function CompleteCostDashboard() {
                 <Typography variant="h6" fontWeight={600} color="var(--text-primary)">
                   Model Usage Breakdown
                 </Typography>
+                <Typography variant="body2" color="text.secondary" mt={0.5}>
+                  Actual usage and costs for models used in this period
+                </Typography>
               </Box>
               <TableContainer>
                 <Table>
@@ -1823,7 +1839,9 @@ export default function CompleteCostDashboard() {
                       bedrockData.models.map((model: any, index: number) => (
                         <TableRow key={index} hover>
                           <TableCell>{model.modelName}</TableCell>
-                          <TableCell>{model.provider}</TableCell>
+                          <TableCell>
+                            <Chip label={model.provider} size="small" color="primary" variant="outlined" />
+                          </TableCell>
                           <TableCell align="right">{model.inputTokens.toLocaleString()}</TableCell>
                           <TableCell align="right">{model.outputTokens.toLocaleString()}</TableCell>
                           <TableCell align="right">{model.totalRequests.toLocaleString()}</TableCell>
@@ -1838,7 +1856,7 @@ export default function CompleteCostDashboard() {
                       <TableRow>
                         <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                           <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                            No model usage data available
+                            No model usage data available for this period
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -1846,6 +1864,88 @@ export default function CompleteCostDashboard() {
                   </TableBody>
                 </Table>
               </TableContainer>
+            </Paper>
+
+            {/* Inference Models Pricing Table */}
+            <Paper sx={{ borderRadius: 2, overflow: 'hidden', mb: 3 }}>
+              <Box p={2} bgcolor="var(--card-background)">
+                <Typography variant="h6" fontWeight={600} color="var(--text-primary)">
+                  Available Inference Models - Pricing
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mt={0.5}>
+                  Current pricing for all available Bedrock inference models (per 1000 tokens)
+                </Typography>
+              </Box>
+              <TableContainer sx={{ maxHeight: 600 }}>
+                <Table stickyHeader size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><strong>Model</strong></TableCell>
+                      <TableCell><strong>Provider</strong></TableCell>
+                      <TableCell align="right"><strong>Input / 1K Tokens</strong></TableCell>
+                      <TableCell align="right"><strong>Output / 1K Tokens</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {bedrockPricing && bedrockPricing.models && bedrockPricing.models.length > 0 ? (
+                      bedrockPricing.models.map((model: any, index: number) => (
+                        <TableRow key={index} hover>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={500}>
+                              {model.modelName}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {model.modelId}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={model.provider}
+                              size="small"
+                              sx={{
+                                bgcolor: model.provider === 'Anthropic' ? '#191919' :
+                                         model.provider === 'Amazon' ? '#FF9900' :
+                                         model.provider === 'Meta' ? '#0668E1' :
+                                         model.provider === 'Cohere' ? '#39594D' :
+                                         model.provider === 'AI21 Labs' ? '#6B4FBB' :
+                                         model.provider === 'Mistral AI' ? '#F2A444' : '#0073bb',
+                                color: 'white',
+                                fontWeight: 600
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight={600} color="success.main">
+                              ${model.pricing?.inputPer1kTokens || 'N/A'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight={600} color="error.main">
+                              ${model.pricing?.outputPer1kTokens || 'N/A'}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                          <CircularProgress size={24} />
+                          <Typography variant="body2" color="text.secondary" fontStyle="italic" mt={2}>
+                            Loading pricing information...
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {bedrockPricing && bedrockPricing.models && (
+                <Box p={2} bgcolor="var(--surface-color)" borderTop="1px solid var(--border-color)">
+                  <Typography variant="caption" color="text.secondary">
+                    Showing {bedrockPricing.modelCount || 0} inference models | Last updated: {bedrockPricing.lastUpdated ? new Date(bedrockPricing.lastUpdated).toLocaleString() : 'N/A'}
+                  </Typography>
+                </Box>
+              )}
             </Paper>
 
             {/* Cost Trend Chart */}
