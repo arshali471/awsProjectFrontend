@@ -1,5 +1,7 @@
 const url = {
     login: "/user/login",
+    microsoftCallback: '/auth/microsoft/callback',
+    azureConfig: '/auth/azure/config',
     getAllAwsKey: "/awsKey/getAllAWSKey",
     getAwsKeyById: "/awsKey/getAWSKeyById",
     getAllS3Data: "/aws/getS3Bucket",

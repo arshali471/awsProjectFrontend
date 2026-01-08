@@ -7,9 +7,16 @@ import "react-datepicker/dist/react-datepicker.css";
 import 'react-date-picker/dist/DatePicker.css';
 import 'react-calendar/dist/Calendar.css';
 import "react-resizable/css/styles.css";
+import { MsalProvider } from '@azure/msal-react';
+import { msalInstance, initializeMsal } from './authConfig';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+// Initialize MSAL before rendering
+initializeMsal().then(() => {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <MsalProvider instance={msalInstance}>
+        <App />
+      </MsalProvider>
+    </React.StrictMode>,
+  );
+});

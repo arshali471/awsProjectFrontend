@@ -454,3 +454,80 @@
     outline: 2px solid #1a8cd8;
     outline-offset: 2px;
 }
+
+/* Microsoft SSO Styles */
+.login-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.login-divider span {
+    padding: 0 1rem;
+}
+
+.microsoft-button {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 120, 212, 0.2);
+}
+
+.microsoft-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #005a9e 0%, #004578 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+.microsoft-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.microsoft-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.microsoft-icon {
+    font-size: 1.25rem;
+}
+
+/* Dark mode support for SSO elements */
+[data-theme="dark"] .login-divider {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .login-divider::before,
+[data-theme="dark"] .login-divider::after {
+    border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .microsoft-button {
+    box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
+}
+
+[data-theme="dark"] .microsoft-button:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(0, 120, 212, 0.4);
+}

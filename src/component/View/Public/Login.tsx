@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthService } from "../../services/auth.service";
+import { AzureService } from "../../services/azure.service";
 import Auth from "../../Auth/auth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import iffLogo from "../../../assets/IFF.png";
-import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaMicrosoft } from "react-icons/fa";
 import "./Login.css";
 
 export default function Login() {
@@ -14,6 +15,8 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const [azureEnabled, setAzureEnabled] = useState(false);
+    const [ssoLoading, setSsoLoading] = useState(false);
 
     const handleChange = (e: any) => {
         setData({ ...data, [e.target.name]: e.target.value });
@@ -68,6 +71,53 @@ export default function Login() {
     const handleKeyPress = (e: any) => {
         if (e.key === "Enter") {
             handleLoginSubmission(e);
+        }
+    };
+
+    // Check if Azure AD is configured
+    useEffect(() => {
+        const checkAzureConfig = async () => {
+            try {
+                const res = await AzureService.getAzureConfig();
+                setAzureEnabled(res.data?.enabled || false);
+            } catch (error) {
+                console.error('Failed to check Azure config:', error);
+            }
+        };
+        checkAzureConfig();
+    }, []);
+
+    const handleMicrosoftLogin = async () => {
+        setSsoLoading(true);
+        try {
+            const result = await AzureService.completeSSOFlow();
+
+            if (result.success && result.token) {
+                Auth.authenticate();
+                sessionStorage.setItem("authKey", result.token);
+                sessionStorage.setItem("username", result.username || '');
+                sessionStorage.setItem("email", result.email || '');
+                sessionStorage.setItem("admin", result.admin ? 'true' : 'false');
+
+                if (result.admin) {
+                    sessionStorage.setItem("role", "admin");
+                }
+
+                toast.success("Microsoft SSO successful! Redirecting...");
+
+                const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+                sessionStorage.removeItem('redirectAfterLogin');
+
+                setTimeout(() => {
+                    navigate(redirectUrl || '/dashboard');
+                }, 500);
+            } else {
+                toast.error(result.error || "Microsoft login failed");
+            }
+        } catch (err: any) {
+            toast.error(err.message || "Microsoft login failed");
+        } finally {
+            setSsoLoading(false);
         }
     };
 
@@ -171,6 +221,24 @@ export default function Login() {
                         {loading && <span className="button-spinner" />}
                         {loading ? "Signing in..." : "Sign In"}
                     </button>
+
+                    {/* Microsoft SSO Button */}
+                    {azureEnabled && (
+                        <>
+                            <div className="login-divider">
+                                <span>or</span>
+                            </div>
+                            <button
+                                type="button"
+                                className="microsoft-button"
+                                onClick={handleMicrosoftLogin}
+                                disabled={ssoLoading || loading}
+                            >
+                                <FaMicrosoft className="microsoft-icon" />
+                                {ssoLoading ? "Signing in with Microsoft..." : "Sign in with Microsoft"}
+                            </button>
+                        </>
+                    )}
                 </form>
 
                 {/* Footer */}

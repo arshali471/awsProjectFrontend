@@ -2,6 +2,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { AdminService } from "../../../services/admin.service";
 import { LoadingContext, SelectedRegionContext } from "../../../context/context";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Container } from "react-bootstrap";
 import InstanceTable from "../../../Table/Instance.table";
@@ -19,11 +20,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ComputerIcon from "@mui/icons-material/Computer";
 import PublicIcon from "@mui/icons-material/Public";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const isIPv4 = (str) =>
     /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/.test(str);
 
 export default function Dashboard() {
+    const navigate = useNavigate();
     const { selectedRegion }: any = useContext(SelectedRegionContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
@@ -197,6 +200,20 @@ export default function Dashboard() {
             {/* Page Header */}
             <Box className="page-header-elegant" sx={{ mb: 3 }}>
                 <Box display="flex" alignItems="center" gap={2}>
+                    <IconButton
+                        onClick={() => navigate(-1)}
+                        sx={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #5568d3 0%, #6a4193 100%)',
+                                transform: 'translateY(-2px)',
+                            },
+                            transition: 'all 0.3s ease',
+                        }}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
                     <Box className="page-icon-elegant">
                         <ComputerIcon sx={{ fontSize: 32 }} />
                     </Box>

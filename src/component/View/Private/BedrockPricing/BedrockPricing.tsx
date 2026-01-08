@@ -101,17 +101,17 @@ export default function BedrockPricing() {
         setLoading(true);
 
         try {
-            // Fetch combined usage and pricing data (only shows used models)
-            const response = await AdminService.getBedrockCostAnalysis(selectedRegion.value, 30);
+            // Fetch all inference models pricing from Pricing API
+            const response = await AdminService.getBedrockPricingSummary(selectedRegion.value);
 
             if (response.status === 200 && response.data?.data) {
                 const data = response.data.data;
                 setPricingData(data);
                 setFilteredModels(data.models || []);
-                toast.success(`Loaded ${data.summary?.totalModelsUsed || 0} used models with pricing`);
+                toast.success(`Loaded ${data.modelCount || 0} inference models`);
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to fetch Bedrock cost analysis");
+            toast.error(error.response?.data?.message || "Failed to fetch Bedrock pricing");
         }
         setLoading(false);
     };
@@ -212,16 +212,15 @@ export default function BedrockPricing() {
                         </Box>
                         <Box>
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                                Bedrock Pricing
+                                Bedrock Inference Models Pricing
                             </Typography>
                             <Typography variant="body2" sx={{ color: 'var(--text-secondary)', mt: 0.5 }}>
-                                View model pricing and calculate costs (Per 1000 tokens)
+                                All available inference models with pricing (Per 1000 tokens)
                             </Typography>
                         </Box>
                     </Box>
 
                     <Box display="flex" alignItems="center" gap={2}>
-                        {/* Region Selector */}
                         <Box sx={{ minWidth: 250, maxWidth: 300 }}>
                             <AsyncSelect
                                 value={selectedRegion}
@@ -294,18 +293,18 @@ export default function BedrockPricing() {
                         No Region Selected
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'var(--text-secondary)', mb: 3 }}>
-                        Please select an AWS region from the dropdown above to view Bedrock model pricing.
+                        Please select an AWS region from the dropdown above to view Bedrock inference model pricing.
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
-                        The pricing information will be fetched from AWS Pricing API for all available Bedrock models in the selected region.
+                        The pricing information will be fetched from AWS Pricing API for all available inference models in the selected region.
                     </Typography>
                 </Paper>
             )}
 
             {/* Summary Stats Cards */}
-            {selectedRegion?.value && (<>
+            {selectedRegion?.value && pricingData && (<>
             <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid item xs={12} sm={6} md={4}>
                     <Card className="stat-card-elegant" elevation={0}>
                         <CardContent sx={{ p: 2.5 }}>
                             <Box>
@@ -320,45 +319,30 @@ export default function BedrockPricing() {
                     </Card>
                 </Grid>
 
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid item xs={12} sm={6} md={4}>
                     <Card className="stat-card-elegant" elevation={0}>
                         <CardContent sx={{ p: 2.5 }}>
                             <Box>
                                 <Typography variant="caption" className="stat-label-elegant">
-                                    Used Models
+                                    Total Inference Models
                                 </Typography>
                                 <Typography variant="h5" className="stat-value-elegant">
-                                    {pricingData?.summary?.totalModelsUsed || 0}
+                                    {pricingData?.modelCount || 0}
                                 </Typography>
                             </Box>
                         </CardContent>
                     </Card>
                 </Grid>
 
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid item xs={12} sm={6} md={4}>
                     <Card className="stat-card-elegant" elevation={0}>
                         <CardContent sx={{ p: 2.5 }}>
                             <Box>
                                 <Typography variant="caption" className="stat-label-elegant">
-                                    Total Cost (30 days)
-                                </Typography>
-                                <Typography variant="h5" className="stat-value-elegant">
-                                    ${pricingData?.summary?.totalCost?.toFixed(2) || "0.00"}
-                                </Typography>
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={3}>
-                    <Card className="stat-card-elegant" elevation={0}>
-                        <CardContent sx={{ p: 2.5 }}>
-                            <Box>
-                                <Typography variant="caption" className="stat-label-elegant">
-                                    Period
+                                    Last Updated
                                 </Typography>
                                 <Typography variant="body2" className="stat-value-elegant" sx={{ fontSize: '0.9rem !important' }}>
-                                    {pricingData?.period?.days || 30} days
+                                    {pricingData?.lastUpdated ? new Date(pricingData.lastUpdated).toLocaleString() : "N/A"}
                                 </Typography>
                             </Box>
                         </CardContent>
@@ -467,13 +451,13 @@ export default function BedrockPricing() {
                     </Paper>
                 </Grid>
 
-                {/* Pricing & Usage Table */}
+                {/* Pricing Table */}
                 <Grid item xs={12} md={12} lg={8}>
                     <Paper className="chart-card" elevation={0}>
                         <Box className="chart-header">
-                            <Typography variant="h6" className="chart-title">Used Models with Pricing</Typography>
+                            <Typography variant="h6" className="chart-title">Inference Models Pricing</Typography>
                             <Typography variant="caption" className="chart-subtitle">
-                                Only models with actual usage (last 30 days)
+                                All available models with on-demand pricing
                             </Typography>
                         </Box>
 
@@ -499,10 +483,8 @@ export default function BedrockPricing() {
                                         <TableRow>
                                             <TableCell sx={{ fontWeight: 600 }}>Model</TableCell>
                                             <TableCell sx={{ fontWeight: 600 }}>Provider</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>Total Cost</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>Requests</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>Input/1K</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>Output/1K</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 600 }}>Input/1K Tokens</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 600 }}>Output/1K Tokens</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -528,22 +510,12 @@ export default function BedrockPricing() {
                                                     />
                                                 </TableCell>
                                                 <TableCell align="right">
-                                                    <Typography variant="body2" fontWeight={700} color="primary">
-                                                        ${model.usage?.totalCost?.toFixed(2) || "0.00"}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell align="right">
-                                                    <Typography variant="body2">
-                                                        {model.usage?.totalRequests?.toFixed(0) || "0"}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell align="right">
-                                                    <Typography variant="body2" fontWeight={600}>
+                                                    <Typography variant="body2" fontWeight={600} color="primary">
                                                         ${model.pricing?.inputPer1kTokens || "N/A"}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell align="right">
-                                                    <Typography variant="body2" fontWeight={600}>
+                                                    <Typography variant="body2" fontWeight={600} color="primary">
                                                         ${model.pricing?.outputPer1kTokens || "N/A"}
                                                     </Typography>
                                                 </TableCell>
@@ -552,17 +524,25 @@ export default function BedrockPricing() {
                                     </TableBody>
                                 </Table>
                             </TableContainer>
+
+                            {filteredModels.length === 0 && (
+                                <Box sx={{ textAlign: 'center', py: 4 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        No models found matching your search
+                                    </Typography>
+                                </Box>
+                            )}
                         </Box>
                     </Paper>
                 </Grid>
 
-                {/* Usage Details & Example Costs for Each Model */}
+                {/* Detailed Pricing Breakdown */}
                 <Grid item xs={12}>
                     <Paper className="chart-card" elevation={0}>
                         <Box className="chart-header">
-                            <Typography variant="h6" className="chart-title">Usage Details & Pricing</Typography>
+                            <Typography variant="h6" className="chart-title">Detailed Pricing Examples</Typography>
                             <Typography variant="caption" className="chart-subtitle">
-                                Actual usage (last 30 days) and cost examples
+                                Cost examples for different token volumes
                             </Typography>
                         </Box>
 
@@ -581,88 +561,54 @@ export default function BedrockPricing() {
                                                     fontWeight: 600
                                                 }}
                                             />
-                                            <Typography variant="body2" color="primary" fontWeight={700} sx={{ ml: 'auto' }}>
-                                                ${model.usage?.totalCost?.toFixed(2) || "0.00"}
+                                            <Typography variant="body2" sx={{ ml: 'auto', color: 'var(--text-secondary)' }}>
+                                                {model.modelId}
                                             </Typography>
                                         </Box>
                                     </AccordionSummary>
                                     <AccordionDetails>
-                                        <Grid container spacing={2}>
-                                            <Grid item xs={12} md={4}>
-                                                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                                                    Actual Usage (30 days)
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                    <Typography variant="body2">Input Tokens:</Typography>
-                                                    <Typography variant="body2" fontWeight={600}>
-                                                        {model.usage?.inputTokens?.toLocaleString() || "0"}
+                                        {model.exampleCosts ? (
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={12} md={6}>
+                                                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                                                        Input Token Cost Examples
                                                     </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                    <Typography variant="body2">Output Tokens:</Typography>
-                                                    <Typography variant="body2" fontWeight={600}>
-                                                        {model.usage?.outputTokens?.toLocaleString() || "0"}
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                    <Typography variant="body2">Total Requests:</Typography>
-                                                    <Typography variant="body2" fontWeight={600}>
-                                                        {model.usage?.totalRequests?.toFixed(0) || "0"}
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '1px solid var(--border-color)' }}>
-                                                    <Typography variant="body2" fontWeight={700}>Total Cost:</Typography>
-                                                    <Typography variant="body2" fontWeight={700} color="primary">
-                                                        ${model.usage?.totalCost?.toFixed(2) || "0.00"}
-                                                    </Typography>
-                                                </Box>
-                                            </Grid>
-                                            {model.exampleCosts && (
-                                                <>
-                                                    <Grid item xs={12} md={4}>
-                                                        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                                                            Input Token Cost Examples
-                                                        </Typography>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                            <Typography variant="body2">1K tokens:</Typography>
-                                                            <Typography variant="body2">${model.exampleCosts._1kInputTokens}</Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                            <Typography variant="body2">10K tokens:</Typography>
-                                                            <Typography variant="body2">${model.exampleCosts._10kInputTokens}</Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <Typography variant="body2">100K tokens:</Typography>
-                                                            <Typography variant="body2">${model.exampleCosts._100kInputTokens}</Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                    <Grid item xs={12} md={4}>
-                                                        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                                                            Output Token Cost Examples
-                                                        </Typography>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                            <Typography variant="body2">1K tokens:</Typography>
-                                                            <Typography variant="body2">${model.exampleCosts._1kOutputTokens}</Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                            <Typography variant="body2">10K tokens:</Typography>
-                                                            <Typography variant="body2">${model.exampleCosts._10kOutputTokens}</Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <Typography variant="body2">100K tokens:</Typography>
-                                                            <Typography variant="body2">${model.exampleCosts._100kOutputTokens}</Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                </>
-                                            )}
-                                            {!model.exampleCosts && (
-                                                <Grid item xs={12} md={8}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                                        Pricing information not available for this model
-                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                        <Typography variant="body2">1K tokens:</Typography>
+                                                        <Typography variant="body2" fontWeight={600}>${model.exampleCosts._1kInputTokens}</Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                        <Typography variant="body2">10K tokens:</Typography>
+                                                        <Typography variant="body2" fontWeight={600}>${model.exampleCosts._10kInputTokens}</Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="body2">100K tokens:</Typography>
+                                                        <Typography variant="body2" fontWeight={600}>${model.exampleCosts._100kInputTokens}</Typography>
+                                                    </Box>
                                                 </Grid>
-                                            )}
-                                        </Grid>
+                                                <Grid item xs={12} md={6}>
+                                                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                                                        Output Token Cost Examples
+                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                        <Typography variant="body2">1K tokens:</Typography>
+                                                        <Typography variant="body2" fontWeight={600}>${model.exampleCosts._1kOutputTokens}</Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                        <Typography variant="body2">10K tokens:</Typography>
+                                                        <Typography variant="body2" fontWeight={600}>${model.exampleCosts._10kOutputTokens}</Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="body2">100K tokens:</Typography>
+                                                        <Typography variant="body2" fontWeight={600}>${model.exampleCosts._100kOutputTokens}</Typography>
+                                                    </Box>
+                                                </Grid>
+                                            </Grid>
+                                        ) : (
+                                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                                Pricing information not available for this model
+                                            </Typography>
+                                        )}
                                     </AccordionDetails>
                                 </Accordion>
                             ))}

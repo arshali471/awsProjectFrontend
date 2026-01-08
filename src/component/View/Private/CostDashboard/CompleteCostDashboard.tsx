@@ -60,6 +60,8 @@ import CloudIcon from "@mui/icons-material/Cloud";
 import MemoryIcon from "@mui/icons-material/Memory";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useNavigate } from "react-router-dom";
 import "../SharedPage.css";
 import "./CostDashboard.css";
 
@@ -92,6 +94,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export default function CompleteCostDashboard() {
+  const navigate = useNavigate();
   const { selectedRegion, setSelectedRegion }: any = useContext(SelectedRegionContext);
   const { loading, setLoading }: any = useContext(LoadingContext);
 
@@ -467,58 +470,55 @@ export default function CompleteCostDashboard() {
 
   // Header component (always visible)
   const renderHeader = () => (
-    <Box
-      sx={{
-        mb: 4,
-        p: 3,
-        background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)",
-        borderRadius: "24px",
-        border: "1px solid rgba(59, 130, 246, 0.2)",
-      }}
-    >
-      <Box display="flex" alignItems="center" gap={3} justifyContent="space-between" flexWrap="wrap">
-        <Box display="flex" alignItems="center" gap={3}>
+    <Box sx={{ mb: 3 }}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap">
+        <Box display="flex" alignItems="center" gap={2}>
+          <IconButton
+            onClick={() => navigate(-1)}
+            sx={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+              color: 'white',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                transform: 'translateY(-2px)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           <Box
             sx={{
-              width: 72,
-              height: 72,
+              width: 56,
+              height: 56,
               background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-              borderRadius: "20px",
+              borderRadius: "16px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "white",
-              boxShadow: "0 8px 32px rgba(59, 130, 246, 0.4)",
-              position: "relative",
-              overflow: "hidden",
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: "linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%)",
-              },
+              boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)",
+              transition: "all 0.3s ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: "0 8px 20px rgba(59, 130, 246, 0.4)",
+              }
             }}
           >
-            <AttachMoneyIcon sx={{ fontSize: 40, zIndex: 1 }} />
+            <AttachMoneyIcon sx={{ fontSize: 32 }} />
           </Box>
           <Box>
             <Typography
-              variant="h3"
+              variant="h4"
               sx={{
-                fontWeight: 800,
-                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                letterSpacing: "-1px",
+                fontWeight: 700,
+                color: '#232f3e',
+                letterSpacing: '-0.5px',
               }}
             >
               Complete Cost Analytics
             </Typography>
-            <Typography variant="body1" sx={{ color: "var(--text-secondary)", mt: 0.5, fontWeight: 500 }}>
+            <Typography variant="body2" sx={{ color: "#6c757d", mt: 0.5 }}>
               {selectedRegion ? `${selectedRegion.label}` : "Select an account to view costs"}
               {period && ` • ${period.startDate} to ${period.endDate}`}
             </Typography>
