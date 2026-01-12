@@ -7,6 +7,7 @@ import { RxAvatar } from "react-icons/rx";
 import CustomToggle from "../../../helpers/CustomToggle";
 import { IoSettingsSharp } from "react-icons/io5";
 import { FiExternalLink } from "react-icons/fi";
+import { AuthService } from "../../../services/auth.service";
 
 import DevopsImage from "../../../../assets/devops.png";
 import EksImage from "../../../../assets/eks.png";
@@ -22,6 +23,7 @@ import TerminalIcon from '@mui/icons-material/Terminal';
 import DescriptionIcon from '@mui/icons-material/Description';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import PriceCheckIcon from '@mui/icons-material/PriceCheck';
+import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
 
 import "./IffDashboard.css";
 
@@ -31,6 +33,7 @@ const apps = [
   { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage, isExternal: true, isIconComponent: false },
   { url: "/cost", name: "Cost", icon: CostImage, isExternal: false, isIconComponent: false },
   { url: "/bedrock-pricing", name: "Bedrock Pricing", icon: PriceCheckIcon, isExternal: false, isIconComponent: true },
+  { url: "/bedrock-usage", name: "Bedrock Usage", icon: ModelTrainingIcon, isExternal: false, isIconComponent: true },
   { url: "/api-logs", name: "API Logs", icon: AssessmentIcon, isExternal: false, isIconComponent: true },
   { url: "/devops", name: "DevOps", icon: DevopsImage, isExternal: false, isIconComponent: false },
   { url: "/kubebot", name: "Kubebot", icon: Kubebot, isExternal: false, isIconComponent: false },
@@ -50,13 +53,27 @@ export default function IffDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("authKey");
-    sessionStorage.removeItem("username");
-    sessionStorage.removeItem("email");
-    sessionStorage.removeItem("admin");
-    sessionStorage.removeItem("role");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // Call backend to track logout time
+      console.log('[Frontend] Calling logout API...');
+      const response = await AuthService.logout();
+      console.log('[Frontend] Logout API response:', response);
+    } catch (error) {
+      console.error("[Frontend] Logout error:", error);
+    } finally {
+      // Clear session storage regardless of API call success
+      sessionStorage.removeItem("authKey");
+      sessionStorage.removeItem("username");
+      sessionStorage.removeItem("email");
+      sessionStorage.removeItem("admin");
+      sessionStorage.removeItem("addUser");
+      sessionStorage.removeItem("addAWSKey");
+      sessionStorage.removeItem("addDocument");
+      sessionStorage.removeItem("role");
+      sessionStorage.removeItem("ssoProvider");
+      navigate("/login");
+    }
   };
 
   const username = sessionStorage.getItem("username") || "User";

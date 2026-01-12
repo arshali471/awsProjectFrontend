@@ -19,6 +19,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LockIcon from "@mui/icons-material/Lock";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import EmailIcon from "@mui/icons-material/Email";
 
 interface IAddUserModal {
     show: any,
@@ -40,8 +41,8 @@ export default function AddUserModal({ show, handleClose, reload }: IAddUserModa
     }
 
     const handleUserSubmission = async () => {
-        if (!data?.username || !data?.password) {
-            toast.error("Please fill all required fields");
+        if (!data?.username || !data?.password || !data?.email) {
+            toast.error("Please fill all required fields (username, email, password)");
             return;
         }
 
@@ -146,6 +147,41 @@ export default function AddUserModal({ show, handleClose, reload }: IAddUserModa
                             startAdornment: (
                                 <InputAdornment position="start">
                                     <AccountCircleIcon sx={{ color: '#6c757d' }} />
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                background: 'white',
+                                '&:hover fieldset': {
+                                    borderColor: '#0073bb',
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#0073bb',
+                                    borderWidth: '2px',
+                                }
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#0073bb',
+                            }
+                        }}
+                    />
+
+                    {/* Email */}
+                    <TextField
+                        fullWidth
+                        required
+                        label="Email"
+                        name="email"
+                        type="email"
+                        value={data?.email || ''}
+                        onChange={handleChangeValue}
+                        placeholder="Enter email address"
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <EmailIcon sx={{ color: '#6c757d' }} />
                                 </InputAdornment>
                             ),
                         }}
@@ -286,6 +322,42 @@ export default function AddUserModal({ show, handleClose, reload }: IAddUserModa
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
                                         Allow user to create and manage other users
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    </Box>
+
+                    <Box
+                        sx={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            p: 2,
+                            border: '1px solid rgba(0, 0, 0, 0.06)',
+                        }}
+                    >
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    name="addDocument"
+                                    onChange={handleToggleValue}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#0073bb',
+                                        },
+                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                            backgroundColor: '#0073bb',
+                                        },
+                                    }}
+                                />
+                            }
+                            label={
+                                <Box>
+                                    <Typography variant="body1" fontWeight={500}>
+                                        Upload Documentation
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Allow user to upload files in documentation section
                                     </Typography>
                                 </Box>
                             }

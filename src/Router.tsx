@@ -30,6 +30,8 @@ import CompleteCostDashboard from "./component/View/Private/CostDashboard/Comple
 import Documentation from "./component/View/Private/Documentation/Documentation";
 import ApiLogs from "./component/View/Private/ApiLogs/ApiLogs";
 import BedrockPricing from "./component/View/Private/BedrockPricing/BedrockPricing";
+import BedrockUsageAnalytics from "./component/View/Private/BedrockUsage/BedrockUsageAnalytics";
+import ActiveUsers from "./component/View/Private/Account/ActiveUsers";
 
 function PrivateRouter({ children }: { children: React.ReactNode }) {
     const auth = Auth.checkAuth();
@@ -133,6 +135,18 @@ export default function Router() {
                         }
                     />
 
+                    {/* Bedrock Usage Analytics route */}
+                    <Route
+                        path="/bedrock-usage"
+                        element={
+                            <PrivateRouter>
+                                <DevOpsLayout />
+                            </PrivateRouter>
+                        }
+                    >
+                        <Route index element={<BedrockUsageAnalytics />} />
+                    </Route>
+
                     {/* API Logs route */}
                     <Route
                         path="/api-logs"
@@ -173,6 +187,7 @@ export default function Router() {
                         <Route path="addAWSKey" element={<AddAWSKey />} />
                         <Route path="addEKSToken" element={<AddEKSToken />} />
                         <Route path="ssh-key" element={<SshKey />} />
+                        <Route path="active-users" element={<ActiveUsers />} />
                         <Route path="change-password" element={<ChangePassword />} />
                     </Route>
 

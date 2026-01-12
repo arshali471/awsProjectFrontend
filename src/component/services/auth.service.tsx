@@ -6,4 +6,8 @@ export class AuthService {
     static async login(payload: any) {
         return await makeRequest(url.login, RequestMethods.POST, payload)
     }
+
+    static async logout() {
+        return await makeRequest(url.logout, RequestMethods.POST, {})
+    }
 }

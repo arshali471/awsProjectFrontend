@@ -70,6 +70,9 @@ export class AzureService {
                 username: backendResponse.data.username,
                 email: backendResponse.data.email,
                 admin: backendResponse.data.admin,
+                addUser: backendResponse.data.addUser,
+                addAWSKey: backendResponse.data.addAWSKey,
+                addDocument: backendResponse.data.addDocument,
             };
         } catch (error: any) {
             return { success: false, error: error.message || 'SSO authentication failed' };

@@ -109,6 +109,7 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
                         <th style={{ fontSize: 14 }}>Admin Access</th>
                         <th style={{ fontSize: 14 }}>Access AWS Key</th>
                         <th style={{ fontSize: 14 }}>Access Add Users</th>
+                        <th style={{ fontSize: 14 }}>Upload Documentation</th>
                         <th style={{ fontSize: 14 }}>Action</th>
                     </tr>
                 </thead>
@@ -157,6 +158,15 @@ export default function AdminUsersTable({ tableData, reload }: IUsersTable) {
                                         onChange={(e: any) => handlePermissionToggle(data._id, data, "addUser", e.target.checked)}
                                         disabled={isCurrentUser}
                                         title={isCurrentUser ? "You cannot modify your own add user access" : ""}
+                                    />
+                                </td>
+                                <td style={{ fontSize: 12 }}>
+                                    <Form.Switch
+                                        id={`adddocument-${data._id}`}
+                                        checked={data?.addDocument}
+                                        onChange={(e: any) => handlePermissionToggle(data._id, data, "addDocument", e.target.checked)}
+                                        disabled={isCurrentUser}
+                                        title={isCurrentUser ? "You cannot modify your own document upload access" : ""}
                                     />
                                 </td>
                                 <td style={{ fontSize: 12 }}>

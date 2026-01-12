@@ -5,7 +5,7 @@ import Auth from "../../Auth/auth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import iffLogo from "../../../assets/IFF.png";
-import { FaUser, FaLock, FaEye, FaEyeSlash, FaMicrosoft } from "react-icons/fa";
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaMicrosoft, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import "./Login.css";
 
 export default function Login() {
@@ -17,6 +17,7 @@ export default function Login() {
     const [rememberMe, setRememberMe] = useState(false);
     const [azureEnabled, setAzureEnabled] = useState(false);
     const [ssoLoading, setSsoLoading] = useState(false);
+    const [showLocalLogin, setShowLocalLogin] = useState(false);
 
     const handleChange = (e: any) => {
         setData({ ...data, [e.target.name]: e.target.value });
@@ -40,6 +41,10 @@ export default function Login() {
                 sessionStorage.setItem("username", res.data.username);
                 sessionStorage.setItem("email", res.data.email);
                 sessionStorage.setItem("admin", res.data.admin ? 'true' : 'false');
+                sessionStorage.setItem("addUser", res.data.addUser ? 'true' : 'false');
+                sessionStorage.setItem("addAWSKey", res.data.addAWSKey ? 'true' : 'false');
+                sessionStorage.setItem("addDocument", res.data.addDocument ? 'true' : 'false');
+                sessionStorage.setItem("ssoProvider", "local"); // Mark as local login
 
                 // Set role for admin users (required by some components like AddUser)
                 if (res.data.admin) {
@@ -98,6 +103,10 @@ export default function Login() {
                 sessionStorage.setItem("username", result.username || '');
                 sessionStorage.setItem("email", result.email || '');
                 sessionStorage.setItem("admin", result.admin ? 'true' : 'false');
+                sessionStorage.setItem("addUser", result.addUser ? 'true' : 'false');
+                sessionStorage.setItem("addAWSKey", result.addAWSKey ? 'true' : 'false');
+                sessionStorage.setItem("addDocument", result.addDocument ? 'true' : 'false');
+                sessionStorage.setItem("ssoProvider", "azure"); // Mark as SSO login
 
                 if (result.admin) {
                     sessionStorage.setItem("role", "admin");
@@ -142,104 +151,139 @@ export default function Login() {
                 </div>
 
                 {/* Login Form */}
-                <form className="login-form" onSubmit={handleLoginSubmission}>
-                    {/* Username Field */}
-                    <div className="form-group-modern">
-                        <label className="form-label-modern" htmlFor="username">
-                            Username
-                        </label>
-                        <div className="form-input-wrapper">
-                            <FaUser className="form-input-icon" />
-                            <input
-                                id="username"
-                                type="text"
-                                name="username"
-                                className="form-control-modern"
-                                placeholder="Enter your username"
-                                onChange={handleChange}
-                                onKeyPress={handleKeyPress}
-                                disabled={loading}
-                                autoComplete="username"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Password Field */}
-                    <div className="form-group-modern">
-                        <label className="form-label-modern" htmlFor="password">
-                            Password
-                        </label>
-                        <div className="form-input-wrapper">
-                            <FaLock className="form-input-icon" />
-                            <input
-                                id="password"
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                className="form-control-modern"
-                                placeholder="Enter your password"
-                                onChange={handleChange}
-                                onKeyPress={handleKeyPress}
-                                disabled={loading}
-                                autoComplete="current-password"
-                            />
-                            <button
-                                type="button"
-                                className="password-toggle"
-                                onClick={() => setShowPassword(!showPassword)}
-                                aria-label={showPassword ? "Hide password" : "Show password"}
-                            >
-                                {showPassword ? <FaEyeSlash /> : <FaEye />}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Remember Me & Forgot Password */}
-                    <div className="remember-forgot">
-                        <div className="remember-me">
-                            <input
-                                type="checkbox"
-                                id="rememberMe"
-                                className="custom-checkbox"
-                                checked={rememberMe}
-                                onChange={(e) => setRememberMe(e.target.checked)}
-                            />
-                            <label htmlFor="rememberMe" className="remember-label">
-                                Remember me
-                            </label>
-                        </div>
-                        <a href="#" className="forgot-password">
-                            Forgot password?
-                        </a>
-                    </div>
-
-                    {/* Login Button */}
-                    <button
-                        type="submit"
-                        className="login-button"
-                        disabled={loading}
-                    >
-                        {loading && <span className="button-spinner" />}
-                        {loading ? "Signing in..." : "Sign In"}
-                    </button>
-
-                    {/* Microsoft SSO Button */}
+                <div className="login-form">
+                    {/* Primary: Microsoft SSO Login */}
                     {azureEnabled && (
-                        <>
-                            <div className="login-divider">
-                                <span>or</span>
-                            </div>
+                        <div className="primary-login-section">
+                            <p className="sso-description">
+                                Sign in with your organization account
+                            </p>
                             <button
                                 type="button"
-                                className="microsoft-button"
+                                className="microsoft-button-primary"
                                 onClick={handleMicrosoftLogin}
                                 disabled={ssoLoading || loading}
                             >
-                                <FaMicrosoft className="microsoft-icon" />
-                                {ssoLoading ? "Signing in with Microsoft..." : "Sign in with Microsoft"}
+                                <FaMicrosoft className="microsoft-icon-large" />
+                                <div className="microsoft-button-content">
+                                    <span className="microsoft-button-title">
+                                        {ssoLoading ? "Signing in..." : "Continue with Microsoft"}
+                                    </span>
+                                    <span className="microsoft-button-subtitle">
+                                        Recommended for organization users
+                                    </span>
+                                </div>
                             </button>
-                        </>
+                        </div>
                     )}
-                </form>
+
+                    {/* Divider with "or" */}
+                    {azureEnabled && (
+                        <div className="login-divider-modern">
+                            <div className="divider-line"></div>
+                            <span className="divider-text">or</span>
+                            <div className="divider-line"></div>
+                        </div>
+                    )}
+
+                    {/* Secondary: Local Login (Collapsible) */}
+                    <div className="local-login-section">
+                        <button
+                            type="button"
+                            className="local-login-toggle"
+                            onClick={() => setShowLocalLogin(!showLocalLogin)}
+                        >
+                            <span className="local-login-toggle-text">
+                                Sign in with local account
+                            </span>
+                            {showLocalLogin ? <FaChevronUp /> : <FaChevronDown />}
+                        </button>
+
+                        {/* Collapsible Local Login Form */}
+                        <div className={`local-login-form ${showLocalLogin ? 'expanded' : 'collapsed'}`}>
+                            <form onSubmit={handleLoginSubmission}>
+                                {/* Username Field */}
+                                <div className="form-group-modern">
+                                    <label className="form-label-modern" htmlFor="username">
+                                        Username
+                                    </label>
+                                    <div className="form-input-wrapper">
+                                        <FaUser className="form-input-icon" />
+                                        <input
+                                            id="username"
+                                            type="text"
+                                            name="username"
+                                            className="form-control-modern"
+                                            placeholder="Enter your username"
+                                            onChange={handleChange}
+                                            onKeyPress={handleKeyPress}
+                                            disabled={loading}
+                                            autoComplete="username"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Password Field */}
+                                <div className="form-group-modern">
+                                    <label className="form-label-modern" htmlFor="password">
+                                        Password
+                                    </label>
+                                    <div className="form-input-wrapper">
+                                        <FaLock className="form-input-icon" />
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            name="password"
+                                            className="form-control-modern"
+                                            placeholder="Enter your password"
+                                            onChange={handleChange}
+                                            onKeyPress={handleKeyPress}
+                                            disabled={loading}
+                                            autoComplete="current-password"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="password-toggle"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            aria-label={showPassword ? "Hide password" : "Show password"}
+                                        >
+                                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Remember Me & Forgot Password */}
+                                <div className="remember-forgot">
+                                    <div className="remember-me">
+                                        <input
+                                            type="checkbox"
+                                            id="rememberMe"
+                                            className="custom-checkbox"
+                                            checked={rememberMe}
+                                            onChange={(e) => setRememberMe(e.target.checked)}
+                                        />
+                                        <label htmlFor="rememberMe" className="remember-label">
+                                            Remember me
+                                        </label>
+                                    </div>
+                                    <a href="#" className="forgot-password">
+                                        Forgot password?
+                                    </a>
+                                </div>
+
+                                {/* Login Button */}
+                                <button
+                                    type="submit"
+                                    className="login-button"
+                                    disabled={loading}
+                                >
+                                    {loading && <span className="button-spinner" />}
+                                    {loading ? "Signing in..." : "Sign In"}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Footer */}
                 <div className="login-footer">

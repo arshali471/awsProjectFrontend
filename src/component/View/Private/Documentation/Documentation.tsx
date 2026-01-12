@@ -65,6 +65,7 @@ export default function Documentation() {
     const [refreshing, setRefreshing] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
+    const [canUploadDocument, setCanUploadDocument] = useState<boolean>(false);
 
     // Modal states
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -104,7 +105,9 @@ export default function Documentation() {
         fetchDocuments();
         fetchUsers();
         const adminStatus = sessionStorage.getItem('admin') === 'true';
+        const addDocumentPermission = sessionStorage.getItem('addDocument') === 'true';
         setIsAdmin(adminStatus);
+        setCanUploadDocument(adminStatus || addDocumentPermission);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -908,7 +911,7 @@ export default function Documentation() {
                             <FaInfoCircle />
                         </IconButton>
                     </div>
-                    {isAdmin && (
+                    {canUploadDocument && (
                         <Button variant="contained" startIcon={<FaPlus />} onClick={handleUploadModalOpen} sx={{ background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)', color: 'white', padding: '8px 20px', borderRadius: '10px', fontWeight: 500, textTransform: 'none' }}>
                             Add Document
                         </Button>

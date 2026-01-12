@@ -531,3 +531,201 @@
 [data-theme="dark"] .microsoft-button:hover:not(:disabled) {
     box-shadow: 0 4px 12px rgba(0, 120, 212, 0.4);
 }
+
+/* ========================================
+   NEW DESIGN: Microsoft-First Login
+   ======================================== */
+
+/* Primary Login Section - Microsoft SSO */
+.primary-login-section {
+    margin-bottom: 1.5rem;
+}
+
+.sso-description {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.microsoft-button-primary {
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 120, 212, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.microsoft-button-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.microsoft-button-primary:hover::before {
+    left: 100%;
+}
+
+.microsoft-button-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #005a9e 0%, #004578 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 120, 212, 0.5);
+}
+
+.microsoft-button-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.microsoft-icon-large {
+    font-size: 2rem;
+    min-width: 2rem;
+}
+
+.microsoft-button-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.microsoft-button-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    display: block;
+}
+
+.microsoft-button-subtitle {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    opacity: 0.9;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Modern Divider */
+.login-divider-modern {
+    display: flex;
+    align-items: center;
+    margin: 1.75rem 0;
+}
+
+.divider-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.divider-text {
+    padding: 0 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Local Login Section - Collapsible */
+.local-login-section {
+    margin-top: 1rem;
+}
+
+.local-login-toggle {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.local-login-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.local-login-toggle-text {
+    flex: 1;
+    text-align: left;
+}
+
+.local-login-toggle svg {
+    transition: transform 0.3s ease;
+}
+
+/* Collapsible Form */
+.local-login-form {
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, margin-top 0.4s ease;
+}
+
+.local-login-form.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+}
+
+.local-login-form.expanded {
+    max-height: 600px;
+    opacity: 1;
+    margin-top: 1.5rem;
+}
+
+.local-login-form form {
+    animation: fadeInForm 0.5s ease-out;
+}
+
+@keyframes fadeInForm {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .microsoft-button-primary {
+        padding: 1rem;
+    }
+    
+    .microsoft-icon-large {
+        font-size: 1.5rem;
+        min-width: 1.5rem;
+    }
+    
+    .microsoft-button-title {
+        font-size: 1rem;
+    }
+    
+    .microsoft-button-subtitle {
+        font-size: 0.75rem;
+    }
+}

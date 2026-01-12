@@ -3,19 +3,34 @@ import { Container, Navbar, Dropdown } from "react-bootstrap";
 import CustomToggle from "../helpers/CustomToggle";
 import { IoSettingsSharp } from "react-icons/io5";
 import { HiOutlineLogout } from "react-icons/hi";
+import { AuthService } from "../services/auth.service";
 import ImageData from "../../assets/IFF.png";
 import "../View/Private/IffDashboard/IffDashboard.css";
 
 export default function DevOpsLayout() {
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        sessionStorage.removeItem("authKey");
-        sessionStorage.removeItem("username");
-        sessionStorage.removeItem("email");
-        sessionStorage.removeItem("admin");
-        sessionStorage.removeItem("role");
-        navigate("/login");
+    const handleLogout = async () => {
+        try {
+            // Call backend to track logout time
+            console.log('[Frontend] Calling logout API...');
+            const response = await AuthService.logout();
+            console.log('[Frontend] Logout API response:', response);
+        } catch (error) {
+            console.error("[Frontend] Logout error:", error);
+        } finally {
+            // Clear session storage regardless of API call success
+            sessionStorage.removeItem("authKey");
+            sessionStorage.removeItem("username");
+            sessionStorage.removeItem("email");
+            sessionStorage.removeItem("admin");
+            sessionStorage.removeItem("addUser");
+            sessionStorage.removeItem("addAWSKey");
+            sessionStorage.removeItem("addDocument");
+            sessionStorage.removeItem("role");
+            sessionStorage.removeItem("ssoProvider");
+            navigate("/login");
+        }
     };
 
     const username = sessionStorage.getItem("username") || "User";

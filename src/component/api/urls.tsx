@@ -1,5 +1,6 @@
 const url = {
     login: "/user/login",
+    logout: "/user/logout",
     microsoftCallback: '/auth/microsoft/callback',
     azureConfig: '/auth/azure/config',
     getAllAwsKey: "/awsKey/getAllAWSKey",
@@ -86,6 +87,18 @@ const url = {
         getLogs: "/api-logs/logs",
         getStats: "/api-logs/stats",
         deleteOldLogs: "/api-logs/old-logs"
+    },
+
+    bedrockUsage: {
+        logUsage: "/bedrock-usage/log",
+        getMyUsage: "/bedrock-usage/my-usage",
+        getUserUsage: "/bedrock-usage/user",
+        getUserByUsername: "/bedrock-usage/user/by-username",
+        getInferenceProfileUsage: "/bedrock-usage/inference-profile",
+        getAllUsersUsage: "/bedrock-usage/all-users",
+        getModelStats: "/bedrock-usage/model-stats",
+        getAdminAnalytics: "/bedrock-usage/admin/analytics",
+        cleanup: "/bedrock-usage/cleanup"
     }
 
 };

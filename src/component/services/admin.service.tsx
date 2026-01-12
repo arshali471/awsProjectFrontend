@@ -514,4 +514,70 @@ export class AdminService {
         return await makeRequest(url.apiLogs.deleteOldLogs + params, RequestMethods.DELETE);
     }
 
+    // Bedrock Usage Tracking
+    static async logBedrockUsage(usageData: any) {
+        return await makeRequest(url.bedrockUsage.logUsage, RequestMethods.POST, usageData);
+    }
+
+    static async getMyBedrockUsage(days: number = 30, region?: string) {
+        const params = makeParams([
+            { index: "days", value: days },
+            { index: "region", value: region }
+        ]);
+        return await makeRequest(url.bedrockUsage.getMyUsage + params, RequestMethods.GET);
+    }
+
+    static async getUserBedrockUsage(userId: string, days: number = 30, region?: string) {
+        const params = makeParams([
+            { index: "days", value: days },
+            { index: "region", value: region }
+        ]);
+        return await makeRequest(url.bedrockUsage.getUserUsage + "/" + userId + params, RequestMethods.GET);
+    }
+
+    static async getUserBedrockUsageByUsername(username: string, days: number = 30) {
+        const params = makeParams([
+            { index: "days", value: days }
+        ]);
+        return await makeRequest(url.bedrockUsage.getUserByUsername + "/" + username + params, RequestMethods.GET);
+    }
+
+    static async getInferenceProfileUsage(profileId: string, days: number = 30) {
+        const params = makeParams([
+            { index: "days", value: days }
+        ]);
+        return await makeRequest(url.bedrockUsage.getInferenceProfileUsage + "/" + profileId + params, RequestMethods.GET);
+    }
+
+    static async getAllUsersBedrockUsage(days: number = 30, region?: string) {
+        const params = makeParams([
+            { index: "days", value: days },
+            { index: "region", value: region }
+        ]);
+        return await makeRequest(url.bedrockUsage.getAllUsersUsage + params, RequestMethods.GET);
+    }
+
+    static async getBedrockModelStats(days: number = 30, region?: string) {
+        const params = makeParams([
+            { index: "days", value: days },
+            { index: "region", value: region }
+        ]);
+        return await makeRequest(url.bedrockUsage.getModelStats + params, RequestMethods.GET);
+    }
+
+    static async getBedrockAdminAnalytics(days: number = 30, region?: string) {
+        const params = makeParams([
+            { index: "days", value: days },
+            { index: "region", value: region }
+        ]);
+        return await makeRequest(url.bedrockUsage.getAdminAnalytics + params, RequestMethods.GET);
+    }
+
+    static async cleanupBedrockUsage(daysToKeep: number = 90) {
+        const params = makeParams([
+            { index: "daysToKeep", value: daysToKeep }
+        ]);
+        return await makeRequest(url.bedrockUsage.cleanup + params, RequestMethods.DELETE);
+    }
+
 }

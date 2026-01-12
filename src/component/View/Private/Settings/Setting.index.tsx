@@ -13,10 +13,15 @@ import LockIcon from '@mui/icons-material/Lock'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ShieldIcon from '@mui/icons-material/Shield'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import PeopleIcon from '@mui/icons-material/People'
 
 export default function SettingIndex() {
     const navigate = useNavigate();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+    // Check if user logged in via SSO
+    const ssoProvider = sessionStorage.getItem("ssoProvider");
+    const isLocalUser = ssoProvider === "local";
 
     const apps = [
         {
@@ -63,6 +68,15 @@ export default function SettingIndex() {
             description: "Manage SSH authentication keys",
             color: "#FFA726",
             bgColor: "rgba(255, 167, 38, 0.1)"
+        },
+        {
+            url: "/settings/active-users",
+            name: "Active Users",
+            icon: PeopleIcon,
+            isAdmin: true,
+            description: "Monitor logged-in users and sessions",
+            color: "#00BCD4",
+            bgColor: "rgba(0, 188, 212, 0.1)"
         },
         {
             url: "/settings/change-password",
@@ -148,7 +162,15 @@ export default function SettingIndex() {
 
                 {/* Settings Grid */}
                 <Grid container spacing={3}>
-                    {apps.map((app, index) => {
+                    {apps
+                        .filter(app => {
+                            // Hide change password for SSO users
+                            if (app.url === "/settings/change-password" && !isLocalUser) {
+                                return false;
+                            }
+                            return true;
+                        })
+                        .map((app, index) => {
                         const IconComponent = app.icon;
                         return (
                             <Grid item xs={12} sm={6} md={4} key={index}>
