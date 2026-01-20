@@ -1,6 +1,7 @@
 const url = {
     login: "/user/login",
     logout: "/user/logout",
+    refreshToken: "/user/refresh-token",
     microsoftCallback: '/auth/microsoft/callback',
     azureConfig: '/auth/azure/config',
     getAllAwsKey: "/awsKey/getAllAWSKey",
@@ -99,6 +100,13 @@ const url = {
         getModelStats: "/bedrock-usage/model-stats",
         getAdminAnalytics: "/bedrock-usage/admin/analytics",
         cleanup: "/bedrock-usage/cleanup"
+    },
+
+    terminal: {
+        upload: "/terminal/upload",
+        download: "/terminal/download",
+        listUploads: "/terminal/uploads",
+        listFiles: "/terminal/list-files"
     }
 
 };

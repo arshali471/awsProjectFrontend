@@ -88,7 +88,7 @@ export default function Router() {
                             <PrivateRouter>
                                 <AIChat />
                             </PrivateRouter>
-                        }
+                        }                                   
                     />
 
                     {/* KubeBot route */}

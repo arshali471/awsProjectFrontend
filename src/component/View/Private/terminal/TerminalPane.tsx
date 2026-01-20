@@ -1,58 +1,110 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { Box, IconButton, TextField, InputAdornment, Typography, Tooltip, Chip } from '@mui/material';
+import { SearchAddon } from '@xterm/addon-search';
+import { Box, IconButton, TextField, InputAdornment, Typography, Tooltip, Chip, Drawer, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import HistoryIcon from '@mui/icons-material/History';
 import SearchIcon from '@mui/icons-material/Search';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import CloseIcon from '@mui/icons-material/Close';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import 'xterm/css/xterm.css';
+import TerminalFileUpload from './TerminalFileUpload';
+import TerminalToolbar, { terminalThemes } from './TerminalToolbar';
+import FileBrowser from './FileBrowser';
+import CommandSnippets from './CommandSnippets';
+import TerminalSearch from './TerminalSearch';
 
 type Props = {
     ip: string;
     username: string;
     sshKey: string;
     paneId: string;
+    onSplitHorizontal?: () => void;
+    onSplitVertical?: () => void;
+    canClose?: boolean;
+    onClosePane?: () => void;
 };
 
-const TerminalPane = ({ ip, username, sshKey, paneId }: Props) => {
+const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplitVertical, canClose, onClosePane }: Props) => {
+    console.log(`[TerminalPane] MOUNTING component for pane: ${paneId}`);
+
     const terminalRef = useRef<HTMLDivElement>(null);
     const termRef = useRef<Terminal>();
     const fitRef = useRef<FitAddon>();
+    const searchAddonRef = useRef<SearchAddon>();
     const socketRef = useRef<WebSocket>();
     const [connected, setConnected] = useState(false);
     const resizeObserverRef = useRef<ResizeObserver>();
     const [commandHistory, setCommandHistory] = useState<string[]>([]);
     const [showHistory, setShowHistory] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showUpload, setShowUpload] = useState(false);
     const commandBufferRef = useRef<string>('');
+
+    // New state for enhanced features
+    const [fileBrowserOpen, setFileBrowserOpen] = useState(false);
+    const [snippetsOpen, setSnippetsOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [fontSize, setFontSize] = useState(14);
+    const [currentTheme, setCurrentTheme] = useState('default');
+
+    // Add cleanup logging
+    useEffect(() => {
+        console.log(`[TerminalPane] Component mounted for pane: ${paneId}`);
+        return () => {
+            console.log(`[TerminalPane] UNMOUNTING component for pane: ${paneId}`);
+        };
+    }, [paneId]);
+
     // Initialize terminal once
     useEffect(() => {
         const term = new Terminal({
             cursorBlink: true,
-            fontSize: 14,
+            fontSize: fontSize,
             fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-            theme: {
-                background: '#1e1e1e',
-                foreground: '#d4d4d4',
-            }
+            theme: terminalThemes[currentTheme],
         });
         const fitAddon = new FitAddon();
+        const searchAddon = new SearchAddon();
         term.loadAddon(fitAddon);
+        term.loadAddon(searchAddon);
         term.open(terminalRef.current!);
-        fitAddon.fit();
-        term.focus();
+
         termRef.current = term;
         fitRef.current = fitAddon;
+        searchAddonRef.current = searchAddon;
+
+        // Wait for terminal to be fully rendered before fitting
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                try {
+                    if (fitRef.current && termRef.current) {
+                        fitRef.current.fit();
+                        termRef.current.focus();
+                    }
+                } catch (error) {
+                    console.warn('Error during initial terminal fit:', error);
+                }
+            }, 50);
+        });
 
         // Set up ResizeObserver for better resize handling
         resizeObserverRef.current = new ResizeObserver(() => {
             if (fitRef.current && termRef.current) {
-                fitRef.current.fit();
-                const cols = termRef.current.cols;
-                const rows = termRef.current.rows;
-                socketRef.current?.send(JSON.stringify({ resize: true, cols, rows }));
+                try {
+                    fitRef.current.fit();
+                    const cols = termRef.current.cols;
+                    const rows = termRef.current.rows;
+                    // Only send resize if WebSocket is connected
+                    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                        socketRef.current.send(JSON.stringify({ resize: true, cols, rows }));
+                    }
+                } catch (error) {
+                    console.warn('Error during terminal resize:', error);
+                }
             }
         });
 
@@ -67,6 +119,24 @@ const TerminalPane = ({ ip, username, sshKey, paneId }: Props) => {
             term.dispose();
         };
     }, [paneId]);
+
+    // Apply theme and font size changes
+    useEffect(() => {
+        if (termRef.current && fitRef.current) {
+            try {
+                termRef.current.options.fontSize = fontSize;
+                termRef.current.options.theme = terminalThemes[currentTheme];
+                // Small delay to ensure options are applied before fitting
+                requestAnimationFrame(() => {
+                    if (fitRef.current) {
+                        fitRef.current.fit();
+                    }
+                });
+            } catch (error) {
+                console.warn('Error applying terminal theme/font:', error);
+            }
+        }
+    }, [fontSize, currentTheme]);
 
     // Fetch command history by executing 'history' command silently
     const fetchCommandHistory = () => {
@@ -278,7 +348,9 @@ const TerminalPane = ({ ip, username, sshKey, paneId }: Props) => {
 
         term.onResize(({ cols, rows }) => {
             fit.fit();
-            ws.send(JSON.stringify({ resize: true, cols, rows }));
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ resize: true, cols, rows }));
+            }
         });
 
         // initial fit after socket opens
@@ -308,306 +380,343 @@ const TerminalPane = ({ ip, username, sshKey, paneId }: Props) => {
         cmd.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const downloadCommandHistory = () => {
+        const content = commandHistory.join('\n');
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `terminal-history-${ip}-${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleClearTerminal = () => {
+        if (termRef.current) {
+            termRef.current.clear();
+        }
+    };
+
     return (
         <Box
             sx={{
                 display: 'flex',
-                flexDirection: 'row',
+                flexDirection: 'column',
                 width: '100%',
                 height: '100%',
                 background: '#1e1e1e',
             }}
         >
-            {/* Terminal */}
+            {/* Enhanced Toolbar */}
+            <TerminalToolbar
+                connected={connected}
+                onReconnect={connect}
+                onShowHistory={() => setShowHistory(!showHistory)}
+                onShowFileBrowser={() => setFileBrowserOpen(!fileBrowserOpen)}
+                onShowSnippets={() => setSnippetsOpen(!snippetsOpen)}
+                onShowSearch={() => setSearchOpen(!searchOpen)}
+                onDownloadHistory={downloadCommandHistory}
+                onClearTerminal={handleClearTerminal}
+                fontSize={fontSize}
+                onFontSizeChange={setFontSize}
+                theme={currentTheme}
+                onThemeChange={setCurrentTheme}
+                historyCount={commandHistory.length}
+                fileBrowserOpen={fileBrowserOpen}
+                snippetsOpen={snippetsOpen}
+                searchOpen={searchOpen}
+                onSplitHorizontal={onSplitHorizontal}
+                onSplitVertical={onSplitVertical}
+                canClose={canClose}
+                onClosePane={onClosePane}
+            />
+
+            {/* Main Content Area */}
             <Box
                 sx={{
                     display: 'flex',
-                    flexDirection: 'column',
                     flex: 1,
-                    minWidth: 0,
+                    overflow: 'hidden',
+                    position: 'relative',
                 }}
             >
-                <Box
-                    ref={terminalRef}
-                    sx={{
-                        flex: 1,
-                        width: '100%',
-                        overflow: 'hidden',
-                        '& .xterm': {
-                            height: '100%',
-                        },
-                        '& .xterm-viewport': {
-                            width: '100% !important',
-                        }
-                    }}
-                />
-                <Box
-                    sx={{
-                        height: 32,
-                        background: '#2d2d2d',
-                        color: '#0f0',
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                        borderTop: '1px solid #444',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0 12px',
-                    }}
-                >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>🖥️</span>
-                        <span style={{ fontWeight: 'bold', color: '#4fc3f7' }}>{ip}</span>
-                        <span style={{ color: '#666' }}>|</span>
-                        <span>👤</span>
-                        <span style={{ fontWeight: 'bold', color: '#81c784' }}>{username}</span>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Tooltip title="Command History">
-                            <IconButton
-                                size="small"
-                                onClick={() => setShowHistory(!showHistory)}
-                                sx={{
-                                    color: showHistory ? '#4fc3f7' : '#888',
-                                    background: showHistory ? 'rgba(79, 195, 247, 0.1)' : 'transparent',
-                                    '&:hover': {
-                                        background: 'rgba(79, 195, 247, 0.2)',
-                                        color: '#4fc3f7',
-                                    },
-                                }}
-                            >
-                                <HistoryIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                        {connected ? (
-                            <span style={{ color: '#81c784' }}>📡 Connected</span>
-                        ) : (
-                            <IconButton
-                                size="small"
-                                onClick={connect}
-                                sx={{
-                                    color: '#0f0',
-                                    background: 'rgba(15, 255, 0, 0.1)',
-                                    '&:hover': {
-                                        background: 'rgba(15, 255, 0, 0.2)',
-                                    },
-                                }}
-                            >
-                                <RefreshIcon fontSize="small" />
-                            </IconButton>
-                        )}
-                    </Box>
-                </Box>
-            </Box>
+                {/* Command Snippets - Left Sidebar */}
+                {snippetsOpen && (
+                    <CommandSnippets
+                        onExecuteCommand={executeCommand}
+                        connected={connected}
+                    />
+                )}
 
-            {/* Command History Sidebar */}
-            {showHistory && (
+                {/* Terminal Area */}
                 <Box
                     sx={{
-                        width: 350,
-                        background: '#1e1e1e',
-                        borderLeft: '1px solid #444',
                         display: 'flex',
                         flexDirection: 'column',
+                        flex: 1,
+                        minWidth: 0,
+                        position: 'relative',
                     }}
                 >
-                    {/* Header */}
+                    {/* File Upload Panel */}
+                    {showUpload && (
+                        <Box sx={{ padding: 2, background: '#1e1e1e' }}>
+                            <TerminalFileUpload
+                                serverIp={ip}
+                                username={username}
+                                sshKey={sshKey}
+                                onClose={() => setShowUpload(false)}
+                            />
+                        </Box>
+                    )}
+
+                    {/* Terminal */}
+                    <Box
+                        ref={terminalRef}
+                        sx={{
+                            flex: 1,
+                            width: '100%',
+                            overflow: 'hidden',
+                            '& .xterm': {
+                                height: '100%',
+                            },
+                            '& .xterm-viewport': {
+                                width: '100% !important',
+                            }
+                        }}
+                    />
+
+                    {/* Search Overlay */}
+                    {searchOpen && (
+                        <TerminalSearch
+                            terminal={termRef.current}
+                            searchAddon={searchAddonRef.current}
+                            onClose={() => setSearchOpen(false)}
+                        />
+                    )}
+
+                    {/* Status Bar */}
                     <Box
                         sx={{
-                            height: 48,
+                            height: 32,
                             background: '#2d2d2d',
-                            borderBottom: '1px solid #444',
+                            color: '#0f0',
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                            borderTop: '1px solid #444',
                             display: 'flex',
-                            alignItems: 'center',
                             justifyContent: 'space-between',
+                            alignItems: 'center',
                             padding: '0 12px',
                         }}
                     >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <HistoryIcon sx={{ color: '#4fc3f7', fontSize: 20 }} />
-                            <Typography
-                                sx={{
-                                    color: '#4fc3f7',
-                                    fontWeight: 600,
-                                    fontSize: 14,
-                                    fontFamily: 'monospace',
-                                }}
-                            >
-                                Command History ({commandHistory.length})
-                            </Typography>
-                            <Tooltip title="Refresh History from Server">
+                            <span>🖥️</span>
+                            <span style={{ fontWeight: 'bold', color: '#4fc3f7' }}>{ip}</span>
+                            <span style={{ color: '#666' }}>|</span>
+                            <span>👤</span>
+                            <span style={{ fontWeight: 'bold', color: '#81c784' }}>{username}</span>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Tooltip title="Upload File">
                                 <IconButton
                                     size="small"
-                                    onClick={fetchCommandHistory}
+                                    onClick={() => setShowUpload(!showUpload)}
+                                    disabled={!connected}
                                     sx={{
-                                        color: '#81c784',
-                                        background: 'rgba(129, 199, 132, 0.15)',
-                                        border: '1px solid rgba(129, 199, 132, 0.3)',
+                                        color: showUpload ? '#ff9800' : '#888',
+                                        background: showUpload ? 'rgba(255, 152, 0, 0.1)' : 'transparent',
                                         '&:hover': {
-                                            color: '#fff',
-                                            background: 'rgba(129, 199, 132, 0.3)',
-                                            borderColor: '#81c784',
+                                            background: 'rgba(255, 152, 0, 0.2)',
+                                            color: '#ff9800',
+                                        },
+                                        '&:disabled': {
+                                            color: '#555',
+                                            background: 'transparent',
                                         },
                                     }}
                                 >
-                                    <RefreshIcon fontSize="small" />
+                                    <UploadFileIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
                         </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton
-                                size="small"
-                                onClick={() => setShowHistory(false)}
-                                sx={{
-                                    color: '#888',
-                                    '&:hover': {
-                                        color: '#fff',
-                                        background: 'rgba(255, 255, 255, 0.1)',
-                                    },
-                                }}
-                            >
-                                <CloseIcon fontSize="small" />
-                            </IconButton>
-                        </Box>
                     </Box>
+                </Box>
 
-                    {/* Search */}
-                    <Box sx={{ padding: '12px' }}>
-                        <TextField
-                            fullWidth
-                            size="small"
-                            placeholder="Search commands..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon sx={{ color: '#888', fontSize: 18 }} />
-                                    </InputAdornment>
-                                ),
-                            }}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    background: '#2d2d2d',
-                                    color: '#fff',
-                                    fontFamily: 'monospace',
-                                    fontSize: 13,
-                                    '& fieldset': {
-                                        borderColor: '#444',
-                                    },
-                                    '&:hover fieldset': {
-                                        borderColor: '#4fc3f7',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                        borderColor: '#4fc3f7',
-                                    },
-                                },
-                                '& .MuiInputBase-input::placeholder': {
-                                    color: '#666',
-                                    opacity: 1,
-                                },
-                            }}
-                        />
+                {/* File Browser - Right Sidebar */}
+                {fileBrowserOpen && (
+                    <FileBrowser
+                        ip={ip}
+                        username={username}
+                        sshKey={sshKey}
+                        onExecuteCommand={executeCommand}
+                        connected={connected}
+                    />
+                )}
+            </Box>
+
+            {/* Command History Drawer */}
+            <Drawer
+                anchor="right"
+                open={showHistory}
+                onClose={() => setShowHistory(false)}
+                PaperProps={{
+                    sx: {
+                        width: 400,
+                        background: '#252525',
+                        color: '#fff',
+                    },
+                }}
+            >
+                <Box sx={{ padding: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                        <Typography variant="h6">Command History</Typography>
+                        <IconButton size="small" onClick={() => setShowHistory(false)} sx={{ color: '#888' }}>
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
-
-                    {/* Command List */}
-                    <Box
+                    <TextField
+                        size="small"
+                        fullWidth
+                        placeholder="Search commands..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon sx={{ color: '#888' }} />
+                                </InputAdornment>
+                            ),
+                        }}
                         sx={{
-                            flex: 1,
-                            overflowY: 'auto',
-                            padding: '0 12px 12px',
-                            '&::-webkit-scrollbar': {
-                                width: '8px',
-                            },
-                            '&::-webkit-scrollbar-track': {
+                            marginBottom: 2,
+                            '& .MuiOutlinedInput-root': {
                                 background: '#1e1e1e',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                                background: '#444',
-                                borderRadius: '4px',
-                                '&:hover': {
-                                    background: '#555',
+                                color: '#fff',
+                                '& fieldset': {
+                                    borderColor: '#444',
+                                },
+                                '&:hover fieldset': {
+                                    borderColor: '#666',
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#2196f3',
                                 },
                             },
                         }}
-                    >
-                        {filteredHistory.length === 0 ? (
-                            <Box
+                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                        <Chip
+                            label={`${filteredHistory.length} commands`}
+                            size="small"
+                            sx={{ background: '#1e1e1e', color: '#888' }}
+                        />
+                        <Tooltip title="Fetch complete history from server">
+                            <IconButton
+                                size="small"
+                                onClick={fetchCommandHistory}
+                                disabled={!connected}
                                 sx={{
-                                    textAlign: 'center',
-                                    color: '#666',
-                                    fontSize: 13,
-                                    fontFamily: 'monospace',
-                                    marginTop: 4,
+                                    color: '#888',
+                                    background: '#1e1e1e',
+                                    border: '1px solid #444',
+                                    borderRadius: 1,
+                                    padding: '4px 12px',
+                                    '&:hover': {
+                                        background: '#2d2d2d',
+                                        color: '#4fc3f7',
+                                        borderColor: '#4fc3f7',
+                                    },
+                                    '&:disabled': {
+                                        color: '#555',
+                                        borderColor: '#333',
+                                    },
                                 }}
                             >
-                                {searchQuery ? 'No commands found' : 'No command history yet'}
-                            </Box>
-                        ) : (
-                            filteredHistory.map((cmd, index) => (
-                                <Tooltip key={index} title="Click to execute" placement="left">
-                                    <Box
-                                        onClick={() => executeCommand(cmd)}
-                                        sx={{
-                                            background: '#2d2d2d',
-                                            border: '1px solid #444',
-                                            borderRadius: '6px',
-                                            padding: '10px 12px',
-                                            marginBottom: '8px',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1,
-                                            '&:hover': {
-                                                background: '#3d3d3d',
-                                                borderColor: '#4fc3f7',
-                                                transform: 'translateX(-4px)',
-                                            },
-                                        }}
-                                    >
-                                        <PlayArrowIcon
-                                            sx={{
-                                                color: '#81c784',
-                                                fontSize: 16,
+                                <RefreshIcon fontSize="small" sx={{ marginRight: 0.5 }} />
+                                <Typography variant="caption" sx={{ fontSize: '0.7rem', fontWeight: 600 }}>
+                                    Fetch All
+                                </Typography>
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+                    <List sx={{ padding: 0 }}>
+                        {filteredHistory.map((cmd, index) => (
+                            <ListItem
+                                key={index}
+                                disablePadding
+                                secondaryAction={
+                                    <Tooltip title="Execute">
+                                        <IconButton
+                                            edge="end"
+                                            size="small"
+                                            onClick={() => {
+                                                executeCommand(cmd);
+                                                setShowHistory(false);
                                             }}
-                                        />
-                                        <Typography
+                                            disabled={!connected}
                                             sx={{
-                                                color: '#fff',
-                                                fontFamily: 'monospace',
-                                                fontSize: 13,
-                                                wordBreak: 'break-all',
-                                                flex: 1,
+                                                color: '#666',
+                                                '&:hover': { color: '#4caf50' },
+                                                '&:disabled': { color: '#444' },
                                             }}
                                         >
-                                            {cmd}
-                                        </Typography>
-                                        <Chip
-                                            label={index === 0 ? 'Latest' : `${index + 1}`}
-                                            size="small"
-                                            sx={{
-                                                height: 20,
-                                                fontSize: 10,
-                                                background: index === 0 ? 'rgba(129, 199, 132, 0.2)' : 'rgba(79, 195, 247, 0.2)',
-                                                color: index === 0 ? '#81c784' : '#4fc3f7',
+                                            <PlayArrowIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                }
+                                sx={{
+                                    borderBottom: '1px solid #333',
+                                    '&:hover': {
+                                        background: '#2d2d2d',
+                                    },
+                                }}
+                            >
+                                <ListItemButton
+                                    onClick={() => {
+                                        executeCommand(cmd);
+                                        setShowHistory(false);
+                                    }}
+                                    disabled={!connected}
+                                >
+                                    <ListItemText
+                                        primary={cmd}
+                                        primaryTypographyProps={{
+                                            sx: {
                                                 fontFamily: 'monospace',
-                                                fontWeight: 600,
-                                            }}
-                                        />
-                                    </Box>
-                                </Tooltip>
-                            ))
-                        )}
-                    </Box>
+                                                fontSize: '0.875rem',
+                                                color: '#fff',
+                                            },
+                                        }}
+                                    />
+                                </ListItemButton>
+                            </ListItem>
+                        ))}
+                    </List>
                 </Box>
-            )}
+            </Drawer>
         </Box>
     );
 };
 
-// Use React.memo to prevent re-renders when props haven't changed
+// Memoize TerminalPane to prevent unnecessary re-renders when splitting
+// Only re-render if props actually change (ip, username, sshKey, paneId)
+// Ignore function props AND canClose as they change when splitting but don't need re-render
 export default React.memo(TerminalPane, (prevProps, nextProps) => {
-    // Only re-render if paneId changes (which means it's actually a different terminal)
-    return prevProps.paneId === nextProps.paneId;
+    // Return true to SKIP re-render, false to allow re-render
+    const shouldSkip = (
+        prevProps.ip === nextProps.ip &&
+        prevProps.username === nextProps.username &&
+        prevProps.sshKey === nextProps.sshKey &&
+        prevProps.paneId === nextProps.paneId
+    );
+
+    // Debug logging
+    if (!shouldSkip) {
+        console.log('[TerminalPane] Re-rendering pane:', nextProps.paneId);
+    } else {
+        console.log('[TerminalPane] SKIPPING re-render for pane:', nextProps.paneId);
+    }
+
+    return shouldSkip;
 });

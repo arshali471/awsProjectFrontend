@@ -25,7 +25,6 @@ const LAYOUT_KEY = 'terminal_layout';
 const LAYOUT_TIMESTAMP_KEY = 'terminal_layout_timestamp';
 const LAYOUT_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
-
 // Wrapper component that creates stable callbacks per pane
 const MemoizedTerminalPane = React.memo(({
     paneId,
@@ -145,9 +144,6 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
     const [rootPane, setRootPane] = useState<Pane>(initializePane());
     const [focusedPaneId, setFocusedPaneId] = useState<string>(rootPane.id);
 
-    // Track which pane IDs have rendered terminals (prevents remount)
-    const renderedTerminalsRef = useRef<Set<string>>(new Set([rootPane.id]));
-
     // Save layout to sessionStorage whenever it changes
     useEffect(() => {
         try {
@@ -201,33 +197,37 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
     }, [focusedPaneId, rootPane]);
 
     const splitPane = useCallback((paneId: string, direction: 'horizontal' | 'vertical') => {
+        // Create new pane ID
         const newPaneId = `pane-${paneIdCounter++}`;
-        console.log(`[splitPane] Splitting ${paneId} ${direction}, creating new pane: ${newPaneId}`);
 
         setRootPane(prev => {
             const transformPane = (pane: Pane): Pane => {
+                // If this is the pane we're splitting
                 if (!pane.children && pane.id === paneId) {
-                    // Don't modify - just add to split list
-                    // The pane will be wrapped by parent on next render
                     const newPane: Pane = {
                         id: newPaneId,
                         credentials: pane.credentials,
                     };
 
+                    // Create container with NEW id, but keep children array stable
+                    // This is key: we don't modify the original pane object at all
                     const containerId = `pane-${paneIdCounter++}`;
-
-                    // Keep pane as-is, wrap in container
                     return {
                         id: containerId,
                         splitDirection: direction,
-                        children: [pane, newPane] as [Pane, Pane]
+                        children: [
+                            pane, // EXACT same object - no spread, no modification
+                            newPane,
+                        ] as [Pane, Pane]
                     };
                 }
 
+                // For containers, recursively transform
                 if (pane.children) {
                     const child0 = transformPane(pane.children[0]);
                     const child1 = transformPane(pane.children[1]);
 
+                    // Only create new object if children actually changed
                     if (child0 !== pane.children[0] || child1 !== pane.children[1]) {
                         return {
                             ...pane,
@@ -236,6 +236,7 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
                     }
                 }
 
+                // Return same reference if nothing changed
                 return pane;
             };
 
@@ -339,6 +340,7 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
         const isFocused = pane.id === focusedPaneId;
         const canClose = countPanes(rootPane) > 1;
 
+        // Render terminal directly in the tree
         return (
             <Box
                 key={`pane-wrapper-${pane.id}`}
@@ -352,13 +354,14 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
                 }}
                 onClick={() => setFocusedPaneId(pane.id)}
             >
+                {/* Render terminal component directly - React will preserve it by paneId key */}
                 {pane.credentials && (
                     <MemoizedTerminalPane
                         key={pane.id}
-                        paneId={pane.id}
                         ip={pane.credentials.ip}
                         username={pane.credentials.username}
                         sshKey={pane.credentials.sshKey}
+                        paneId={pane.id}
                         onSplit={splitPane}
                         onClose={closePane}
                         canClose={canClose}
@@ -375,6 +378,10 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
         return 1;
     };
 
+    // Get all leaf panes
+    const allPanes = collectPanes(rootPane);
+    const canClose = countPanes(rootPane) > 1;
+
     return (
         <Box
             sx={{
@@ -386,7 +393,39 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
                 overflow: 'hidden',
             }}
         >
-            {renderPane(rootPane)}
+            {/* Render layout structure */}
+            {renderPaneLayout(rootPane)}
+
+            {/* Render all terminals at the same tree level (prevents unmount on split) */}
+            {allPanes.map(pane => pane.credentials && (
+                <Box
+                    key={`terminal-${pane.id}`}
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        pointerEvents: 'none', // Let clicks pass through to placeholder
+                    }}
+                >
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            ...getP anePosition(pane.id, rootPane),
+                            pointerEvents: 'auto',
+                        }}
+                    >
+                        <MemoizedTerminalPane
+                            key={pane.id}
+                            ip={pane.credentials.ip}
+                            username={pane.credentials.username}
+                            sshKey={pane.credentials.sshKey}
+                            paneId={pane.id}
+                            onSplit={splitPane}
+                            onClose={closePane}
+                            canClose={canClose}
+                        />
+                    </Box>
+                </Box>
+            ))}
 
             {/* Keyboard shortcuts help */}
             <Box

@@ -580,4 +580,17 @@ export class AdminService {
         return await makeRequest(url.bedrockUsage.cleanup + params, RequestMethods.DELETE);
     }
 
+    // Terminal File Upload Methods
+    static async uploadFileToServer(formData: FormData) {
+        return await makeUploadRequest(url.terminal.upload, RequestMethods.POST, formData);
+    }
+
+    static async downloadFileFromServer(payload: any) {
+        return await makeRequest(url.terminal.download, RequestMethods.POST, payload);
+    }
+
+    static async listTerminalUploads() {
+        return await makeRequest(url.terminal.listUploads, RequestMethods.GET);
+    }
+
 }
