@@ -15,6 +15,9 @@ import TerminalToolbar, { terminalThemes } from './TerminalToolbar';
 import FileBrowser from './FileBrowser';
 import CommandSnippets from './CommandSnippets';
 import TerminalSearch from './TerminalSearch';
+import ServerConnectionManager, { RemoteServer } from './ServerConnectionManager';
+import ServerFileTransfer from './ServerFileTransfer';
+import CommandAutoComplete from './CommandAutoComplete';
 
 type Props = {
     ip: string;
@@ -49,6 +52,15 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
     const [searchOpen, setSearchOpen] = useState(false);
     const [fontSize, setFontSize] = useState(14);
     const [currentTheme, setCurrentTheme] = useState('default');
+    const [serverConnectOpen, setServerConnectOpen] = useState(false);
+    const [fileTransferOpen, setFileTransferOpen] = useState(false);
+    const [connectedServer, setConnectedServer] = useState<any>(null);
+    const [savedServers, setSavedServers] = useState<RemoteServer[]>([]);
+
+    // Autocomplete state
+    const [currentCommand, setCurrentCommand] = useState('');
+    const [showAutoComplete, setShowAutoComplete] = useState(false);
+    const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 
     // Add cleanup logging
     useEffect(() => {
@@ -187,9 +199,6 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                         // Give a small delay to ensure all data received
                         setTimeout(() => {
                             isCollectingHistory = false;
-                            console.log('=== History collection complete ===');
-                            console.log('Buffer length:', historyBuffer.length);
-                            console.log('First 500 chars:', historyBuffer.substring(0, 500).replace(/\r/g, '\\r').replace(/\n/g, '\\n'));
 
                             // Parse history
                             parseHistoryOutput(historyBuffer);
@@ -206,14 +215,11 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
         };
 
         // Send history command
-        console.log('Sending: history');
         ws.send('history\r');
 
         // Safety timeout
         setTimeout(() => {
             if (isCollectingHistory) {
-                console.log('History fetch timeout - forcing completion');
-                console.log('Buffer at timeout:', historyBuffer);
                 isCollectingHistory = false;
                 parseHistoryOutput(historyBuffer);
                 ws.onmessage = originalHandler;
@@ -235,8 +241,6 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
 
             const commands: string[] = [];
 
-            console.log('Raw history output lines:', lines);
-
             lines.forEach(line => {
                 // Match history format: "  123  command" or "123  command" or "  123 command"
                 // Also handle formats like "  123* command" (with asterisks)
@@ -250,21 +254,12 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                 }
             });
 
-            console.log('Parsed commands from history:', commands);
-            console.log('Total commands found:', commands.length);
-
             if (commands.length > 0) {
                 setCommandHistory(() => {
                     // Remove duplicates while preserving order (most recent occurrence wins)
                     const uniqueCommands = Array.from(new Set(commands.reverse()));
-                    console.log('Unique commands after deduplication:', uniqueCommands.length);
-                    console.log('Setting command history state with', uniqueCommands.length, 'commands');
                     return uniqueCommands.slice(0, 500); // Limit to 500 commands
                 });
-            } else {
-                console.warn('No commands parsed from history output');
-                console.warn('Check if history output matches expected format');
-                console.warn('Sample lines:', lines.slice(0, 10));
             }
         } catch (error) {
             console.error('Failed to parse history output:', error);
@@ -309,7 +304,6 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
 
             // Wait for connection to be fully established, then fetch history
             setTimeout(() => {
-                console.log('Calling fetchCommandHistory after connection');
                 fetchCommandHistory();
             }, 2000);
         };
@@ -327,22 +321,67 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
             if (data === '\r') {
                 const command = commandBufferRef.current.trim();
                 if (command && command.length > 0 && command !== 'history') {
-                    console.log('Adding command to history:', command);
                     setCommandHistory(prev => {
                         // Remove duplicate if exists, add to front
                         const filtered = prev.filter(cmd => cmd !== command);
                         const updated = [command, ...filtered].slice(0, 500);
-                        console.log('Updated history length:', updated.length);
                         return updated;
                     });
                 }
                 commandBufferRef.current = '';
-            } else if (data === '\x7f') {
-                // Backspace
-                commandBufferRef.current = commandBufferRef.current.slice(0, -1);
+                setCurrentCommand('');
+                setShowAutoComplete(false);
+            } else if (data === '\x7f' || data === '\b') {
+                // Backspace (both DEL and BS)
+                if (commandBufferRef.current.length > 0) {
+                    commandBufferRef.current = commandBufferRef.current.slice(0, -1);
+                    setCurrentCommand(commandBufferRef.current);
+
+                    // Update cursor position
+                    if (terminalRef.current) {
+                        const rect = terminalRef.current.getBoundingClientRect();
+                        const buffer = term.buffer.active;
+                        const cursorX = buffer.cursorX;
+                        const cursorY = buffer.cursorY;
+
+                        setCursorPosition({
+                            x: rect.left + (cursorX * 9),
+                            y: rect.top + (cursorY * 17) + 50
+                        });
+                    }
+
+                    setShowAutoComplete(commandBufferRef.current.length > 0);
+                }
+            } else if (data === '\t') {
+                // Tab key - prevent default, let autocomplete handle it
+                return;
             } else if (data.charCodeAt(0) >= 32 && data.charCodeAt(0) < 127) {
                 // Regular printable ASCII character
                 commandBufferRef.current += data;
+                setCurrentCommand(commandBufferRef.current);
+
+                // Update cursor position
+                if (terminalRef.current) {
+                    const rect = terminalRef.current.getBoundingClientRect();
+                    const buffer = term.buffer.active;
+                    const cursorX = buffer.cursorX;
+                    const cursorY = buffer.cursorY;
+
+                    setCursorPosition({
+                        x: rect.left + (cursorX * 9),
+                        y: rect.top + (cursorY * 17) + 50
+                    });
+                }
+
+                setShowAutoComplete(true);
+            } else if (data === '\x1b[A' || data === '\x1b[B') {
+                // Arrow up/down - hide autocomplete when navigating history
+                setShowAutoComplete(false);
+            } else if (data === '\x03') {
+                // Ctrl+C - clear current command
+                commandBufferRef.current = '';
+                setCurrentCommand('');
+                setShowAutoComplete(false);
             }
         });
 
@@ -367,6 +406,57 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
             ws.send(command + '\r');
             // Update terminal display
             term.write(command + '\r\n');
+        }
+    };
+
+    const handleAutoCompleteSelect = (command: string) => {
+        const term = termRef.current;
+        const ws = socketRef.current;
+
+        if (!term || !ws || !connected) return;
+
+        // Clear current command buffer
+        const currentLength = commandBufferRef.current.length;
+        for (let i = 0; i < currentLength; i++) {
+            ws.send('\x7f'); // Send backspace
+        }
+
+        // Send the selected command
+        ws.send(command);
+        commandBufferRef.current = command;
+        setCurrentCommand(command);
+        setShowAutoComplete(false);
+    };
+
+    const saveAndConnectWithKey = async (server: RemoteServer) => {
+        try {
+            // Create a unique key filename
+            const keyFileName = `${server.username}_${server.host}_${Date.now()}.pem`;
+
+            // Save the key content to a file
+            const ws = socketRef.current;
+            if (!ws || !connected) {
+                console.error('[TerminalPane] No active connection');
+                return;
+            }
+
+            // Create the key file in /tmp directory with proper permissions
+            const commands = [
+                `cat > /tmp/${keyFileName} << 'EOF'\n${server.sshKey}\nEOF`,
+                `chmod 600 /tmp/${keyFileName}`,
+                `ssh -o StrictHostKeyChecking=no -i /tmp/${keyFileName} ${server.username}@${server.host}`
+            ];
+
+            // Execute commands one by one
+            for (const cmd of commands) {
+                ws.send(cmd + '\r');
+                // Small delay between commands
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            console.log('[TerminalPane] SSH connection initiated with custom key');
+        } catch (error) {
+            console.error('[TerminalPane] Error connecting with custom key:', error);
         }
     };
 
@@ -429,6 +519,8 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                 onSplitVertical={onSplitVertical}
                 canClose={canClose}
                 onClosePane={onClosePane}
+                onShowServerConnect={() => setServerConnectOpen(true)}
+                onShowFileTransfer={() => setFileTransferOpen(true)}
             />
 
             {/* Main Content Area */}
@@ -695,6 +787,56 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                     </List>
                 </Box>
             </Drawer>
+
+            {/* Server Connection Manager Dialog */}
+            <ServerConnectionManager
+                open={serverConnectOpen}
+                onClose={() => setServerConnectOpen(false)}
+                currentServer={{ ip, username }}
+                onConnectToServer={(server: RemoteServer) => {
+                    console.log('[TerminalPane] Connecting to server:', server);
+                    setConnectedServer(server);
+
+                    // If custom SSH key provided, we need to save it first
+                    if (server.sshKey && server.sshKey.trim() !== '') {
+                        // Save key to a temporary file on the backend and then connect
+                        saveAndConnectWithKey(server);
+                    } else {
+                        // Use default SSH connection (will use current server's key via SSH agent forwarding)
+                        const ws = socketRef.current;
+                        if (ws && connected) {
+                            const sshCommand = `ssh -o StrictHostKeyChecking=no ${server.username}@${server.host}\r`;
+                            ws.send(sshCommand);
+                        }
+                    }
+                }}
+                onServersUpdate={(servers) => {
+                    console.log('[TerminalPane] Servers updated:', servers);
+                    setSavedServers(servers);
+                }}
+            />
+
+            {/* Server File Transfer Dialog */}
+            <ServerFileTransfer
+                open={fileTransferOpen}
+                onClose={() => setFileTransferOpen(false)}
+                sourceServer={{ ip, username, sshKey }}
+                targetServer={connectedServer}
+                savedServers={savedServers}
+                onOpenServerManager={() => {
+                    setFileTransferOpen(false);
+                    setServerConnectOpen(true);
+                }}
+            />
+
+            {/* Command Autocomplete */}
+            <CommandAutoComplete
+                input={currentCommand}
+                onSelect={handleAutoCompleteSelect}
+                visible={showAutoComplete && connected}
+                position={cursorPosition}
+                commandHistory={commandHistory}
+            />
         </Box>
     );
 };

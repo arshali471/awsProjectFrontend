@@ -106,9 +106,23 @@ const url = {
         upload: "/terminal/upload",
         download: "/terminal/download",
         listUploads: "/terminal/uploads",
-        listFiles: "/terminal/list-files"
+        listFiles: "/terminal/list-files",
+        transferFile: "/terminal/transfer-file",
+        deleteFile: "/terminal/delete-file",
+        createFolder: "/terminal/create-folder"
     }
 
 };
 
 export default url;
+export const URLS = {
+    TERMINAL: {
+        UPLOAD: "/terminal/upload",
+        DOWNLOAD: "/terminal/download",
+        LIST_UPLOADS: "/terminal/uploads",
+        LIST_FILES: "/terminal/list-files",
+        TRANSFER_FILE: "/terminal/transfer-file",
+        DELETE_FILE: "/terminal/delete-file",
+        CREATE_FOLDER: "/terminal/create-folder"
+    }
+};

@@ -28,6 +28,8 @@ import ClearIcon from '@mui/icons-material/Clear';
 import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import CloseIcon from '@mui/icons-material/Close';
+import StorageIcon from '@mui/icons-material/Storage';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 export interface TerminalTheme {
     name: string;
@@ -376,6 +378,8 @@ interface TerminalToolbarProps {
     onSplitVertical?: () => void;
     canClose?: boolean;
     onClosePane?: () => void;
+    onShowServerConnect?: () => void;
+    onShowFileTransfer?: () => void;
 }
 
 export default function TerminalToolbar({
@@ -399,6 +403,8 @@ export default function TerminalToolbar({
     onSplitVertical,
     canClose,
     onClosePane,
+    onShowServerConnect,
+    onShowFileTransfer,
 }: TerminalToolbarProps) {
     const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
 
@@ -579,6 +585,42 @@ export default function TerminalToolbar({
                         <ClearIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>
+
+                <Divider orientation="vertical" flexItem sx={{ background: '#555', height: 24, mx: 0.5 }} />
+
+                {onShowServerConnect && (
+                    <Tooltip title="Connect to Remote Server">
+                        <IconButton
+                            size="small"
+                            onClick={onShowServerConnect}
+                            disabled={!connected}
+                            sx={{
+                                color: '#888',
+                                '&:hover': { color: '#9c27b0', background: 'rgba(156, 39, 176, 0.1)' },
+                                '&:disabled': { color: '#555' },
+                            }}
+                        >
+                            <StorageIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                )}
+
+                {onShowFileTransfer && (
+                    <Tooltip title="Server-to-Server File Transfer">
+                        <IconButton
+                            size="small"
+                            onClick={onShowFileTransfer}
+                            disabled={!connected}
+                            sx={{
+                                color: '#888',
+                                '&:hover': { color: '#ff9800', background: 'rgba(255, 152, 0, 0.1)' },
+                                '&:disabled': { color: '#555' },
+                            }}
+                        >
+                            <SwapHorizIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                )}
             </Box>
 
             {/* Right side - Split & Settings */}
