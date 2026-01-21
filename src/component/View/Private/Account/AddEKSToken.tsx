@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { Container, OverlayTrigger, Spinner, Table, Tooltip } from "react-bootstrap";
+import { Container, Spinner, Table } from "react-bootstrap";
 import { AdminService } from "../../../services/admin.service";
 import toast from "react-hot-toast";
-import Select from "react-select";
 import { useNavigate } from "react-router-dom";
 import AddEksTokenModal from "../../../modal/AddEksToken.modal";
 import EditEksTokenModal from "../../../modal/EditEksToken.modal";
+import ViewYmlContentModal from "../../../modal/ViewYmlContent.modal";
 import TablePagination from "../../../Pagination/TablePagination";
-import copy from 'copy-to-clipboard';
 import {
     Box,
     Typography,
@@ -26,8 +25,9 @@ import BlockIcon from "@mui/icons-material/Block";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import SearchIcon from "@mui/icons-material/Search";
+import DescriptionIcon from "@mui/icons-material/Description";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 export default function AddEKSToken() {
     const navigate = useNavigate();
@@ -38,35 +38,19 @@ export default function AddEKSToken() {
     const [data, setData] = useState<any>([]);
     const [eksIndex, setEksIndex] = useState<number>(-1);
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+    const [showViewModal, setShowViewModal] = useState<boolean>(false);
     const [selectedEksToken, setSelectedEksToken] = useState<any>(null);
-    const [keyId, setKeyId] = useState<any>(null);
-    const [keyIdData, setKeyIdData] = useState<any>(null);
+    const [viewEksTokenId, setViewEksTokenId] = useState<string | null>(null);
     const [search, setSearch] = useState<any>(null);
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const getAllAwsKey = async () => {
-        try {
-            const res = await AdminService.getAllAwsKey();
-            if (res.status === 200) {
-                setKeyId(
-                    Object.values(res.data).map((data: any) => ({
-                        label: `${data.enviroment} (${data.region})`,
-                        value: data._id,
-                    }))
-                );
-            }
-        } catch (err) {
-            toast.error(err.response?.data || "Failed to get AWS key");
-        }
-    };
-
     const getAllEksToken = async () => {
         setLoading(true);
         try {
-            const res = await AdminService.getAllEksToken(search, currentPage, perPage, keyIdData);
+            const res = await AdminService.getAllEksToken(search, currentPage, perPage);
             if (res.status === 200) {
                 setData(res.data.data);
                 setTotalCount(res.data.count);
@@ -107,27 +91,12 @@ export default function AddEKSToken() {
     //         .catch(() => toast.error("Failed to copy"));
     // };
 
-    const copyToClipboard = (text: string) => {
-        const success = copy(text);
-        if (success) {
-            toast.success("Copied to clipboard!");
-        } else {
-            toast.error("Failed to copy");
-        }
-    };
-
-    const truncateText = (text: string, maxLength: number = 15) => {
-        if (!text) return "--";
-        return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
-    };
-
     useEffect(() => {
         getAllEksToken();
-    }, [search, perPage, currentPage, keyIdData]);
+    }, [search, perPage, currentPage]);
 
     useEffect(() => {
         getUserData();
-        getAllAwsKey();
     }, []);
 
     const handleDelete = async () => {
@@ -147,6 +116,16 @@ export default function AddEKSToken() {
     const openDeleteModal = (eksToken: any) => {
         setSelectedEksToken(eksToken);
         setShowDeleteModal(true);
+    };
+
+    const openViewModal = (eksTokenId: string) => {
+        setViewEksTokenId(eksTokenId);
+        setShowViewModal(true);
+    };
+
+    const closeViewModal = () => {
+        setShowViewModal(false);
+        setViewEksTokenId(null);
     };
 
     if (isUserLoading) {
@@ -340,38 +319,23 @@ export default function AddEKSToken() {
                     </Box>
                 </Box>
 
-                {/* Search and Filter */}
-                <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+                {/* Search */}
+                <Box sx={{ mb: 3 }}>
                     <TextField
-                        placeholder="Search..."
+                        fullWidth
+                        placeholder="Search by cluster name..."
                         value={search || ''}
                         onChange={(e) => setSearch(e.target.value)}
                         InputProps={{
                             startAdornment: <SearchIcon sx={{ color: '#6c757d', mr: 1 }} />,
                         }}
                         sx={{
-                            flex: 1,
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: '12px',
                                 background: 'white',
                             }
                         }}
                     />
-                    <Box sx={{ minWidth: 300 }}>
-                        <Select
-                            options={keyId}
-                            placeholder="Select Environment"
-                            onChange={(e: any) => setKeyIdData(e?.value)}
-                            styles={{
-                                control: (base) => ({
-                                    ...base,
-                                    borderRadius: '12px',
-                                    border: '1px solid #e0e0e0',
-                                    padding: '4px',
-                                })
-                            }}
-                        />
-                    </Box>
                 </Box>
 
                 {/* Table Card */}
@@ -392,81 +356,66 @@ export default function AddEKSToken() {
                                 <tr>
                                     <th>Sr.No</th>
                                     <th>Cluster Name</th>
-                                    <th>Environment</th>
-                                    <th>Dashboard URL</th>
-                                    <th>Monitoring URL</th>
-                                    <th>Token</th>
+                                    <th>YML File</th>
+                                    <th>Uploaded By</th>
+                                    <th>Updated By</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <Spinner size="sm" animation="border" />
+                                    <tr>
+                                        <td colSpan={6} className="text-center">
+                                            <Spinner size="sm" animation="border" />
+                                        </td>
+                                    </tr>
                                 ) : data.length > 0 ? (
                                     data.map((item: any, index: number) => (
                                         <tr key={item._id}>
-                                            <td>{index + 1}</td>
+                                            <td>{(currentPage - 1) * perPage + index + 1}</td>
                                             <td>{item.clusterName || "--"}</td>
-                                            <td>{item.awsKeyId?.enviroment || "--"}</td>
                                             <td>
-                                                <div className="d-flex align-items-center">
-                                                    {item.dashboardUrl ? (
-                                                        <OverlayTrigger
-                                                            placement="top"
-                                                            overlay={<Tooltip>{item.dashboardUrl}</Tooltip>}
+                                                {item.fileName ? (
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        <DescriptionIcon sx={{ fontSize: 18, color: '#28a745' }} />
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                color: '#0073bb',
+                                                                cursor: 'pointer',
+                                                                '&:hover': { textDecoration: 'underline' }
+                                                            }}
+                                                            onClick={() => openViewModal(item._id)}
                                                         >
-                                                            <span style={{ cursor: 'pointer' }}>
-                                                                {truncateText(item.dashboardUrl)}
-                                                            </span>
-                                                        </OverlayTrigger>
-                                                    ) : (
-                                                        "--"
-                                                    )}
-                                                </div>
+                                                            {item.fileName}
+                                                        </Typography>
+                                                    </Box>
+                                                ) : (
+                                                    <Typography variant="body2" sx={{ color: '#6c757d' }}>
+                                                        No file
+                                                    </Typography>
+                                                )}
                                             </td>
                                             <td>
-                                                <div className="d-flex align-items-center">
-                                                    {item.monitoringUrl ? (
-                                                        <OverlayTrigger
-                                                            placement="top"
-                                                            overlay={<Tooltip>{item.monitoringUrl}</Tooltip>}
-                                                        >
-                                                            <span style={{ cursor: 'pointer' }}>
-                                                                {truncateText(item.monitoringUrl)}
-                                                            </span>
-                                                        </OverlayTrigger>
-                                                    ) : (
-                                                        "--"
-                                                    )}
-                                                </div>
+                                                {item.createdBy ? (
+                                                    item.createdBy.username || item.createdBy.email || "--"
+                                                ) : "--"}
                                             </td>
                                             <td>
-                                                <div className="d-flex align-items-center">
-                                                    {/* {item.token ? (
-                                                        <OverlayTrigger
-                                                            placement="top"
-                                                            overlay={<Tooltip>{item.token}</Tooltip>}
-                                                        >
-                                                            <span style={{ cursor: 'pointer' }}>
-                                                                {truncateText(item.token)}
-                                                            </span>
-                                                        </OverlayTrigger>
-                                                    ) : (
-                                                        "--"
-                                                    )} */}
-                                                    {item.token && (
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => copyToClipboard(item.token)}
-                                                            sx={{ color: '#28a745' }}
-                                                        >
-                                                            <ContentCopyIcon fontSize="small" />
-                                                        </IconButton>
-                                                    )}
-                                                </div>
+                                                {item.updatedBy ? (
+                                                    item.updatedBy.username || item.updatedBy.email || "--"
+                                                ) : "--"}
                                             </td>
                                             <td>
-                                                <IconButton size="small" onClick={() => setEksIndex(index)} sx={{ color: '#0073bb' }}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => openViewModal(item._id)}
+                                                    sx={{ color: '#28a745' }}
+                                                    title="View YML Content"
+                                                >
+                                                    <VisibilityIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton size="small" onClick={() => setEksIndex(index)} sx={{ color: '#0073bb', ml: 1 }}>
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>
                                                 <IconButton size="small" onClick={() => openDeleteModal(item)} sx={{ color: '#dc3545', ml: 1 }}>
@@ -477,7 +426,7 @@ export default function AddEKSToken() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={7}>No data found.</td>
+                                        <td colSpan={6} className="text-center">No data found.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -489,6 +438,7 @@ export default function AddEKSToken() {
 
             <AddEksTokenModal show={showAddEksTokenModal} handleClose={() => setShowAddEksTokenModal(false)} reload={getAllEksToken} />
             <EditEksTokenModal show={eksIndex !== -1} handleClose={() => setEksIndex(-1)} reload={getAllEksToken} eksData={data[eksIndex]} />
+            <ViewYmlContentModal show={showViewModal} handleClose={closeViewModal} eksTokenId={viewEksTokenId} />
 
             {/* Delete Confirmation Dialog */}
             <Dialog

@@ -36,6 +36,7 @@ const url = {
         deleteEksToken: "/aws/deleteEksToken",
         addEKSToken: "/aws/addEKSToken",
         getEKSTokenById: "/aws/getEKSTokenById",
+        getEKSTokenContent: "/aws/getEKSTokenContent/:id",
         addSshKey: "/aws/addSshKey",
         getSshKey: "/aws/getSshKey",
         deleteSshKey: "/aws/deleteSshKey",

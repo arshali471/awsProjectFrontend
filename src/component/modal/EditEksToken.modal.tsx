@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AdminService } from '../services/admin.service'
 import toast from 'react-hot-toast'
-import Select from 'react-select'
 import {
     Drawer,
     Box,
@@ -9,16 +8,13 @@ import {
     IconButton,
     TextField,
     Button,
-    Divider,
     CircularProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
-import SettingsIcon from '@mui/icons-material/Settings';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import MonitorIcon from '@mui/icons-material/Monitor';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 interface IEditEksTokenModal {
     show: boolean;
@@ -29,89 +25,61 @@ interface IEditEksTokenModal {
 
 export default function EditEksTokenModal({ show, handleClose, reload, eksData }: IEditEksTokenModal) {
 
-    const [region, setRegion] = useState<any>();
     const [data, setData] = useState<any>({});
-    const [clusterName, setClusterName] = useState<any>();
-    const [environment, setEnvironment] = useState<any>();
     const [loading, setLoading] = useState<boolean>(false);
+    const [ymlFile, setYmlFile] = useState<File | null>(null);
+    const [fileName, setFileName] = useState<string>('');
 
     const handleChangeValue = (e: any) => {
         setData({ ...data, [e.target.name]: e.target.value })
     }
 
-    const getAllAwsKey = async () => {
-        await AdminService.getAllAwsKey().then((res) => {
-            if (res.status === 200) {
-                setRegion(Object.values(res.data).map((data: any) => {
-                    return {
-                        label: `${data.enviroment} (${data.region})`,
-                        value: data._id
-                    }
-                }))
-            }
-        }).catch(err => {
-            toast.error(err.response?.data || 'Failed to get AWS key');
-        })
-    }
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const fileNameLower = file.name.toLowerCase();
 
-    const getClusterName = async () => {
-        setLoading(true)
-        await AdminService.getClusterName(environment).then((res) => {
-            if (res.status === 200) {
-                setClusterName(res.data?.map((data: any) => {
-                    return {
-                        label: data.name,
-                        value: data.name
-                    }
-                }))
+            // Validate file extension
+            if (!fileNameLower.endsWith('.yml') && !fileNameLower.endsWith('.yaml')) {
+                toast.error('Only YML/YAML files are allowed');
+                e.target.value = '';
+                return;
             }
-        }).catch(err => {
-            toast.error(err.response?.data || 'Failed to get cluster name');
-        }).finally(() => {
-            setLoading(false)
-        })
+
+            setYmlFile(file);
+            setFileName(file.name);
+        }
     }
 
     const handleUpdateEksToken = async () => {
-        if (!data?.clusterName || !data?.token) {
-            toast.error('Please fill all required fields');
+        if (!data?.clusterName) {
+            toast.error('Please provide cluster name');
             return;
         }
 
-        const payload = {
-            clusterName: data?.clusterName,
-            dashboardUrl: data?.dashboardUrl,
-            monitoringUrl: data?.monitoringUrl,
-            token: data?.token,
-            keyId: environment
-        }
-        await AdminService.updateEKSToken(data?._id, payload).then((res) => {
+        const formData = new FormData();
+        formData.append('clusterName', data.clusterName);
+        if (ymlFile) formData.append('ymlFile', ymlFile);
+
+        try {
+            const res = await AdminService.updateEKSToken(data?._id, formData);
             if (res.status === 200) {
                 toast.success('EKS Token updated successfully');
+                setYmlFile(null);
+                setFileName('');
                 handleClose();
                 reload();
             }
-        }).catch(err => {
+        } catch (err: any) {
             toast.error(err.response?.data || 'Failed to update EKS token');
-        })
-    }
-
-    useEffect(() => {
-        if (environment) {
-            getClusterName();
         }
-    }, [environment])
+    }
 
     useEffect(() => {
         if (eksData) {
             setData(eksData);
-            setEnvironment(eksData?.awsKeyId?._id);
         }
     }, [eksData])
-
-    useEffect(() => {
-        getAllAwsKey();
-    }, [])
 
     return (
         <Drawer
@@ -175,151 +143,99 @@ export default function EditEksTokenModal({ show, handleClose, reload, eksData }
             {/* Form Content */}
             <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    {/* Environment */}
-                    <Box>
-                        <Typography variant="subtitle2" fontWeight={600} mb={1} color="#232f3e" display="flex" alignItems="center" gap={1}>
-                            <SettingsIcon sx={{ fontSize: 18, color: '#0073bb' }} />
-                            Environment *
-                        </Typography>
-                        <Select
-                            options={region}
-                            onChange={(e: any) => setEnvironment(e.value)}
-                            value={region?.find((r: any) => r.value === environment)}
-                            placeholder="Select Environment"
-                            styles={{
-                                control: (base) => ({
-                                    ...base,
-                                    borderRadius: '12px',
-                                    border: '1px solid #e0e0e0',
-                                    padding: '6px',
-                                    background: 'white',
-                                    '&:hover': {
-                                        borderColor: '#0073bb',
-                                    }
-                                }),
-                            }}
-                        />
-                    </Box>
-
                     {/* Cluster Name */}
                     <Box>
                         <Typography variant="subtitle2" fontWeight={600} mb={1} color="#232f3e" display="flex" alignItems="center" gap={1}>
                             <AccountTreeIcon sx={{ fontSize: 18, color: '#0073bb' }} />
                             Cluster Name *
                         </Typography>
-                        <Select
-                            options={clusterName}
-                            onChange={(e: any) => setData({ ...data, clusterName: e.value })}
-                            value={clusterName?.find((c: any) => c.value === data?.clusterName)}
-                            placeholder="Select Cluster"
-                            isDisabled={!environment}
-                            isLoading={loading}
-                            styles={{
-                                control: (base) => ({
-                                    ...base,
+                        <TextField
+                            fullWidth
+                            required
+                            name="clusterName"
+                            value={data?.clusterName || ''}
+                            onChange={handleChangeValue}
+                            placeholder="Enter cluster name (e.g., my-eks-cluster)"
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
                                     borderRadius: '12px',
-                                    border: '1px solid #e0e0e0',
-                                    padding: '6px',
                                     background: 'white',
-                                    '&:hover': {
+                                    '&:hover fieldset': {
                                         borderColor: '#0073bb',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#0073bb',
+                                        borderWidth: '2px',
                                     }
-                                }),
+                                }
                             }}
                         />
                     </Box>
 
-                    <Divider />
-
-                    {/* Dashboard URL */}
-                    <TextField
-                        fullWidth
-                        label="Dashboard URL"
-                        name="dashboardUrl"
-                        value={data?.dashboardUrl || ''}
-                        onChange={handleChangeValue}
-                        placeholder="https://dashboard.example.com"
-                        InputProps={{
-                            startAdornment: <DashboardIcon sx={{ color: '#6c757d', mr: 1 }} />,
-                        }}
+                    {/* YML File Upload */}
+                    <Box
                         sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '12px',
-                                background: 'white',
-                                '&:hover fieldset': {
-                                    borderColor: '#0073bb',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#0073bb',
-                                    borderWidth: '2px',
-                                }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#0073bb',
-                            }
+                            p: 3,
+                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(0, 115, 187, 0.2)',
                         }}
-                    />
+                    >
+                        <Typography variant="subtitle2" fontWeight={600} mb={2} color="#232f3e" display="flex" alignItems="center" gap={1}>
+                            <CloudUploadIcon sx={{ fontSize: 18, color: '#0073bb' }} />
+                            Configuration File (Optional)
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" mb={2}>
+                            Upload a new YML/YAML configuration file to replace the existing one
+                        </Typography>
 
-                    {/* Monitoring URL */}
-                    <TextField
-                        fullWidth
-                        label="Monitoring URL"
-                        name="monitoringUrl"
-                        value={data?.monitoringUrl || ''}
-                        onChange={handleChangeValue}
-                        placeholder="https://monitoring.example.com"
-                        InputProps={{
-                            startAdornment: <MonitorIcon sx={{ color: '#6c757d', mr: 1 }} />,
-                        }}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
+                        <Box
+                            sx={{
+                                border: '2px dashed #e0e0e0',
                                 borderRadius: '12px',
+                                p: 3,
+                                textAlign: 'center',
                                 background: 'white',
-                                '&:hover fieldset': {
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
                                     borderColor: '#0073bb',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#0073bb',
-                                    borderWidth: '2px',
+                                    background: 'rgba(0, 115, 187, 0.05)',
                                 }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#0073bb',
-                            }
-                        }}
-                    />
-
-                    {/* Token */}
-                    <TextField
-                        fullWidth
-                        required
-                        label="Token"
-                        name="token"
-                        multiline
-                        rows={5}
-                        value={data?.token || ''}
-                        onChange={handleChangeValue}
-                        placeholder="Paste EKS token here..."
-                        InputProps={{
-                            startAdornment: <VpnKeyIcon sx={{ color: '#6c757d', mr: 1, alignSelf: 'flex-start', mt: 1 }} />,
-                        }}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '12px',
-                                background: 'white',
-                                '&:hover fieldset': {
-                                    borderColor: '#0073bb',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#0073bb',
-                                    borderWidth: '2px',
-                                }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#0073bb',
-                            }
-                        }}
-                    />
+                            }}
+                        >
+                            <input
+                                type="file"
+                                id="yml-file-upload-edit"
+                                accept=".yml,.yaml"
+                                onChange={handleFileChange}
+                                style={{ display: 'none' }}
+                            />
+                            <label htmlFor="yml-file-upload-edit" style={{ cursor: 'pointer', display: 'block' }}>
+                                {ymlFile ? (
+                                    <Box>
+                                        <DescriptionIcon sx={{ fontSize: 48, color: '#28a745', mb: 1 }} />
+                                        <Typography variant="body1" fontWeight={600} color="#232f3e">
+                                            {fileName}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Click to change file
+                                        </Typography>
+                                    </Box>
+                                ) : (
+                                    <Box>
+                                        <CloudUploadIcon sx={{ fontSize: 48, color: '#6c757d', mb: 1 }} />
+                                        <Typography variant="body1" fontWeight={600} color="#232f3e">
+                                            Click to upload new YML file
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Leave empty to keep existing configuration
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </label>
+                        </Box>
+                    </Box>
                 </Box>
             </Box>
 

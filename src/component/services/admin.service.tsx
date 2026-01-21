@@ -94,7 +94,7 @@ export class AdminService {
         return await makeRequest(url.changePasswordByAdmin + "/" + userId, RequestMethods.PUT, payload)
     }
 
-    static async getAllEksToken(query: any, pageNumber: number, pageSize: number, filter: any) {
+    static async getAllEksToken(query: any, pageNumber: number, pageSize: number) {
         const params = makeParams([
             {
                 index: "search",
@@ -105,15 +105,15 @@ export class AdminService {
                 value: pageNumber
             },
             {
-                index: "pageSize",
+                index: "count",
                 value: pageSize
-            },
-            {
-                index: "filter",
-                value: filter
             }
         ])
         return await makeRequest(url.eksToken.getAllEksToken + params, RequestMethods.GET)
+    }
+
+    static async getEKSTokenContent(id: string) {
+        return await makeRequest(url.eksToken.getEKSTokenContent.replace(':id', id), RequestMethods.GET)
     }
 
 

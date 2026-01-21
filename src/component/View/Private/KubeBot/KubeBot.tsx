@@ -48,9 +48,9 @@ export default function KubeBot() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId] = useState(() => `kube_user_${Date.now()}`);
-    const [awsKeys, setAwsKeys] = useState<any[]>([]);
-    const [selectedKey, setSelectedKey] = useState<string>('');
-    const [selectedAwsRegion, setSelectedAwsRegion] = useState<string>('');
+    const [eksClusters, setEksClusters] = useState<any[]>([]);
+    const [selectedCluster, setSelectedCluster] = useState<string>('');
+    const [selectedClusterData, setSelectedClusterData] = useState<any>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -61,41 +61,29 @@ export default function KubeBot() {
         scrollToBottom();
     }, [messages]);
 
-    // Load AWS keys on component mount
+    // Load EKS clusters on component mount
     useEffect(() => {
-        const loadAwsKeys = async () => {
+        const loadEksClusters = async () => {
             try {
-                const res = await AdminService.getAllAwsKey();
-                if (res.status === 200) {
-                    setAwsKeys(res.data);
+                const res = await AdminService.getAllEksToken('', 1, 1000);
+                if (res.status === 200 && res.data?.data) {
+                    setEksClusters(res.data.data);
                 }
             } catch (error) {
-                console.error('Failed to load AWS keys:', error);
+                console.error('Failed to load EKS clusters:', error);
             }
         };
-        loadAwsKeys();
+        loadEksClusters();
     }, []);
-
-    // Update selected key and region when selectedRegion context changes
-    useEffect(() => {
-        if (selectedRegion?.value) {
-            setSelectedKey(selectedRegion.value);
-            // Find the region from the awsKeys data
-            const keyData = awsKeys.find(key => key._id === selectedRegion.value);
-            if (keyData?.region) {
-                setSelectedAwsRegion(keyData.region);
-            }
-        }
-    }, [selectedRegion, awsKeys]);
 
     const handleSend = async () => {
         if (!input.trim()) return;
 
-        // Check if region is selected
-        if (!selectedKey || !selectedAwsRegion) {
+        // Check if cluster is selected
+        if (!selectedCluster || !selectedClusterData) {
             setMessages(prev => [...prev, {
                 id: Date.now(),
-                text: 'Please select a region before sending a message.',
+                text: 'Please select a cluster before sending a message.',
                 sender: 'ai',
                 timestamp: new Date(),
             }]);
@@ -349,18 +337,16 @@ export default function KubeBot() {
                         </Box>
                         <Box sx={{ minWidth: 250 }}>
                             <FormControl fullWidth size="small">
-                                <InputLabel>Select Region</InputLabel>
+                                <InputLabel>Select Cluster</InputLabel>
                                 <Select
-                                    value={selectedKey}
+                                    value={selectedCluster}
                                     onChange={(e) => {
-                                        const keyId = e.target.value;
-                                        setSelectedKey(keyId);
-                                        const keyData = awsKeys.find(key => key._id === keyId);
-                                        if (keyData?.region) {
-                                            setSelectedAwsRegion(keyData.region);
-                                        }
+                                        const clusterId = e.target.value;
+                                        setSelectedCluster(clusterId);
+                                        const clusterData = eksClusters.find(cluster => cluster._id === clusterId);
+                                        setSelectedClusterData(clusterData);
                                     }}
-                                    label="Select Region"
+                                    label="Select Cluster"
                                     sx={{
                                         background: 'white',
                                         '& .MuiOutlinedInput-notchedOutline': {
@@ -374,9 +360,9 @@ export default function KubeBot() {
                                         },
                                     }}
                                 >
-                                    {awsKeys.map((key) => (
-                                        <MenuItem key={key._id} value={key._id}>
-                                            {key.enviroment} ({key.region})
+                                    {eksClusters.map((cluster) => (
+                                        <MenuItem key={cluster._id} value={cluster._id}>
+                                            {cluster.clusterName}
                                         </MenuItem>
                                     ))}
                                 </Select>

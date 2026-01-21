@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AdminService } from '../services/admin.service'
 import toast from 'react-hot-toast'
-import Select from 'react-select'
 import {
     Drawer,
     Box,
@@ -9,16 +8,11 @@ import {
     IconButton,
     TextField,
     Button,
-    Divider,
     CircularProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import TokenIcon from '@mui/icons-material/Token';
-import SettingsIcon from '@mui/icons-material/Settings';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import MonitorIcon from '@mui/icons-material/Monitor';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DescriptionIcon from '@mui/icons-material/Description';
 
@@ -30,9 +24,7 @@ interface IAddEksTokenModal {
 
 export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksTokenModal) {
 
-    const [region, setRegion] = useState<any>();
     const [data, setData] = useState<any>({});
-    const [clusterName, setClusterName] = useState<any>();
     const [loading, setLoading] = useState<boolean>(false);
     const [ymlFile, setYmlFile] = useState<File | null>(null);
     const [fileName, setFileName] = useState<string>('');
@@ -59,45 +51,10 @@ export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksT
     }
 
 
-    const getAllAwsKey = async () => {
-        await AdminService.getAllAwsKey().then((res) => {
-            if (res.status === 200) {
-                setRegion(Object.values(res.data).map((data: any) => {
-                    return {
-                        label: `${data.enviroment} (${data.region})`,
-                        value: data._id
-                    }
-                }))
-            }
-        }).catch(err => {
-            toast.error(err.response?.data || 'Failed to get AWS key');
-        })
-    }
-
-
-    const getClusterName = async () => {
-        setLoading(true);
-        await AdminService.getClusterName(data?.keyId).then((res) => {
-            if (res.status === 200) {
-                setClusterName(res.data?.map((data:any) => {
-                    return {
-                        label: data.name,
-                        value: data.name
-                    }
-                }))
-            }
-        }).catch(err => {
-            toast.error(err.response?.data || 'Failed to get cluster name');
-        }).finally(() => {
-            setLoading(false);
-        })
-    }
-
-
 
     const handleAWSKeySubmission = async () => {
-        if (!data?.keyId || !data?.clusterName || !data?.token) {
-            toast.error('Please fill all required fields: Environment, Cluster Name, and Token');
+        if (!data?.clusterName) {
+            toast.error('Please provide cluster name');
             return;
         }
 
@@ -107,12 +64,8 @@ export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksT
         }
 
         const formData = new FormData();
-        formData.append('keyId', data.keyId);
         formData.append('clusterName', data.clusterName);
-        formData.append('token', data.token);
-        if (data.dashboardUrl) formData.append('dashboardUrl', data.dashboardUrl);
-        if (data.monitoringUrl) formData.append('monitoringUrl', data.monitoringUrl);
-        formData.append('configFile', ymlFile);
+        formData.append('ymlFile', ymlFile);
 
         try {
             const res = await AdminService.addEKSToken(formData);
@@ -128,18 +81,6 @@ export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksT
             toast.error(err.response?.data || 'Failed to add EKS token');
         }
     }
-
-
-    useEffect(() => {
-        if (data?.keyId) {
-            getClusterName();
-        }
-    }, [data?.keyId])
-
-
-    useEffect(() => {
-        getAllAwsKey();
-    }, [])
 
     return (
         <Drawer
@@ -203,31 +144,6 @@ export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksT
             {/* Form Content */}
             <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    {/* Environment */}
-                    <Box>
-                        <Typography variant="subtitle2" fontWeight={600} mb={1} color="#232f3e" display="flex" alignItems="center" gap={1}>
-                            <SettingsIcon sx={{ fontSize: 18, color: '#FF6B6B' }} />
-                            Environment *
-                        </Typography>
-                        <Select
-                            options={region}
-                            onChange={(e: any) => setData({ ...data, keyId: e.value })}
-                            placeholder="Select Environment"
-                            styles={{
-                                control: (base) => ({
-                                    ...base,
-                                    borderRadius: '12px',
-                                    border: '1px solid #e0e0e0',
-                                    padding: '6px',
-                                    background: 'white',
-                                    '&:hover': {
-                                        borderColor: '#FF6B6B',
-                                    }
-                                }),
-                            }}
-                        />
-                    </Box>
-
                     {/* Section 1: Cluster Configuration */}
                     <Box
                         sx={{
@@ -254,7 +170,6 @@ export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksT
                             value={data?.clusterName || ''}
                             onChange={handleChangeValue}
                             placeholder="Enter cluster name (e.g., my-eks-cluster)"
-                            disabled={!data?.keyId}
                             InputProps={{
                                 startAdornment: <AccountTreeIcon sx={{ color: '#6c757d', mr: 1 }} />,
                             }}
@@ -275,11 +190,6 @@ export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksT
                                 }
                             }}
                         />
-                        {!data?.keyId && (
-                            <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
-                                ⚠️ Please select an environment first
-                            </Typography>
-                        )}
                     </Box>
 
                     {/* Section 2: YML File Upload */}
@@ -346,102 +256,6 @@ export default function AddEksTokenModal({ show, handleClose, reload }: IAddEksT
                             </label>
                         </Box>
                     </Box>
-
-                    <Divider>
-                        <Typography variant="caption" color="text.secondary">
-                            Optional Fields
-                        </Typography>
-                    </Divider>
-
-                    {/* Dashboard URL */}
-                    <TextField
-                        fullWidth
-                        label="Dashboard URL"
-                        name="dashboardUrl"
-                        value={data?.dashboardUrl || ''}
-                        onChange={handleChangeValue}
-                        placeholder="https://dashboard.example.com"
-                        InputProps={{
-                            startAdornment: <DashboardIcon sx={{ color: '#6c757d', mr: 1 }} />,
-                        }}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '12px',
-                                background: 'white',
-                                '&:hover fieldset': {
-                                    borderColor: '#FF6B6B',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#FF6B6B',
-                                    borderWidth: '2px',
-                                }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#FF6B6B',
-                            }
-                        }}
-                    />
-
-                    {/* Monitoring URL */}
-                    <TextField
-                        fullWidth
-                        label="Monitoring URL"
-                        name="monitoringUrl"
-                        value={data?.monitoringUrl || ''}
-                        onChange={handleChangeValue}
-                        placeholder="https://monitoring.example.com"
-                        InputProps={{
-                            startAdornment: <MonitorIcon sx={{ color: '#6c757d', mr: 1 }} />,
-                        }}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '12px',
-                                background: 'white',
-                                '&:hover fieldset': {
-                                    borderColor: '#FF6B6B',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#FF6B6B',
-                                    borderWidth: '2px',
-                                }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#FF6B6B',
-                            }
-                        }}
-                    />
-
-                    {/* Token */}
-                    <TextField
-                        fullWidth
-                        required
-                        label="Token"
-                        name="token"
-                        multiline
-                        rows={5}
-                        value={data?.token || ''}
-                        onChange={handleChangeValue}
-                        placeholder="Paste EKS token here..."
-                        InputProps={{
-                            startAdornment: <VpnKeyIcon sx={{ color: '#6c757d', mr: 1, alignSelf: 'flex-start', mt: 1 }} />,
-                        }}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '12px',
-                                background: 'white',
-                                '&:hover fieldset': {
-                                    borderColor: '#FF6B6B',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#FF6B6B',
-                                    borderWidth: '2px',
-                                }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#FF6B6B',
-                            }
-                        }}
-                    />
                 </Box>
             </Box>
 
