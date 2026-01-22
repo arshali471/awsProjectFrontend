@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -18,9 +18,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
 import MarkdownMessage from '../AIChat/MarkdownMessage';
-import { SelectedRegionContext } from '../../../context/context';
 import { AdminService } from '../../../services/admin.service';
-import { encryptAWSCredentials, decryptAWSCredentials, isCryptoAvailable } from '../../../../utils/crypto';
 
 interface Message {
     id: number;
@@ -30,13 +28,12 @@ interface Message {
     isStreaming?: boolean;
 }
 
-// Get KubeBot API URL and MCP server from environment variables
-const KUBEBOT_API_URL = import.meta.env.VITE_KUBEBOT_API_URL || 'http://10.35.58.168:8001';
-const KUBEBOT_MCP_SERVER = import.meta.env.VITE_KUBEBOT_MCP_SERVER || 'kubernetes-mcp-server';
+// Use backend MCP server
+const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000';
+const API_VER = import.meta.env.VITE_REACT_APP_API_VER || '/api/v1';
 
 export default function KubeBot() {
     const navigate = useNavigate();
-    const { selectedRegion }: any = useContext(SelectedRegionContext);
     const [messages, setMessages] = useState<Message[]>([
         {
             id: 1,
@@ -115,56 +112,18 @@ export default function KubeBot() {
         setIsLoading(false);
 
         try {
-            // Check if crypto is available
-            if (!isCryptoAvailable()) {
-                throw new Error('Encryption not available in this browser. Please use a modern browser with HTTPS.');
-            }
-
-            // First, fetch AWS credentials from backend (now encrypted)
-            const awsKeyResponse = await AdminService.getAwsKeyById(selectedKey);
-
-            if (awsKeyResponse.status !== 200 || !awsKeyResponse.data) {
-                throw new Error('Failed to fetch AWS credentials');
-            }
-
-            const awsConfig = awsKeyResponse.data;
-
-            // Decrypt the encrypted credentials from backend
-            let decryptedCredentials;
-            if (awsConfig.encrypted_credentials) {
-                // New encrypted format
-                decryptedCredentials = await decryptAWSCredentials(awsConfig.encrypted_credentials);
-            } else if (awsConfig.credentials) {
-                // Legacy unencrypted format (fallback)
-                console.warn('Received unencrypted credentials from backend - please update backend');
-                decryptedCredentials = {
-                    access_key_id: awsConfig.credentials.accessKeyId,
-                    secret_access_key: awsConfig.credentials.secretAccessKey,
-                    region: selectedAwsRegion
-                };
-            } else {
-                throw new Error('No credentials found in response');
-            }
-
-            // Re-encrypt credentials for sending to MCP server
-            const encryptedCredentials = await encryptAWSCredentials({
-                access_key_id: decryptedCredentials.access_key_id,
-                secret_access_key: decryptedCredentials.secret_access_key,
-                region: selectedAwsRegion
-            });
-
-            // Now send the request to MCP server with ENCRYPTED AWS credentials
-            const response = await fetch(`${KUBEBOT_API_URL}/query/stream`, {
+            // Now send the request to backend MCP server with eks_token_id
+            const response = await fetch(`${API_URL}${API_VER}/mcp/query/stream`, {
                 method: 'POST',
-                mode: 'cors',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('authKey')}`
                 },
                 body: JSON.stringify({
                     query: currentInput,
                     session_id: sessionId,
-                    server_name: KUBEBOT_MCP_SERVER, // MCP server from environment variable
-                    encrypted_credentials: encryptedCredentials  // Send encrypted credentials
+                    server_name: 'eks',
+                    eks_token_id: selectedCluster  // Send the selected EKS token ID
                 }),
             });
 
@@ -218,8 +177,15 @@ export default function KubeBot() {
                                         )
                                     );
                                 } else if (data.type === 'error') {
-                                    console.error('Stream error:', data.error);
-                                    throw new Error(data.error || 'Stream error occurred');
+                                    console.error('Stream error:', data.content);
+                                    // Update message with error
+                                    setMessages(prev =>
+                                        prev.map(msg =>
+                                            msg.id === aiMessageId
+                                                ? { ...msg, text: `❌ Error: ${data.content || 'Unknown error occurred'}`, isStreaming: false }
+                                                : msg
+                                        )
+                                    );
                                 }
                             } catch (parseError) {
                                 console.error('Error parsing SSE data:', parseError);

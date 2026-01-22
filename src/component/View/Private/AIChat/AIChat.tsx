@@ -314,7 +314,7 @@
 // }
 
 
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -324,19 +324,12 @@ import {
     Paper,
     Avatar,
     CircularProgress,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
 import MarkdownMessage from './MarkdownMessage';
-import { SelectedRegionContext } from '../../../context/context';
-import { AdminService } from '../../../services/admin.service';
-import { encryptAWSCredentials, decryptAWSCredentials, isCryptoAvailable } from '../../../../utils/crypto';
 
 interface Message {
     id: number;
@@ -350,9 +343,8 @@ interface Message {
 const AI_CHAT_API_URL = import.meta.env.VITE_AI_CHAT_API_URL || 'http://10.35.58.168:8000';
 const AI_CHAT_MCP_SERVER = import.meta.env.VITE_AI_CHAT_MCP_SERVER || 'awslabs.cloudtrail-mcp-server';
 
-export default function AIChat() {
+                export default function AIChat() {
     const navigate = useNavigate();
-    const { selectedRegion }: any = useContext(SelectedRegionContext);
     const [messages, setMessages] = useState<Message[]>([
         {
             id: 1,
@@ -364,9 +356,6 @@ export default function AIChat() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId] = useState(() => `user_${Date.now()}`);
-    const [awsKeys, setAwsKeys] = useState<any[]>([]);
-    const [selectedKey, setSelectedKey] = useState<string>('');
-    const [selectedAwsRegion, setSelectedAwsRegion] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -377,46 +366,8 @@ export default function AIChat() {
         scrollToBottom();
     }, [messages]);
 
-    // Load AWS keys on component mount
-    useEffect(() => {
-        const loadAwsKeys = async () => {
-            try {
-                const res = await AdminService.getAllAwsKey();
-                if (res.status === 200) {
-                    setAwsKeys(res.data);
-                }
-            } catch (error) {
-                console.error('Failed to load AWS keys:', error);
-            }
-        };
-        loadAwsKeys();
-    }, []);
-
-    // Update selected key and region when selectedRegion context changes
-    useEffect(() => {
-        if (selectedRegion?.value) {
-            setSelectedKey(selectedRegion.value);
-            // Find the region from the awsKeys data
-            const keyData = awsKeys.find(key => key._id === selectedRegion.value);
-            if (keyData?.region) {
-                setSelectedAwsRegion(keyData.region);
-            }
-        }
-    }, [selectedRegion, awsKeys]);
-
     const handleSend = async () => {
         if (!input.trim()) return;
-
-        // Check if region is selected
-        if (!selectedKey || !selectedAwsRegion) {
-            setMessages(prev => [...prev, {
-                id: Date.now(),
-                text: 'Please select a region before sending a message.',
-                sender: 'ai',
-                timestamp: new Date(),
-            }]);
-            return;
-        }
 
         const userMessage: Message = {
             id: Date.now(),
@@ -443,45 +394,6 @@ export default function AIChat() {
         setIsLoading(false);
 
         try {
-            // Check if crypto is available
-            if (!isCryptoAvailable()) {
-                throw new Error('Encryption not available in this browser. Please use a modern browser with HTTPS.');
-            }
-
-            // First, fetch AWS credentials from backend (now encrypted)
-            const awsKeyResponse = await AdminService.getAwsKeyById(selectedKey);
-
-            if (awsKeyResponse.status !== 200 || !awsKeyResponse.data) {
-                throw new Error('Failed to fetch AWS credentials');
-            }
-
-            const awsConfig = awsKeyResponse.data;
-
-            // Decrypt the encrypted credentials from backend
-            let decryptedCredentials;
-            if (awsConfig.encrypted_credentials) {
-                // New encrypted format
-                decryptedCredentials = await decryptAWSCredentials(awsConfig.encrypted_credentials);
-            } else if (awsConfig.credentials) {
-                // Legacy unencrypted format (fallback)
-                console.warn('Received unencrypted credentials from backend - please update backend');
-                decryptedCredentials = {
-                    access_key_id: awsConfig.credentials.accessKeyId,
-                    secret_access_key: awsConfig.credentials.secretAccessKey,
-                    region: selectedAwsRegion
-                };
-            } else {
-                throw new Error('No credentials found in response');
-            }
-
-            // Re-encrypt credentials for sending to MCP server
-            const encryptedCredentials = await encryptAWSCredentials({
-                access_key_id: decryptedCredentials.access_key_id,
-                secret_access_key: decryptedCredentials.secret_access_key,
-                region: selectedAwsRegion
-            });
-
-            // Now send the request to MCP server with ENCRYPTED AWS credentials
             const response = await fetch(`${AI_CHAT_API_URL}/query/stream`, {
                 method: 'POST',
                 mode: 'cors',
@@ -491,8 +403,7 @@ export default function AIChat() {
                 body: JSON.stringify({
                     query: currentInput,
                     session_id: sessionId,
-                    server_name: AI_CHAT_MCP_SERVER, // MCP server from environment variable
-                    encrypted_credentials: encryptedCredentials  // Send encrypted credentials
+                    server_name: AI_CHAT_MCP_SERVER // MCP server from environment variable
                 }),
             });
 
@@ -648,7 +559,7 @@ export default function AIChat() {
                         >
                             <SmartToyIcon sx={{ fontSize: 28 }} />
                         </Box>
-                        <Box sx={{ flex: 1 }}>
+                        <Box>
                             <Typography
                                 variant="h5"
                                 sx={{
@@ -662,41 +573,6 @@ export default function AIChat() {
                             <Typography variant="body2" sx={{ color: '#6c757d' }}>
                                 Your CloudTrail analysis assistant
                             </Typography>
-                        </Box>
-                        <Box sx={{ minWidth: 250 }}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Select Region</InputLabel>
-                                <Select
-                                    value={selectedKey}
-                                    onChange={(e) => {
-                                        const keyId = e.target.value;
-                                        setSelectedKey(keyId);
-                                        const keyData = awsKeys.find(key => key._id === keyId);
-                                        if (keyData?.region) {
-                                            setSelectedAwsRegion(keyData.region);
-                                        }
-                                    }}
-                                    label="Select Region"
-                                    sx={{
-                                        background: 'white',
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#667eea',
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#764ba2',
-                                        },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#667eea',
-                                        },
-                                    }}
-                                >
-                                    {awsKeys.map((key) => (
-                                        <MenuItem key={key._id} value={key._id}>
-                                            {key.enviroment} ({key.region})
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
                         </Box>
                     </Box>
                 </Box>

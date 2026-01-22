@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import AddEksTokenModal from "../../../modal/AddEksToken.modal";
 import EditEksTokenModal from "../../../modal/EditEksToken.modal";
-import ViewYmlContentModal from "../../../modal/ViewYmlContent.modal";
 import TablePagination from "../../../Pagination/TablePagination";
 import {
     Box,
@@ -27,7 +26,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import DescriptionIcon from "@mui/icons-material/Description";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 
 export default function AddEKSToken() {
     const navigate = useNavigate();
@@ -38,9 +36,7 @@ export default function AddEKSToken() {
     const [data, setData] = useState<any>([]);
     const [eksIndex, setEksIndex] = useState<number>(-1);
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-    const [showViewModal, setShowViewModal] = useState<boolean>(false);
     const [selectedEksToken, setSelectedEksToken] = useState<any>(null);
-    const [viewEksTokenId, setViewEksTokenId] = useState<string | null>(null);
     const [search, setSearch] = useState<any>(null);
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -116,16 +112,6 @@ export default function AddEKSToken() {
     const openDeleteModal = (eksToken: any) => {
         setSelectedEksToken(eksToken);
         setShowDeleteModal(true);
-    };
-
-    const openViewModal = (eksTokenId: string) => {
-        setViewEksTokenId(eksTokenId);
-        setShowViewModal(true);
-    };
-
-    const closeViewModal = () => {
-        setShowViewModal(false);
-        setViewEksTokenId(null);
     };
 
     if (isUserLoading) {
@@ -378,15 +364,7 @@ export default function AddEKSToken() {
                                                 {item.fileName ? (
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         <DescriptionIcon sx={{ fontSize: 18, color: '#28a745' }} />
-                                                        <Typography
-                                                            variant="body2"
-                                                            sx={{
-                                                                color: '#0073bb',
-                                                                cursor: 'pointer',
-                                                                '&:hover': { textDecoration: 'underline' }
-                                                            }}
-                                                            onClick={() => openViewModal(item._id)}
-                                                        >
+                                                        <Typography variant="body2" sx={{ color: '#0073bb' }}>
                                                             {item.fileName}
                                                         </Typography>
                                                     </Box>
@@ -407,15 +385,7 @@ export default function AddEKSToken() {
                                                 ) : "--"}
                                             </td>
                                             <td>
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => openViewModal(item._id)}
-                                                    sx={{ color: '#28a745' }}
-                                                    title="View YML Content"
-                                                >
-                                                    <VisibilityIcon fontSize="small" />
-                                                </IconButton>
-                                                <IconButton size="small" onClick={() => setEksIndex(index)} sx={{ color: '#0073bb', ml: 1 }}>
+                                                <IconButton size="small" onClick={() => setEksIndex(index)} sx={{ color: '#0073bb' }}>
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>
                                                 <IconButton size="small" onClick={() => openDeleteModal(item)} sx={{ color: '#dc3545', ml: 1 }}>
@@ -438,7 +408,6 @@ export default function AddEKSToken() {
 
             <AddEksTokenModal show={showAddEksTokenModal} handleClose={() => setShowAddEksTokenModal(false)} reload={getAllEksToken} />
             <EditEksTokenModal show={eksIndex !== -1} handleClose={() => setEksIndex(-1)} reload={getAllEksToken} eksData={data[eksIndex]} />
-            <ViewYmlContentModal show={showViewModal} handleClose={closeViewModal} eksTokenId={viewEksTokenId} />
 
             {/* Delete Confirmation Dialog */}
             <Dialog

@@ -17,6 +17,9 @@ import {
     TableHead,
     TableRow,
     Avatar,
+    Switch,
+    FormControlLabel,
+    Tooltip,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -39,8 +42,11 @@ interface ActiveUser {
     displayName?: string;
     lastLogin?: string;
     lastLogout?: string;
+    lastActivity?: string;
     admin: boolean;
     createdAt?: string;
+    sessionCount?: number;
+    sessions?: any[];
 }
 
 export default function ActiveUsers() {
@@ -54,6 +60,8 @@ export default function ActiveUsers() {
     const [loading, setLoading] = useState<boolean>(false);
     const [sortField, setSortField] = useState<string>("");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+    const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
     const [stats, setStats] = useState({
         total: 0,
         active: 0,
@@ -65,17 +73,21 @@ export default function ActiveUsers() {
     const getAllUsers = async () => {
         setLoading(true);
         try {
+            // Use the old endpoint temporarily while debugging session status endpoint
             const res = await AdminService.getAllUsers();
             if (res.status === 200) {
                 const users = res.data || [];
                 setData(users);
                 setFilteredData(users);
 
-                // Calculate stats - user is active if lastLogin is more recent than lastLogout (or no logout)
+                // Calculate stats: users are only active if logged in within 24 hours AND no logout
                 const active = users.filter((u: ActiveUser) => {
                     if (!u.lastLogin) return false;
-                    if (!u.lastLogout) return true;
-                    return new Date(u.lastLogin) > new Date(u.lastLogout);
+                    if (u.lastLogout) return false; // If logged out, always inactive
+
+                    const twentyFourHoursAgo = new Date();
+                    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+                    return new Date(u.lastLogin) > twentyFourHoursAgo;
                 }).length;
                 const sso = users.filter((u: ActiveUser) => u.ssoProvider === 'azure').length;
 
@@ -86,10 +98,12 @@ export default function ActiveUsers() {
                     ssoUsers: sso,
                     localUsers: users.length - sso,
                 });
+
+                setLastRefresh(new Date());
             }
         } catch (err: any) {
-            toast.error(err.response?.data || "Failed to get users");
-        } finally {
+            toast.error(err.response?.data?.message || "Failed to get users");
+        } finally{
             setLoading(false);
         }
     };
@@ -124,6 +138,19 @@ export default function ActiveUsers() {
         }
     }, [isAllowed]);
 
+    // Auto-refresh every 30 seconds if enabled
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (autoRefresh && isAllowed) {
+            interval = setInterval(() => {
+                getAllUsers();
+            }, 30000); // 30 seconds
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [autoRefresh, isAllowed]);
+
     useEffect(() => {
         if (search) {
             const filtered = data.filter((user) =>
@@ -141,11 +168,22 @@ export default function ActiveUsers() {
         return name?.substring(0, 2).toUpperCase() || "U";
     };
 
-    // Check if user is currently active (logged in)
+    // Check if user is currently active
     const isUserCurrentlyActive = (user: ActiveUser) => {
+        // User must have logged in to be active
         if (!user.lastLogin) return false;
-        if (!user.lastLogout) return true;
-        return new Date(user.lastLogin) > new Date(user.lastLogout);
+
+        // If user has logged out, they are ALWAYS inactive
+        if (user.lastLogout) {
+            return false;
+        }
+
+        // If no logout record exists, check if login was recent (within last 24 hours)
+        // This prevents showing users as "active" who logged in days ago but never logged out
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+        return new Date(user.lastLogin) > twentyFourHoursAgo;
     };
 
     // Handle sorting
@@ -298,23 +336,51 @@ export default function ActiveUsers() {
                                     Active Users
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#6c757d', mt: 0.5 }}>
-                                    Monitor user sessions and activity
+                                    Real-time session monitoring • Last updated: {moment(lastRefresh).fromNow()}
                                 </Typography>
                             </Box>
                         </Box>
-                        <IconButton
-                            onClick={getAllUsers}
-                            disabled={loading}
-                            sx={{
-                                background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
-                                color: 'white',
-                                '&:hover': {
-                                    background: 'linear-gradient(135deg, #00ACC1 0%, #0097A7 100%)',
+                        <Box display="flex" alignItems="center" gap={2}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={autoRefresh}
+                                        onChange={(e) => setAutoRefresh(e.target.checked)}
+                                        sx={{
+                                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                                color: '#00BCD4',
+                                            },
+                                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                                backgroundColor: '#00BCD4',
+                                            },
+                                        }}
+                                    />
                                 }
-                            }}
-                        >
-                            {loading ? <Spinner animation="border" size="sm" /> : <RefreshIcon />}
-                        </IconButton>
+                                label={
+                                    <Typography variant="body2" sx={{ color: '#6c757d', fontWeight: 600 }}>
+                                        Auto-refresh (30s)
+                                    </Typography>
+                                }
+                            />
+                            <Tooltip title="Refresh now">
+                                <IconButton
+                                    onClick={getAllUsers}
+                                    disabled={loading}
+                                    sx={{
+                                        background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+                                        color: 'white',
+                                        '&:hover': {
+                                            background: 'linear-gradient(135deg, #00ACC1 0%, #0097A7 100%)',
+                                        },
+                                        '&:disabled': {
+                                            background: '#e0e0e0',
+                                        }
+                                    }}
+                                >
+                                    {loading ? <Spinner animation="border" size="sm" /> : <RefreshIcon />}
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
                     </Box>
                 </Box>
 
@@ -471,17 +537,33 @@ export default function ActiveUsers() {
                                             <Typography variant="body2">{user.email}</Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Chip
-                                                icon={isUserCurrentlyActive(user) ? <CheckCircleIcon /> : <CancelIcon />}
-                                                label={isUserCurrentlyActive(user) ? "Active" : "Inactive"}
-                                                size="small"
-                                                sx={{
-                                                    bgcolor: isUserCurrentlyActive(user) ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)',
-                                                    color: isUserCurrentlyActive(user) ? '#28a745' : '#dc3545',
-                                                    fontWeight: 600,
-                                                    border: `1px solid ${isUserCurrentlyActive(user) ? '#28a745' : '#dc3545'}33`,
-                                                }}
-                                            />
+                                            <Box display="flex" alignItems="center" gap={1}>
+                                                <Chip
+                                                    icon={isUserCurrentlyActive(user) ? <CheckCircleIcon /> : <CancelIcon />}
+                                                    label={isUserCurrentlyActive(user) ? "Active" : "Inactive"}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: isUserCurrentlyActive(user) ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)',
+                                                        color: isUserCurrentlyActive(user) ? '#28a745' : '#dc3545',
+                                                        fontWeight: 600,
+                                                        border: `1px solid ${isUserCurrentlyActive(user) ? '#28a745' : '#dc3545'}33`,
+                                                    }}
+                                                />
+                                                {isUserCurrentlyActive(user) && user.sessionCount && user.sessionCount > 0 && (
+                                                    <Tooltip title={`${user.sessionCount} active session${user.sessionCount > 1 ? 's' : ''}`}>
+                                                        <Chip
+                                                            label={user.sessionCount}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: 'rgba(0, 188, 212, 0.1)',
+                                                                color: '#00BCD4',
+                                                                fontWeight: 700,
+                                                                minWidth: '32px',
+                                                            }}
+                                                        />
+                                                    </Tooltip>
+                                                )}
+                                            </Box>
                                         </TableCell>
                                         <TableCell>
                                             <Chip

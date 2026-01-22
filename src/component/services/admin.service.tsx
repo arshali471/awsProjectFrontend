@@ -21,6 +21,9 @@ export class AdminService {
         return await makeRequest(url.getAllUsers, RequestMethods.GET)
     }
 
+    static async getUsersWithSessionStatus() {
+        return await makeRequest(url.getUsersWithSessionStatus, RequestMethods.GET)
+    }
 
     static async getAllInstance(keyId: any, query: any, date: any) {
         const params = makeParams([

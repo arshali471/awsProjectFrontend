@@ -26,6 +26,8 @@ import DnsIcon from "@mui/icons-material/Dns"
 import EKSInventoryRedirect from "../View/Private/Kubernetes/EKSInventoryRedirect"
 import ApiLogs from "../View/Private/ApiLogs/ApiLogs"
 import AssessmentIcon from "@mui/icons-material/Assessment"
+import KubeBot from "../View/Private/KubeBot/KubeBot"
+import SmartToyIcon from "@mui/icons-material/SmartToy"
 
 export default interface IIFFRouter {
     path: string
@@ -102,6 +104,14 @@ export const iffRoutes: IIFFRouter[] = [
         element: <EKSInventoryRedirect />,
         name: "EKS Inventory",
         icon: SiAmazoneks
+    },
+
+    {
+        path: "platform/kubebot",
+        navbarShow: true,
+        element: <KubeBot />,
+        name: "KubeBot AI",
+        icon: SmartToyIcon
     },
 
     // {

@@ -9,6 +9,7 @@ const url = {
     getAllS3Data: "/aws/getS3Bucket",
     getUserData: "/user/getUserById",
     getAllUsers: "/user/getAllUser",
+    getUsersWithSessionStatus: "/sessions/users-with-status",
     createUser: "/user/createUser",
     createAWSKey: "/awsKey/createAWSKey",
     updateUser: 'user/updateUser',
