@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Navbar, Nav, Button, Dropdown } from "react-bootstrap";
 import ImageData from "../../../../assets/IFF.png"
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,8 @@ import CustomToggle from "../../../helpers/CustomToggle";
 import { IoSettingsSharp } from "react-icons/io5";
 import { FiExternalLink } from "react-icons/fi";
 import { AuthService } from "../../../services/auth.service";
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 
 import DevopsImage from "../../../../assets/devops.png";
 import EksImage from "../../../../assets/eks.png";
@@ -24,20 +26,53 @@ import DescriptionIcon from '@mui/icons-material/Description';
 
 import "./IffDashboard.css";
 
-const apps = [
-  { url: "/platform/agent-status", name: "IFF Inventory", icon: ImageData, isExternal: false, isIconComponent: false },
-  { url: "https://iffcloud-conductor.global.iff.com", name: "EKS Inventory", icon: EksInvImage, isExternal: true, isIconComponent: false },
-  { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage, isExternal: true, isIconComponent: false },
-  { url: "/cost", name: "Cost", icon: CostImage, isExternal: false, isIconComponent: false },
-  { url: "/devops", name: "DevOps", icon: DevopsImage, isExternal: false, isIconComponent: false },
-  { url: "/kubebot", name: "Kubebot", icon: Kubebot, isExternal: false, isIconComponent: false },
-  { url: "/ai-chat", name: "CloudTrail AI Chat", icon: SmartToyIcon, isExternal: false, isIconComponent: true },
-  { url: "/ssh-terminal", name: "SSH Terminal", icon: TerminalIcon, isExternal: false, isIconComponent: true },
-  { url: "/documentation", name: "Documentation", icon: DescriptionIcon, isExternal: false, isIconComponent: true },
+const defaultApps = [
+  { id: 1, url: "/platform/agent-status", name: "IFF Inventory", icon: ImageData, isExternal: false, isIconComponent: false },
+  { id: 2, url: "https://iffcloud-conductor.global.iff.com", name: "EKS Inventory", icon: EksInvImage, isExternal: true, isIconComponent: false },
+  { id: 3, url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage, isExternal: true, isIconComponent: false },
+  { id: 4, url: "/cost", name: "Cost", icon: CostImage, isExternal: false, isIconComponent: false },
+  { id: 5, url: "/devops", name: "DevOps", icon: DevopsImage, isExternal: false, isIconComponent: false },
+  { id: 6, url: "/kubebot", name: "Kubebot", icon: Kubebot, isExternal: false, isIconComponent: false },
+  { id: 7, url: "/ai-chat", name: "CloudTrail AI Chat", icon: SmartToyIcon, isExternal: false, isIconComponent: true },
+  { id: 8, url: "/ssh-terminal", name: "SSH Terminal", icon: TerminalIcon, isExternal: false, isIconComponent: true },
+  { id: 9, url: "/documentation", name: "Documentation", icon: DescriptionIcon, isExternal: false, isIconComponent: true },
 ];
 
 export default function IffDashboard() {
   const navigate = useNavigate();
+  const [apps, setApps] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+
+  // Load saved order and favorites from localStorage
+  useEffect(() => {
+    // Load favorites
+    const savedFavorites = localStorage.getItem('dashboardFavorites');
+    if (savedFavorites) {
+      try {
+        setFavorites(JSON.parse(savedFavorites));
+      } catch (error) {
+        console.error('Failed to parse favorites:', error);
+      }
+    }
+
+    // Sort apps alphabetically
+    const sortedApps = [...defaultApps].sort((a, b) => a.name.localeCompare(b.name));
+    setApps(sortedApps);
+  }, []);
+
+  // Toggle favorite
+  const toggleFavorite = (e, appId) => {
+    e.stopPropagation();
+    const newFavorites = favorites.includes(appId)
+      ? favorites.filter(id => id !== appId)
+      : [...favorites, appId];
+    setFavorites(newFavorites);
+    localStorage.setItem('dashboardFavorites', JSON.stringify(newFavorites));
+  };
+
+  // Get favorite and other apps
+  const favoriteApps = apps.filter(app => favorites.includes(app.id));
+  const otherApps = apps.filter(app => !favorites.includes(app.id));
 
   const handleNavigate = (url: string, isExternal: boolean) => {
     if (isExternal || url.startsWith("http")) {
@@ -120,39 +155,125 @@ export default function IffDashboard() {
       </Navbar>
 
       {/* Dashboard Content */}
-      <Container>
+      <Container style={{ paddingBottom: '4rem', paddingTop: '70px' }}>
         <div className="dashboard-header">
-          <h1 className="dashboard-title">Welcome back, {username.split(" ")[0]}!</h1>
-          <p className="dashboard-subtitle">Access your cloud management tools and services</p>
+          <div>
+            <h1 className="dashboard-title">Welcome back, {username.split(" ")[0]}!</h1>
+            <p className="dashboard-subtitle">Access your cloud management tools and services</p>
+          </div>
+          <p style={{ fontSize: '14px', color: '#666', marginTop: '10px', fontStyle: 'italic' }}>
+            ⭐ Tip: Click the star icon to add apps to your favorites
+          </p>
         </div>
 
-        {/* Apps Grid */}
-        <div className="apps-grid">
-          {apps.map((app) => {
-            const IconComponent = app.isIconComponent ? app.icon : null;
-            return (
-              <div
-                key={app.url}
-                className="app-card"
-                onClick={() => handleNavigate(app.url, app.isExternal)}
-                style={{ cursor: 'pointer', position: 'relative' }}
-              >
-                {app.isExternal && (
-                  <div className="external-badge">
-                    <FiExternalLink size={10} />
+        {/* Favorite Apps Section */}
+        {favoriteApps.length > 0 && (
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#333', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <StarIcon style={{ color: '#ffc107', fontSize: '24px' }} />
+              My Favorite Apps
+            </h2>
+            <div className="apps-grid">
+              {favoriteApps.map((app) => {
+                const AppIcon = app.icon;
+                return (
+                  <div
+                    key={app.id}
+                    className="app-card"
+                    onClick={() => handleNavigate(app.url, app.isExternal)}
+                    style={{ 
+                      cursor: 'pointer',
+                      position: 'relative',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    <div
+                      className="favorite-icon"
+                      onClick={(e) => toggleFavorite(e, app.id)}
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        color: '#ffc107',
+                        cursor: 'pointer',
+                        zIndex: 10
+                      }}
+                    >
+                      <StarIcon fontSize="small" />
+                    </div>
+                    {app.isExternal && (
+                      <div className="external-badge">
+                        <FiExternalLink size={10} />
+                      </div>
+                    )}
+                    <div className="app-icon-container">
+                      {app.isIconComponent ? (
+                        <AppIcon className="app-icon" style={{ fontSize: 64 }} />
+                      ) : (
+                        <img src={app.icon} className="app-icon" alt={app.name} />
+                      )}
+                    </div>
+                    <p className="app-name">{app.name}</p>
                   </div>
-                )}
-                <div className="app-icon-container">
-                  {app.isIconComponent && IconComponent ? (
-                    <IconComponent className="app-icon" style={{ fontSize: 64 }} />
-                  ) : (
-                    <img src={app.icon} className="app-icon" alt={app.name} />
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* All Apps Section */}
+        <div>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#333', marginBottom: '1rem' }}>
+            All Apps (A-Z)
+          </h2>
+          <div className="apps-grid">
+            {otherApps.map((app) => {
+              const AppIcon = app.icon;
+              return (
+                <div
+                  key={app.id}
+                  className="app-card"
+                  onClick={() => handleNavigate(app.url, app.isExternal)}
+                  style={{ 
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <div
+                    className="favorite-icon"
+                    onClick={(e) => toggleFavorite(e, app.id)}
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      color: '#ddd',
+                      cursor: 'pointer',
+                      zIndex: 10,
+                      transition: 'color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#ffc107'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#ddd'}
+                  >
+                    <StarBorderIcon fontSize="small" />
+                  </div>
+                  {app.isExternal && (
+                    <div className="external-badge">
+                      <FiExternalLink size={10} />
+                    </div>
                   )}
+                  <div className="app-icon-container">
+                    {app.isIconComponent ? (
+                      <AppIcon className="app-icon" style={{ fontSize: 64 }} />
+                    ) : (
+                      <img src={app.icon} className="app-icon" alt={app.name} />
+                    )}
+                  </div>
+                  <p className="app-name">{app.name}</p>
                 </div>
-                <p className="app-name">{app.name}</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </Container>
     </div>

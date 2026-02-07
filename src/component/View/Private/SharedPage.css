@@ -3,6 +3,7 @@
 .page-wrapper {
     min-height: calc(100vh - 80px);
     padding: 2rem;
+    padding-top: 5rem;
     background: linear-gradient(135deg, #f1f6fb 0%, #e9ecef 100%);
     animation: fadeIn 0.5s ease-out;
 }

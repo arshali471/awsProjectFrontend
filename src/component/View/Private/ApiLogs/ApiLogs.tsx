@@ -381,7 +381,8 @@ export default function ApiLogs() {
             sx={{
                 minHeight: '100vh',
                 background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
-                py: 4,
+                pt: 10,
+                pb: 4,
                 px: 3,
             }}
         >

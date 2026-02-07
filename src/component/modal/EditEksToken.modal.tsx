@@ -96,7 +96,9 @@ export default function EditEksTokenModal({ show, handleClose, reload, eksData }
             {/* Header */}
             <Box
                 sx={{
-                    p: 3,
+                    pt: 8,
+                    px: 3,
+                    pb: 3,
                     background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                     borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
                 }}
