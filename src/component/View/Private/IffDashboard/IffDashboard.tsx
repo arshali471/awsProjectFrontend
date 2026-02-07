@@ -21,9 +21,6 @@ import { HiOutlineLogout } from "react-icons/hi";
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import DescriptionIcon from '@mui/icons-material/Description';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import PriceCheckIcon from '@mui/icons-material/PriceCheck';
-import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
 
 import "./IffDashboard.css";
 
@@ -32,9 +29,6 @@ const apps = [
   { url: "https://iffcloud-conductor.global.iff.com", name: "EKS Inventory", icon: EksInvImage, isExternal: true, isIconComponent: false },
   { url: "https://monitoring.global.iff.com", name: "Monitoring", icon: EksImage, isExternal: true, isIconComponent: false },
   { url: "/cost", name: "Cost", icon: CostImage, isExternal: false, isIconComponent: false },
-  { url: "/bedrock-pricing", name: "Bedrock Pricing", icon: PriceCheckIcon, isExternal: false, isIconComponent: true },
-  { url: "/bedrock-usage", name: "Bedrock Usage", icon: ModelTrainingIcon, isExternal: false, isIconComponent: true },
-  { url: "/api-logs", name: "API Logs", icon: AssessmentIcon, isExternal: false, isIconComponent: true },
   { url: "/devops", name: "DevOps", icon: DevopsImage, isExternal: false, isIconComponent: false },
   { url: "/kubebot", name: "Kubebot", icon: Kubebot, isExternal: false, isIconComponent: false },
   { url: "/ai-chat", name: "CloudTrail AI Chat", icon: SmartToyIcon, isExternal: false, isIconComponent: true },
@@ -77,16 +71,6 @@ export default function IffDashboard() {
   };
 
   const username = sessionStorage.getItem("username") || "User";
-  const isAdmin = sessionStorage.getItem("admin") === "true" || sessionStorage.getItem("role") === "admin";
-
-  // Filter apps based on admin status
-  const filteredApps = apps.filter(app => {
-    // Hide API Logs for non-admin users
-    if (app.url === "/api-logs" && !isAdmin) {
-      return false;
-    }
-    return true;
-  });
 
   return (
     <div className="dashboard-wrapper">
@@ -144,7 +128,7 @@ export default function IffDashboard() {
 
         {/* Apps Grid */}
         <div className="apps-grid">
-          {filteredApps.map((app) => {
+          {apps.map((app) => {
             const IconComponent = app.isIconComponent ? app.icon : null;
             return (
               <div

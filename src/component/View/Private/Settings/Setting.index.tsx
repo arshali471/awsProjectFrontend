@@ -14,6 +14,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ShieldIcon from '@mui/icons-material/Shield'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import PeopleIcon from '@mui/icons-material/People'
+import AssessmentIcon from '@mui/icons-material/Assessment'
 
 export default function SettingIndex() {
     const navigate = useNavigate();
@@ -77,6 +78,15 @@ export default function SettingIndex() {
             description: "Monitor logged-in users and sessions",
             color: "#00BCD4",
             bgColor: "rgba(0, 188, 212, 0.1)"
+        },
+        {
+            url: "/settings/api-logs",
+            name: "API Logs",
+            icon: AssessmentIcon,
+            isAdmin: true,
+            description: "View API request logs and monitoring data",
+            color: "#FF9800",
+            bgColor: "rgba(255, 152, 0, 0.1)"
         },
         {
             url: "/settings/change-password",

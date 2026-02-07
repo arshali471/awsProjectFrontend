@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DataGrid, GridColDef, useGridApiRef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import { Button, Box } from '@mui/material';
@@ -9,16 +10,21 @@ import TableViewIcon from '@mui/icons-material/TableView';
 import * as XLSX from 'xlsx';
 
 interface IVolumesTable {
-    tableData: any[];
+    tableData?: any[];
     loading?: boolean;
 }
 
 export default function VolumesTable({ tableData, loading = false }: IVolumesTable) {
+    const navigate = useNavigate();
     const apiRef = useGridApiRef();
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
 
+    // Handle undefined tableData
+    const actualData = tableData || [];
+
     const columns: GridColDef[] = [
         { field: 'serialNo', headerName: 'Sr No.', width: 70 },
+        { field: 'name', headerName: 'Name', width: 180 },
         { field: 'volumeId', headerName: 'Volume ID', width: 200 },
         { field: 'state', headerName: 'State', width: 120 },
         { field: 'size', headerName: 'Size (GB)', width: 100 },
@@ -33,9 +39,10 @@ export default function VolumesTable({ tableData, loading = false }: IVolumesTab
         { field: 'attachmentStatus', headerName: 'Attachment Status', width: 150 },
     ];
 
-    const rows = tableData.map((data, index) => ({
+    const rows = actualData.map((data, index) => ({
         id: index + 1,
         serialNo: index + 1,
+        name: (data.name && data.name !== "N/A") ? data.name : "--",
         volumeId: data.volumeId || "--",
         state: data.state || "--",
         size: data.size || "--",
@@ -169,16 +176,27 @@ export default function VolumesTable({ tableData, loading = false }: IVolumesTab
                     columns={columns}
                     loading={loading}
                     checkboxSelection
-                    disableRowSelectionOnClick
+                    disableRowSelectionOnClick={false}
                     pagination
                     paginationModel={paginationModel}
                     onPaginationModelChange={setPaginationModel}
                     pageSizeOptions={[10, 25, 50, 100]}
                     autoHeight
+                    onRowClick={(params) => {
+                        const volumeData = actualData.find(item => item.volumeId === params.row.volumeId);
+                        if (volumeData) {
+                            navigate(`/platform/volumes/detail/${params.row.volumeId}`, {
+                                state: { volume: volumeData }
+                            });
+                        }
+                    }}
                     sx={{
                         border: 0,
                         '& .MuiDataGrid-cell:focus': {
                             outline: 'none',
+                        },
+                        '& .MuiDataGrid-row': {
+                            cursor: 'pointer',
                         },
                         '& .MuiDataGrid-row:hover': {
                             backgroundColor: 'rgba(0, 115, 187, 0.04)',

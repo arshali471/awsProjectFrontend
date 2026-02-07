@@ -28,6 +28,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import TerminalIcon from '@mui/icons-material/Terminal';
 import makeRequest from '../../../api/makeRequest';
 import { RequestMethods } from '../../../api/requestMethode';
 import url from '../../../api/urls';
@@ -547,22 +548,43 @@ export default function FileBrowser({ ip, username, sshKey, onExecuteCommand, co
                                 disablePadding
                                 secondaryAction={
                                     !file.isDirectory && (
-                                        <Tooltip title="Download">
-                                            <IconButton
-                                                edge="end"
-                                                size="small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDownload(file);
-                                                }}
-                                                sx={{
-                                                    color: '#666',
-                                                    '&:hover': { color: '#4caf50' },
-                                                }}
-                                            >
-                                                <GetAppIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
+                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                            <Tooltip title="Open in nano">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const fullPath = currentPath.endsWith('/')
+                                                            ? `${currentPath}${file.name}`
+                                                            : `${currentPath}/${file.name}`;
+                                                        onExecuteCommand(`nano "${fullPath}"`);
+                                                        toast.success(`Opening ${file.name} in nano editor`);
+                                                    }}
+                                                    sx={{
+                                                        color: '#4caf50',
+                                                        '&:hover': { color: '#66bb6a' },
+                                                    }}
+                                                >
+                                                    <TerminalIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Download">
+                                                <IconButton
+                                                    edge="end"
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDownload(file);
+                                                    }}
+                                                    sx={{
+                                                        color: '#666',
+                                                        '&:hover': { color: '#4caf50' },
+                                                    }}
+                                                >
+                                                    <GetAppIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
                                     )
                                 }
                                 sx={{

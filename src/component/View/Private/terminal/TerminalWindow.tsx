@@ -14,7 +14,9 @@ export default function TerminalWindow({ ip, username, sshKey }: Props) {
 
     // Initialize terminal once
     useEffect(() => {
-        const term = new Terminal({ cursorBlink: true });
+        const term = new Terminal({
+            cursorBlink: true,
+        });
         const fitAddon = new FitAddon();
         term.loadAddon(fitAddon);
         term.open(terminalRef.current!);
@@ -117,10 +119,20 @@ export default function TerminalWindow({ ip, username, sshKey }: Props) {
         >
             <div
                 ref={terminalRef}
+                tabIndex={0}
+                onClick={() => {
+                    if (termRef.current) {
+                        termRef.current.focus();
+                    }
+                }}
                 style={{
                     flex: 1,
                     width: '100%',
                     overflow: 'hidden',
+                    cursor: 'text',
+                    userSelect: 'text',
+                    WebkitUserSelect: 'text',
+                    pointerEvents: 'auto',
                 }}
             />
             <div

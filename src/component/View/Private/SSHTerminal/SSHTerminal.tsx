@@ -54,6 +54,19 @@ export default function SSHTerminal() {
                 formData
             );
 
+            console.log('[SSHTerminal] Backend response:', data);
+            console.log('[SSHTerminal] User-entered IP:', ip);
+            console.log('[SSHTerminal] User-entered username:', username);
+            console.log('[SSHTerminal] Backend returned IP:', data.ip);
+            
+            // IMPORTANT: Use the IP that the USER entered, not from backend response
+            // Backend just echoes back what we sent, but we should use our form value
+            const credentialsToSend = {
+                ip: ip,  // Use form value, not data.ip
+                username: username,  // Use form value, not data.username
+                sshKey: data.sshKey
+            };
+
             // Open the terminal in a new tab
             const terminalUrl = `${window.location.origin}/terminal`;
             const newWindow = window.open(terminalUrl, '_blank');
@@ -71,12 +84,13 @@ export default function SSHTerminal() {
                     return;
                 }
                 if (newWindow && !acknowledged && sendAttempts < 20) {
+                    console.log('[SSHTerminal] Sending credentials to terminal window (attempt ' + (sendAttempts + 1) + '):', {
+                        ip: credentialsToSend.ip,
+                        username: credentialsToSend.username,
+                        sshKeyLength: credentialsToSend.sshKey?.length || 0
+                    });
                     newWindow.postMessage(
-                        {
-                            ip: data.ip,
-                            username: data.username,
-                            sshKey: data.sshKey,
-                        },
+                        credentialsToSend,
                         window.location.origin
                     );
                     sendAttempts++;

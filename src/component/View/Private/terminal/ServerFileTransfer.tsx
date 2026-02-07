@@ -45,8 +45,10 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import StorageIcon from '@mui/icons-material/Storage';
+import EditIcon from '@mui/icons-material/Edit';
 import { Menu } from '@mui/material';
 import { RemoteServer } from './ServerConnectionManager';
+import FileEditor from './FileEditor';
 import makeRequest from '../../../api/makeRequest';
 import { URLS } from '../../../api/urls';
 
@@ -95,7 +97,11 @@ const ServerFileTransfer = ({ open, onClose, sourceServer, targetServer, savedSe
     const [fileToDelete, setFileToDelete] = useState<{ path: string; name: string; isTarget: boolean } | null>(null);
     const [createFolderDialogOpen, setCreateFolderDialogOpen] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
-    const [createFolderTarget, setCreateFolderTarget] = useState(false)
+    const [createFolderTarget, setCreateFolderTarget] = useState(false);
+
+    // File editor
+    const [editorOpen, setEditorOpen] = useState(false);
+    const [fileToEdit, setFileToEdit] = useState<{ path: string; name: string; server: RemoteServer | null } | null>(null)
 
     useEffect(() => {
         if (open) {
@@ -853,6 +859,30 @@ const ServerFileTransfer = ({ open, onClose, sourceServer, targetServer, savedSe
                                             </Box>
                                         }
                                     />
+                                    {file.type === 'file' && (
+                                        <Tooltip title="Edit file">
+                                            <IconButton
+                                                size="small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setFileToEdit({
+                                                        path: file.path,
+                                                        name: file.name,
+                                                        server: isTarget ? selectedTargetServer : selectedSourceServer
+                                                    });
+                                                    setEditorOpen(true);
+                                                }}
+                                                sx={{
+                                                    color: '#2196f3',
+                                                    '&:hover': {
+                                                        background: 'rgba(33, 150, 243, 0.1)'
+                                                    }
+                                                }}
+                                            >
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
                                     <Tooltip title="Delete">
                                         <IconButton
                                             edge="end"
@@ -1353,6 +1383,31 @@ const ServerFileTransfer = ({ open, onClose, sourceServer, targetServer, savedSe
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* File Editor */}
+            <FileEditor
+                open={editorOpen}
+                onClose={() => {
+                    setEditorOpen(false);
+                    setFileToEdit(null);
+                    // Reload files after editing
+                    if (fileToEdit?.server?.id === selectedSourceServer?.id) {
+                        loadSourceFiles();
+                    } else if (fileToEdit?.server?.id === selectedTargetServer?.id) {
+                        loadTargetFiles();
+                    }
+                }}
+                file={fileToEdit ? { path: fileToEdit.path, name: fileToEdit.name } : null}
+                server={fileToEdit?.server ? {
+                    host: fileToEdit.server.host,
+                    username: fileToEdit.server.username,
+                    sshKey: fileToEdit.server.sshKey || sourceServer.sshKey
+                } : {
+                    host: sourceServer.ip,
+                    username: sourceServer.username,
+                    sshKey: sourceServer.sshKey
+                }}
+            />
         </Dialog>
     );
 };

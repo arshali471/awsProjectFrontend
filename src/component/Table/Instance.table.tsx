@@ -378,6 +378,7 @@
 
 
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     DataGrid,
     GridColDef,
@@ -407,6 +408,7 @@ interface IInstanceTable {
 type RowSelection = { type: 'include', ids: Set<string | number> };
 
 export default function InstanceTable({ tableData, loading, fetchData }: IInstanceTable) {
+    const navigate = useNavigate();
     const apiRef = useGridApiRef();
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
     const [rowSelectionModel, setRowSelectionModel] = React.useState<RowSelection>({ type: 'include', ids: new Set() });
@@ -700,13 +702,23 @@ export default function InstanceTable({ tableData, loading, fetchData }: IInstan
                     paginationModel={paginationModel}
                     onPaginationModelChange={(newModel) => setPaginationModel(newModel)}
                     pageSizeOptions={[10, 20, 50]}
-                    onRowDoubleClick={handleRowDoubleClick}
+                    onRowClick={(params) => {
+                        const instanceData = tableData.find(item => item.InstanceId === params.row.instanceId);
+                        if (instanceData) {
+                            navigate(`/platform/ec2/instance/${params.row.instanceId}`, {
+                                state: { instance: instanceData }
+                            });
+                        }
+                    }}
                     sx={{
                         border: 0, width: '100%',
                         position: 'relative',
                         minHeight: rows.length === 0 || loading ? 300 : 'auto',
                         '& .MuiDataGrid-row': {
                             cursor: 'pointer',
+                            '&:hover': {
+                                backgroundColor: '#f5f5f5',
+                            },
                         },
                     }}
                     rowSelectionModel={rowSelectionModel}

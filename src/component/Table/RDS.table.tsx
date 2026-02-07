@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DataGrid, GridColDef, useGridApiRef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import { Button, Box } from '@mui/material';
@@ -9,13 +10,21 @@ import TableViewIcon from '@mui/icons-material/TableView';
 import * as XLSX from 'xlsx';
 
 interface IRDSTable {
-    tableData: any[];
+    data?: any[];
+    tableData?: any[];
     loading?: boolean;
+    searchText?: string;
+    setSearchText?: (text: string) => void;
+    onRowClick?: (instance: any) => void;
 }
 
-export default function RDSTable({ tableData, loading = false }: IRDSTable) {
+export default function RDSTable({ data, tableData, loading = false, searchText, setSearchText, onRowClick }: IRDSTable) {
+    const navigate = useNavigate();
     const apiRef = useGridApiRef();
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
+
+    // Support both 'data' and 'tableData' props for backward compatibility
+    const actualData = data || tableData || [];
 
     const columns: GridColDef[] = [
         { field: 'serialNo', headerName: 'Sr No.', width: 70 },
@@ -33,7 +42,7 @@ export default function RDSTable({ tableData, loading = false }: IRDSTable) {
         { field: 'securityGroups', headerName: 'Security Groups', width: 250 },
     ];
 
-    const rows = tableData.map((data, index) => ({
+    const rows = actualData.map((data, index) => ({
         id: index + 1,
         serialNo: index + 1,
         instanceId: data.instanceId || "--",
@@ -174,10 +183,26 @@ export default function RDSTable({ tableData, loading = false }: IRDSTable) {
                     onPaginationModelChange={setPaginationModel}
                     pageSizeOptions={[10, 25, 50, 100]}
                     autoHeight
+                    onRowClick={(params) => {
+                        const instanceData = actualData.find(item => item.instanceId === params.row.instanceId);
+                        if (instanceData) {
+                            // Use custom onRowClick if provided (for modal), otherwise navigate to detail page
+                            if (onRowClick) {
+                                onRowClick(instanceData);
+                            } else {
+                                navigate(`/platform/rds/instance/${params.row.instanceId}`, {
+                                    state: { instance: instanceData }
+                                });
+                            }
+                        }
+                    }}
                     sx={{
                         border: 0,
                         '& .MuiDataGrid-cell:focus': {
                             outline: 'none',
+                        },
+                        '& .MuiDataGrid-row': {
+                            cursor: 'pointer',
                         },
                         '& .MuiDataGrid-row:hover': {
                             backgroundColor: 'rgba(0, 115, 187, 0.04)',

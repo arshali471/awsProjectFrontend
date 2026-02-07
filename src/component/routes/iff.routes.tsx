@@ -2,6 +2,7 @@ import { FaBullhorn, FaMagento } from "react-icons/fa"
 import Dashboard from "../View/Private/Dashboard/Dashboard"
 import { MdSpaceDashboard } from "react-icons/md"
 import S3Index from "../View/Private/S3/S3.index"
+import S3Objects from "../View/Private/S3/S3Objects.final"
 import AdminIndex from "../View/Private/Account/Admin"
 import AddUser from "../View/Private/Account/AddUser"
 import AddAWSKey from "../View/Private/Account/AddAWSKey"
@@ -13,21 +14,22 @@ import { SiAwsorganizations } from "react-icons/si";
 import Kubernetes from "../View/Private/Kubernetes/Kubernetes"
 import { SiAmazonrds } from "react-icons/si";
 import RDSIndex from "../View/Private/RDS/RDS.index"
+import RDSInstanceDetail from "../View/Private/RDS/RDSInstanceDetail"
 import VolumesIndex from "../View/Private/Volumes/Volumes"
+import VolumeDetail from "../View/Private/Volumes/VolumeDetail"
 import { RxDashboard } from "react-icons/rx";
 import IffDashboard from "../View/Private/IffDashboard/IffDashboard"
 import ZabbixStatus from "../View/Private/ZabbixStatus/ZabbixStatus"
 import CompleteCostDashboard from "../View/Private/CostDashboard/CompleteCostDashboard"
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"
 import EC2AllRegionsIndex from "../View/Private/EC2AllRegions/EC2AllRegions.index"
+import EC2InstanceDetail from "../View/Private/EC2AllRegions/EC2InstanceDetail"
 import CloudIcon from "@mui/icons-material/Cloud"
 import EKSInstancesIndex from "../View/Private/EKSInstances/EKSInstances.index"
 import DnsIcon from "@mui/icons-material/Dns"
 import EKSInventoryRedirect from "../View/Private/Kubernetes/EKSInventoryRedirect"
 import ApiLogs from "../View/Private/ApiLogs/ApiLogs"
 import AssessmentIcon from "@mui/icons-material/Assessment"
-import KubeBot from "../View/Private/KubeBot/KubeBot"
-import SmartToyIcon from "@mui/icons-material/SmartToy"
 
 export default interface IIFFRouter {
     path: string
@@ -63,11 +65,23 @@ export const iffRoutes: IIFFRouter[] = [
         icon: SiAmazonec2
     },
     {
+        path: "platform/ec2/instance/:instanceId",
+        navbarShow: false,
+        element: <EC2InstanceDetail />,
+        name: "EC2 Instance Details"
+    },
+    {
         path: "platform/ec2-all-regions",
         navbarShow: true,
         element: <EC2AllRegionsIndex />,
         name: "EC2 Inventory",
         icon: CloudIcon
+    },
+    {
+        path: "platform/ec2-all-regions/instance/:instanceId",
+        navbarShow: false,
+        element: <EC2InstanceDetail />,
+        name: "EC2 Instance Details"
     },
     {
         path: "platform/eks-instances",
@@ -84,11 +98,23 @@ export const iffRoutes: IIFFRouter[] = [
         icon: SiAmazondynamodb
     },
     {
+        path: "platform/volumes/detail/:volumeId",
+        navbarShow: false,
+        element: <VolumeDetail />,
+        name: "Volume Details"
+    },
+    {
         path: "platform/s3",
         navbarShow: true,
         element: <S3Index />,
         name: "S3",
         icon: SiAmazons3
+    },
+    {
+        path: "platform/s3/objects",
+        navbarShow: false,
+        element: <S3Objects />,
+        name: "S3 Objects"
     },
     {
         path: "platform/rds",
@@ -97,6 +123,12 @@ export const iffRoutes: IIFFRouter[] = [
         name: "RDS Instances",
         icon: SiAmazonrds
     },
+    {
+        path: "platform/rds/instance/:instanceId",
+        navbarShow: false,
+        element: <RDSInstanceDetail />,
+        name: "RDS Instance Details"
+    },
 
     {
         path: "eks",
@@ -104,14 +136,6 @@ export const iffRoutes: IIFFRouter[] = [
         element: <EKSInventoryRedirect />,
         name: "EKS Inventory",
         icon: SiAmazoneks
-    },
-
-    {
-        path: "platform/kubebot",
-        navbarShow: true,
-        element: <KubeBot />,
-        name: "KubeBot AI",
-        icon: SmartToyIcon
     },
 
     // {

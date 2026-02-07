@@ -44,21 +44,16 @@ const MemoizedTerminalPane = React.memo(({
     onClose: (paneId: string) => void;
     canClose: boolean;
 }) => {
-    console.log(`[MemoizedTerminalPane] Rendering pane: ${paneId}`);
-
     // Create stable callbacks for this specific pane
     const handleSplitHorizontal = useCallback(() => {
-        console.log(`[MemoizedTerminalPane] Split horizontal called for: ${paneId}`);
         onSplit(paneId, 'horizontal');
     }, [onSplit, paneId]);
 
     const handleSplitVertical = useCallback(() => {
-        console.log(`[MemoizedTerminalPane] Split vertical called for: ${paneId}`);
         onSplit(paneId, 'vertical');
     }, [onSplit, paneId]);
 
     const handleClose = useCallback(() => {
-        console.log(`[MemoizedTerminalPane] Close called for: ${paneId}`);
         onClose(paneId);
     }, [onClose, paneId]);
 
@@ -83,8 +78,6 @@ const MemoizedTerminalPane = React.memo(({
         prev.username === next.username &&
         prev.sshKey === next.sshKey
     );
-
-    console.log(`[MemoizedTerminalPane] Memo check for ${next.paneId}: ${shouldSkip ? 'SKIP re-render' : 'ALLOW re-render'}`);
 
     return shouldSkip;
 });
@@ -177,18 +170,24 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't intercept keys when typing in terminal
+            // Only handle keyboard shortcuts with modifiers (Cmd/Ctrl)
+            if (!e.metaKey && !e.ctrlKey) {
+                return; // Let terminal handle normal keypresses
+            }
+
             // Cmd/Ctrl + D: Split horizontally
-            if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'd' && !e.shiftKey) {
                 e.preventDefault();
                 splitPane(focusedPaneId, 'horizontal');
             }
             // Cmd/Ctrl + Shift + D: Split vertically
-            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'D') {
+            else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'D') {
                 e.preventDefault();
                 splitPane(focusedPaneId, 'vertical');
             }
             // Cmd/Ctrl + W: Close pane
-            if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+            else if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
                 if (countPanes(rootPane) > 1) {
                     e.preventDefault();
                     closePane(focusedPaneId);
@@ -404,6 +403,7 @@ export default function SplitTerminal({ credentials }: SplitTerminalProps) {
                     gap: 2,
                     opacity: 0.5,
                     transition: 'opacity 0.2s',
+                    pointerEvents: 'none', // Don't block clicks or keyboard input
                     '&:hover': { opacity: 1 },
                 }}
             >

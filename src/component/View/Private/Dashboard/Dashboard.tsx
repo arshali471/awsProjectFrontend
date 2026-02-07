@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { AdminService } from "../../../services/admin.service";
-import { LoadingContext, SelectedRegionContext } from "../../../context/context";
+import { LoadingContext, SelectedRegionContext, SelectedAccountContext } from "../../../context/context";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Container } from "react-bootstrap";
@@ -28,6 +28,7 @@ const isIPv4 = (str) =>
 export default function Dashboard() {
     const navigate = useNavigate();
     const { selectedRegion }: any = useContext(SelectedRegionContext);
+    const { selectedAccount }: any = useContext(SelectedAccountContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
     const [instanceData, setInstanceData] = useState<any[]>([]);
@@ -41,26 +42,41 @@ export default function Dashboard() {
 
     // Fetch region data
     const getAllInstance = async () => {
-        if (!selectedRegion?.value) return;
+        if (!selectedAccount?.value || !selectedRegion?.value) return;
         setLoading(true);
         try {
-            const isToday = moment(new Date()).isSame(startDate, "day");
-            const source = isToday ? "api" : "db";
-            const dateParam = isToday ? undefined : moment(startDate).utc().format();
-
-            const res = await AdminService.getAllInstance(
-                selectedRegion.value,
-                source,
-                dateParam
+            // Get credentials for selected account and region
+            const credsRes = await AdminService.getCredentialsByAccountAndRegion(
+                selectedAccount.value,
+                selectedRegion.value
             );
 
-            if (res.status === 200 && Array.isArray(res.data.data)) {
-                setInstanceData(res.data.data);
-                setDisplayData(res.data.data);
-                setIsGlobal(false);
-            } else {
-                setInstanceData([]);
-                setDisplayData([]);
+            if (credsRes.status === 200 && credsRes.data._id) {
+                const isToday = moment(new Date()).isSame(startDate, "day");
+                const source = isToday ? "api" : "db";
+                const dateParam = isToday ? undefined : moment(startDate).utc().format();
+
+                const res = await AdminService.getAllInstance(
+                    credsRes.data._id,
+                    source,
+                    dateParam,
+                    selectedRegion.value
+                );
+
+                if (res.status === 200 && Array.isArray(res.data.data)) {
+                    // Add Region and Environment to each instance
+                    const instancesWithContext = res.data.data.map((instance: any) => ({
+                        ...instance,
+                        Region: selectedRegion.value,
+                        Environment: selectedAccount.value,
+                    }));
+                    setInstanceData(instancesWithContext);
+                    setDisplayData(instancesWithContext);
+                    setIsGlobal(false);
+                } else {
+                    setInstanceData([]);
+                    setDisplayData([]);
+                }
             }
         } catch (err: any) {
             toast.error(err.response?.data || "Failed to fetch data");
@@ -90,13 +106,19 @@ export default function Dashboard() {
         setLoading(false);
     };
 
-    // On region/date change, reset chips and fetch data
+    // On account/region/date change, reset chips and fetch data
     useEffect(() => {
-        setChips([]);
-        setInput("");
-        getAllInstance();
+        if (selectedAccount?.value && selectedRegion?.value) {
+            setChips([]);
+            setInput("");
+            getAllInstance();
+        } else {
+            // Clear data if account or region not selected
+            setInstanceData([]);
+            setDisplayData([]);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedRegion, startDate]);
+    }, [selectedAccount, selectedRegion, startDate]);
 
     // Local multi-chip filter (all chips must match in row, AND) + status filter
     const filteredInstanceData = useMemo(() => {

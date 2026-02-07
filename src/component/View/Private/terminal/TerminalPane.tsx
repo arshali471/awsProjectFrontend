@@ -13,11 +13,14 @@ import 'xterm/css/xterm.css';
 import TerminalFileUpload from './TerminalFileUpload';
 import TerminalToolbar, { terminalThemes } from './TerminalToolbar';
 import FileBrowser from './FileBrowser';
+import VSCodeFileTree from './VSCodeFileTree';
+import InlineFileEditor from './InlineFileEditor';
 import CommandSnippets from './CommandSnippets';
 import TerminalSearch from './TerminalSearch';
 import ServerConnectionManager, { RemoteServer } from './ServerConnectionManager';
 import ServerFileTransfer from './ServerFileTransfer';
 import CommandAutoComplete from './CommandAutoComplete';
+import FileEditor from './FileEditor';
 
 type Props = {
     ip: string;
@@ -31,7 +34,7 @@ type Props = {
 };
 
 const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplitVertical, canClose, onClosePane }: Props) => {
-    console.log(`[TerminalPane] MOUNTING component for pane: ${paneId}`);
+    // Component render (not necessarily mounting)
 
     const terminalRef = useRef<HTMLDivElement>(null);
     const termRef = useRef<Terminal>();
@@ -45,9 +48,11 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
     const [searchQuery, setSearchQuery] = useState('');
     const [showUpload, setShowUpload] = useState(false);
     const commandBufferRef = useRef<string>('');
+    const isMountedRef = useRef<boolean>(true);
 
     // New state for enhanced features
     const [fileBrowserOpen, setFileBrowserOpen] = useState(false);
+    const [vscodeTreeOpen, setVscodeTreeOpen] = useState(false); // VS Code file tree (left side)
     const [snippetsOpen, setSnippetsOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [fontSize, setFontSize] = useState(14);
@@ -59,14 +64,25 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
 
     // Autocomplete state
     const [currentCommand, setCurrentCommand] = useState('');
+
+    // Track current working directory
+    const [currentWorkingDir, setCurrentWorkingDir] = useState(`/home/${username}`);
+
+    // File editor state (for dialog-based editor)
+    const [editorOpen, setEditorOpen] = useState(false);
+    const [fileToEdit, setFileToEdit] = useState<{ path: string; name: string } | null>(null);
+
+    // Inline editor state (for VS Code-style split view)
+    const [inlineFileToEdit, setInlineFileToEdit] = useState<{ path: string; name: string } | null>(null);
+
     const [showAutoComplete, setShowAutoComplete] = useState(false);
     const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 
     // Add cleanup logging
     useEffect(() => {
-        console.log(`[TerminalPane] Component mounted for pane: ${paneId}`);
+        isMountedRef.current = true;
         return () => {
-            console.log(`[TerminalPane] UNMOUNTING component for pane: ${paneId}`);
+            isMountedRef.current = false;
         };
     }, [paneId]);
 
@@ -77,6 +93,11 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
             fontSize: fontSize,
             fontFamily: 'Menlo, Monaco, "Courier New", monospace',
             theme: terminalThemes[currentTheme],
+            // Ensure all input is allowed
+            allowProposedApi: false,
+            allowTransparency: true,
+            convertEol: false,
+            scrollback: 1000,
         });
         const fitAddon = new FitAddon();
         const searchAddon = new SearchAddon();
@@ -87,6 +108,13 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
         termRef.current = term;
         fitRef.current = fitAddon;
         searchAddonRef.current = searchAddon;
+
+        // Aggressively ensure terminal has focus
+        const ensureFocus = () => {
+            if (term) {
+                term.focus();
+            }
+        };
 
         // Wait for terminal to be fully rendered before fitting
         // Use requestAnimationFrame to ensure DOM is ready
@@ -127,8 +155,12 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
         // Clean up on unmount
         return () => {
             resizeObserverRef.current?.disconnect();
-            socketRef.current?.close();
-            term.dispose();
+            if (socketRef.current) {
+                socketRef.current.close();
+            }
+            if (term && !term.isDisposed) {
+                term.dispose();
+            }
         };
     }, [paneId]);
 
@@ -155,8 +187,8 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
         const ws = socketRef.current;
         const term = termRef.current;
 
-        if (!ws || !connected || !term) {
-            console.log('Cannot fetch history - not connected');
+        if (!ws || !connected || !term || !isMountedRef.current) {
+            console.log('Cannot fetch history - not connected or component unmounted');
             return;
         }
 
@@ -255,11 +287,13 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
             });
 
             if (commands.length > 0) {
-                setCommandHistory(() => {
-                    // Remove duplicates while preserving order (most recent occurrence wins)
-                    const uniqueCommands = Array.from(new Set(commands.reverse()));
-                    return uniqueCommands.slice(0, 500); // Limit to 500 commands
-                });
+                if (isMountedRef.current) {
+                    setCommandHistory(() => {
+                        // Remove duplicates while preserving order (most recent occurrence wins)
+                        const uniqueCommands = Array.from(new Set(commands.reverse()));
+                        return uniqueCommands.slice(0, 500); // Limit to 500 commands
+                    });
+                }
             }
         } catch (error) {
             console.error('Failed to parse history output:', error);
@@ -277,21 +311,51 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
         const sshWsUrl = import.meta.env.VITE_SSH_WS_URL || 'ws://localhost:3100/ssh';
 
         const ws = new WebSocket(sshWsUrl);
+        // Use arraybuffer to properly receive binary data from backend
         ws.binaryType = 'arraybuffer';
 
-        // Default message handler
-        const defaultMessageHandler = (e: MessageEvent) => {
+        // Default message handler with directory tracking
+        const defaultMessageHandler = async (e: MessageEvent) => {
+            let dataStr = '';
             if (typeof e.data === 'string') {
+                dataStr = e.data;
                 term.write(e.data);
+            } else if (e.data instanceof Blob) {
+                const text = await e.data.text();
+                dataStr = text;
+                term.write(text);
+            } else if (e.data instanceof ArrayBuffer) {
+                const uint8Data = new Uint8Array(e.data);
+                dataStr = new TextDecoder().decode(uint8Data);
+                term.write(uint8Data);
             } else {
-                term.write(new Uint8Array(e.data));
+                const uint8Data = new Uint8Array(e.data);
+                dataStr = new TextDecoder().decode(uint8Data);
+                term.write(uint8Data);
+            }
+
+            // Track current directory from prompt (e.g., "ubuntu@ip-172-31-41-95:~/EXMBIO$")
+            // Extract directory from patterns like: user@host:~/path$ or user@host:/full/path$
+            const promptMatch = dataStr.match(/[@\w-]+:([~\/][\w\-\/\.]*)\$/);
+            if (promptMatch) {
+                let dir = promptMatch[1];
+                // Convert ~ to /home/username
+                if (dir.startsWith('~')) {
+                    dir = dir.replace('~', `/home/${username}`);
+                }
+                if (dir !== currentWorkingDir) {
+                    console.log('[TerminalPane] Directory changed:', dir);
+                    setCurrentWorkingDir(dir);
+                }
             }
         };
 
         ws.onmessage = defaultMessageHandler;
 
         ws.onopen = () => {
+            if (!isMountedRef.current) return;
             setConnected(true);
+            console.log('[TerminalPane] WebSocket opened, sending handshake with IP:', ip, 'username:', username);
             ws.send(
                 JSON.stringify({
                     ip,
@@ -302,87 +366,47 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                 })
             );
 
+            // Ensure terminal is focused after connection
+            setTimeout(() => {
+                if (term && !term.isDisposed) {
+                    term.focus();
+                }
+            }, 500);
+
             // Wait for connection to be fully established, then fetch history
             setTimeout(() => {
-                fetchCommandHistory();
+                if (isMountedRef.current) {
+                    fetchCommandHistory();
+                }
             }, 2000);
         };
 
-        ws.onerror = () => term.writeln('\r\n[WebSocket error]\r\n');
+        ws.onerror = () => {
+            if (term && !term.isDisposed) {
+                term.writeln('\r\n[WebSocket error]\r\n');
+            }
+        };
         ws.onclose = () => {
-            setConnected(false);
-            term.writeln('\r\n[Connection closed] Click Restart to reconnect.\r\n');
+            if (isMountedRef.current) {
+                setConnected(false);
+            }
+            if (term && !term.isDisposed) {
+                term.writeln('\r\n[Connection closed] Click Restart to reconnect.\r\n');
+            }
+        };
+
+        // Helper function to safely send data via WebSocket
+        const safeSend = (data: string) => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(data);
+            } else {
+                console.warn('[TerminalPane] Cannot send data - WebSocket not open. State:', ws.readyState);
+            }
         };
 
         term.onData((data) => {
-            ws.send(data);
-
-            // Track commands (detect Enter key)
-            if (data === '\r') {
-                const command = commandBufferRef.current.trim();
-                if (command && command.length > 0 && command !== 'history') {
-                    setCommandHistory(prev => {
-                        // Remove duplicate if exists, add to front
-                        const filtered = prev.filter(cmd => cmd !== command);
-                        const updated = [command, ...filtered].slice(0, 500);
-                        return updated;
-                    });
-                }
-                commandBufferRef.current = '';
-                setCurrentCommand('');
-                setShowAutoComplete(false);
-            } else if (data === '\x7f' || data === '\b') {
-                // Backspace (both DEL and BS)
-                if (commandBufferRef.current.length > 0) {
-                    commandBufferRef.current = commandBufferRef.current.slice(0, -1);
-                    setCurrentCommand(commandBufferRef.current);
-
-                    // Update cursor position
-                    if (terminalRef.current) {
-                        const rect = terminalRef.current.getBoundingClientRect();
-                        const buffer = term.buffer.active;
-                        const cursorX = buffer.cursorX;
-                        const cursorY = buffer.cursorY;
-
-                        setCursorPosition({
-                            x: rect.left + (cursorX * 9),
-                            y: rect.top + (cursorY * 17) + 50
-                        });
-                    }
-
-                    setShowAutoComplete(commandBufferRef.current.length > 0);
-                }
-            } else if (data === '\t') {
-                // Tab key - prevent default, let autocomplete handle it
-                return;
-            } else if (data.charCodeAt(0) >= 32 && data.charCodeAt(0) < 127) {
-                // Regular printable ASCII character
-                commandBufferRef.current += data;
-                setCurrentCommand(commandBufferRef.current);
-
-                // Update cursor position
-                if (terminalRef.current) {
-                    const rect = terminalRef.current.getBoundingClientRect();
-                    const buffer = term.buffer.active;
-                    const cursorX = buffer.cursorX;
-                    const cursorY = buffer.cursorY;
-
-                    setCursorPosition({
-                        x: rect.left + (cursorX * 9),
-                        y: rect.top + (cursorY * 17) + 50
-                    });
-                }
-
-                setShowAutoComplete(true);
-            } else if (data === '\x1b[A' || data === '\x1b[B') {
-                // Arrow up/down - hide autocomplete when navigating history
-                setShowAutoComplete(false);
-            } else if (data === '\x03') {
-                // Ctrl+C - clear current command
-                commandBufferRef.current = '';
-                setCurrentCommand('');
-                setShowAutoComplete(false);
-            }
+            // Send data to server - server will echo back
+            safeSend(data);
         });
 
         term.onResize(({ cols, rows }) => {
@@ -421,8 +445,11 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
             ws.send('\x7f'); // Send backspace
         }
 
-        // Send the selected command
-        ws.send(command);
+        // Send the selected command character by character
+        for (let i = 0; i < command.length; i++) {
+            ws.send(command[i]);
+        }
+
         commandBufferRef.current = command;
         setCurrentCommand(command);
         setShowAutoComplete(false);
@@ -463,8 +490,14 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
     // Establish initial connection
     useEffect(() => {
         connect();
+        
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.close();
+            }
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [paneId]);
 
     const filteredHistory = commandHistory.filter(cmd =>
         cmd.toLowerCase().includes(searchQuery.toLowerCase())
@@ -540,7 +573,21 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                     />
                 )}
 
-                {/* Terminal Area */}
+                {/* VS Code File Tree - Left Sidebar */}
+                {vscodeTreeOpen && (
+                    <VSCodeFileTree
+                        key={currentWorkingDir} // Re-mount when directory changes
+                        ip={ip}
+                        username={username}
+                        sshKey={sshKey}
+                        connected={connected}
+                        initialPath={currentWorkingDir}
+                        onClose={() => setVscodeTreeOpen(false)}
+                        onFileSelect={(file) => setInlineFileToEdit(file)}
+                    />
+                )}
+
+                {/* Main Content Area - Terminal or Editor */}
                 <Box
                     sx={{
                         display: 'flex',
@@ -550,6 +597,20 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                         position: 'relative',
                     }}
                 >
+                    {/* Show Inline Editor when file is selected (either from tree or edit command) */}
+                    {inlineFileToEdit ? (
+                        <InlineFileEditor
+                            file={inlineFileToEdit}
+                            server={{
+                                host: ip,
+                                username: username,
+                                sshKey: sshKey
+                            }}
+                            onClose={() => setInlineFileToEdit(null)}
+                        />
+                    ) : (
+                        // Show terminal when no file is selected
+                        <>
                     {/* File Upload Panel */}
                     {showUpload && (
                         <Box sx={{ padding: 2, background: '#1e1e1e' }}>
@@ -565,16 +626,54 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                     {/* Terminal */}
                     <Box
                         ref={terminalRef}
+                        tabIndex={0}
+                        // Disable any browser autocomplete or input helpers
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            // Ensure terminal gets focus when clicked
+                            if (termRef.current) {
+                                termRef.current.focus();
+                            }
+                        }}
+                        onFocus={() => {
+                            // Also focus terminal when container gets focus
+                            if (termRef.current) {
+                                termRef.current.focus();
+                            }
+                        }}
+                        onMouseDown={(e) => {
+                            // Ensure we don't prevent default on mousedown which could interfere with focus
+                            // Allow the terminal to handle its own mouse events
+                        }}
+                        onKeyDown={(e) => {
+                            // Do NOT prevent default - let xterm handle all keys
+                            // Force focus if needed
+                            if (termRef.current) {
+                                termRef.current.focus();
+                            }
+                        }}
                         sx={{
                             flex: 1,
                             width: '100%',
                             overflow: 'hidden',
+                            cursor: 'text',
+                            userSelect: 'text', // Allow text selection
+                            WebkitUserSelect: 'text',
                             '& .xterm': {
                                 height: '100%',
                             },
                             '& .xterm-viewport': {
                                 width: '100% !important',
-                            }
+                            },
+                            '&:focus': {
+                                outline: 'none',
+                            },
+                            // Ensure terminal is interactive and not blocked
+                            pointerEvents: 'auto',
                         }}
                     />
 
@@ -633,6 +732,8 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                             </Tooltip>
                         </Box>
                     </Box>
+                    </>
+                    )}
                 </Box>
 
                 {/* File Browser - Right Sidebar */}
@@ -829,13 +930,30 @@ const TerminalPane = ({ ip, username, sshKey, paneId, onSplitHorizontal, onSplit
                 }}
             />
 
-            {/* Command Autocomplete */}
+            {/* Command Autocomplete - DISABLED */}
+            {/*
             <CommandAutoComplete
                 input={currentCommand}
                 onSelect={handleAutoCompleteSelect}
                 visible={showAutoComplete && connected}
                 position={cursorPosition}
                 commandHistory={commandHistory}
+            />
+            */}
+
+            {/* File Editor */}
+            <FileEditor
+                open={editorOpen}
+                onClose={() => {
+                    setEditorOpen(false);
+                    setFileToEdit(null);
+                }}
+                file={fileToEdit}
+                server={{
+                    host: ip,
+                    username: username,
+                    sshKey: sshKey
+                }}
             />
         </Box>
     );

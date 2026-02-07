@@ -5,7 +5,7 @@ import DevOpsLayout from "./component/View/DevOps.layout";
 import mainRoutes from "./component/routes/routes";
 import IRouter from "./component/Interface/IRouter";
 import Login from "./component/View/Public/Login";
-import { LoadingContext, SelectedRegionContext } from "./component/context/context";
+import { LoadingContext, SelectedRegionContext, SelectedAccountContext } from "./component/context/context";
 import { useState } from "react";
 import IIFFRouter, { iffRoutes } from "./component/routes/iff.routes";
 import IffDashboard from "./component/View/Private/IffDashboard/IffDashboard";
@@ -47,11 +47,13 @@ function PrivateRouter({ children }: { children: React.ReactNode }) {
 
 export default function Router() {
     const [selectedRegion, setSelectedRegion] = useState<any>();
+    const [selectedAccount, setSelectedAccount] = useState<any>();
     const [loading, setLoading] = useState<boolean>();
 
     return (
         <LoadingContext.Provider value={{ loading, setLoading }}>
-            <SelectedRegionContext.Provider value={{ selectedRegion, setSelectedRegion }}>
+            <SelectedAccountContext.Provider value={{ selectedAccount, setSelectedAccount }}>
+                <SelectedRegionContext.Provider value={{ selectedRegion, setSelectedRegion }}>
 
                 <Routes>
                     {/* Public route */}
@@ -147,18 +149,6 @@ export default function Router() {
                         <Route index element={<BedrockUsageAnalytics />} />
                     </Route>
 
-                    {/* API Logs route */}
-                    <Route
-                        path="/api-logs"
-                        element={
-                            <PrivateRouter>
-                                <DevOpsLayout />
-                            </PrivateRouter>
-                        }
-                    >
-                        <Route index element={<ApiLogs />} />
-                    </Route>
-
                     {/* Documentation routes */}
                     <Route
                         path="/documentation"
@@ -189,6 +179,7 @@ export default function Router() {
                         <Route path="ssh-key" element={<SshKey />} />
                         <Route path="active-users" element={<ActiveUsers />} />
                         <Route path="change-password" element={<ChangePassword />} />
+                        <Route path="api-logs" element={<ApiLogs />} />
                     </Route>
 
                     {/* Other protected app routes */}
@@ -227,7 +218,8 @@ export default function Router() {
                     {/* Catch-all route */}
                     <Route path="*" element={<Navigate to="/login" />} />
                 </Routes>
-            </SelectedRegionContext.Provider>
+                </SelectedRegionContext.Provider>
+            </SelectedAccountContext.Provider>
         </LoadingContext.Provider>
     );
 }

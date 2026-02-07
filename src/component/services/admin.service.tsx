@@ -9,6 +9,14 @@ export class AdminService {
         return await makeRequest(url.getAllAwsKey, RequestMethods.GET)
     }
 
+    static async getAccountsAndRegions() {
+        return await makeRequest(url.getAccountsAndRegions, RequestMethods.GET)
+    }
+
+    static async getCredentialsByAccountAndRegion(account: string, region: string) {
+        return await makeRequest(`${url.getCredentials}?account=${account}&region=${region}`, RequestMethods.GET)
+    }
+
     static async getAwsKeyById(keyId: string) {
         return await makeRequest(url.getAwsKeyById + "/" + keyId, RequestMethods.GET)
     }
@@ -25,7 +33,7 @@ export class AdminService {
         return await makeRequest(url.getUsersWithSessionStatus, RequestMethods.GET)
     }
 
-    static async getAllInstance(keyId: any, query: any, date: any) {
+    static async getAllInstance(keyId: any, query: any, date: any, region?: string) {
         const params = makeParams([
             {
                 index: "query",
@@ -34,6 +42,10 @@ export class AdminService {
             {
                 index: "date",
                 value: date
+            },
+            {
+                index: "region",
+                value: region
             }
         ])
         return await makeRequest(url.instance.getAllInstance + "/" + keyId + params, RequestMethods.GET)
@@ -43,21 +55,65 @@ export class AdminService {
         return await makeRequest(url.instance.getGlobalInstance + "/" + ip, RequestMethods.GET)
     }
 
-    static async getEksCluster(keyId: any) {
-        return await makeRequest(url.getEksCluster + "/" + keyId, RequestMethods.GET)
+    static async getAllInstancesFromAllRegions() {
+        return await makeRequest(url.instance.getAllInstancesFromAllRegions, RequestMethods.GET)
+    }
+
+    static async getInstanceDetails(instanceId: string, keyId: string, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.instance.getInstanceDetails + "/" + instanceId + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    static async getVolumeById(volumeId: string, keyId: string, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.instance.getVolumeById + "/" + volumeId + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    static async getSnapshotsByVolumeId(volumeId: string, keyId: string, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.instance.getSnapshotsByVolumeId + "/" + volumeId + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    static async getEksCluster(keyId: any, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.getEksCluster + "/" + keyId + params, RequestMethods.GET)
     }
 
 
-    static async getAllS3Data(keyId: any) {
-        return await makeRequest(url.getAllS3Data + "/" + keyId, RequestMethods.GET)
+    static async getAllS3Data(keyId: any, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.getAllS3Data + "/" + keyId + params, RequestMethods.GET)
     }
 
-    static async getAllRDSData(keyId: any) {
-        return await makeRequest(url.getAllRDSData + "/" + keyId, RequestMethods.GET)
+    static async getS3Objects(keyId: any, bucketName: string, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.getS3Objects + "/" + keyId + "/" + bucketName + params, RequestMethods.GET)
     }
 
-    static async getAllVolumesData(keyId: any) {
-        return await makeRequest(url.instance.getAllVolumesData + "/" + keyId, RequestMethods.GET)
+    static async getS3ObjectsPaginated(keyId: any, bucketName: string, region?: string, page: number = 1, pageSize: number = 100, search?: string) {
+        const params = new URLSearchParams();
+        if (region) params.append('region', region);
+        params.append('page', page.toString());
+        params.append('pageSize', pageSize.toString());
+        if (search && search.trim() !== '') params.append('search', search);
+        
+        const queryString = params.toString() ? `?${params.toString()}` : '';
+        return await makeRequest(url.getS3ObjectsPaginated + "/" + keyId + "/" + bucketName + queryString, RequestMethods.GET)
+    }
+
+    static async getS3BucketConfiguration(keyId: any, bucketName: string, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.getS3BucketConfiguration + "/" + keyId + "/" + bucketName + params, RequestMethods.GET)
+    }
+
+    static async getAllRDSData(keyId: any, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.getAllRDSData + "/" + keyId + params, RequestMethods.GET)
+    }
+
+    static async getAllVolumesData(keyId: any, region?: string) {
+        const params = region ? `?region=${region}` : '';
+        return await makeRequest(url.instance.getAllVolumesData + "/" + keyId + params, RequestMethods.GET)
     }
 
     static async createUser(payload: any) {
@@ -321,10 +377,6 @@ export class AdminService {
     }
 
     // NEW: EC2 All Regions Methods
-    static async getAllInstancesFromAllRegions() {
-        return await makeRequest(url.instance.getAllInstancesFromAllRegions, RequestMethods.GET)
-    }
-
     static async exportAllInstancesToExcel() {
         const response = await fetch(
             (import.meta.env.VITE_REACT_APP_API_URL || '') +

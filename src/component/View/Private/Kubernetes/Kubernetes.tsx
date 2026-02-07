@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { LoadingContext, SelectedRegionContext } from '../../../context/context';
+import { LoadingContext, SelectedRegionContext, SelectedAccountContext } from '../../../context/context';
 import { AdminService } from '../../../services/admin.service';
 import toast from 'react-hot-toast';
 import LoaderSpinner from '../../../Spinner/Spinner';
@@ -10,9 +10,10 @@ import { CSVLink } from 'react-csv';
 import { Box, Typography } from '@mui/material';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
-export default function Kubernetes({ selectedRegion }: any) {
+export default function Kubernetes() {
 
-
+    const { selectedRegion }: any = useContext(SelectedRegionContext);
+    const { selectedAccount }: any = useContext(SelectedAccountContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
     const [eksData, setEksData] = useState<any>([]);
@@ -24,26 +25,40 @@ export default function Kubernetes({ selectedRegion }: any) {
     const [downloadFilteredData, setDownlaodFilteredData] = useState<any>([]);
 
     const getEksCluster = async () => {
+        if (!selectedAccount?.value || !selectedRegion?.value) return;
         setLoading(true);
         try {
-            const res = await AdminService.getEksCluster(selectedRegion.value);
-            if (res.status === 200) {
-                setEksData(res.data);
-                setTotalCount(res.data.length);
+            // Get credentials for selected account and region
+            const credsRes = await AdminService.getCredentialsByAccountAndRegion(
+                selectedAccount.value,
+                selectedRegion.value
+            );
+
+            if (credsRes.status === 200 && credsRes.data._id) {
+                const res = await AdminService.getEksCluster(credsRes.data._id, selectedRegion.value);
+                if (res.status === 200) {
+                    setEksData(res.data);
+                    setTotalCount(res.data.length);
+                }
             }
         } catch (error) {
             console.error("Error fetching EKS data", error);
             toast.error(error.response?.data || "Failed to fetch EKS clusters");
+            setEksData([]);
+            setTotalCount(0);
         }
         setLoading(false);
     };
 
     useEffect(() => {
-        if (selectedRegion?.value) {
+        if (selectedAccount?.value && selectedRegion?.value) {
             setSearchText("")
             getEksCluster();
+        } else {
+            setEksData([]);
+            setTotalCount(0);
         }
-    }, [selectedRegion?.value]);
+    }, [selectedAccount?.value, selectedRegion?.value]);
 
     useEffect(() => {
         let filteredData = eksData;

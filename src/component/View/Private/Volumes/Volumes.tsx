@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react"
-import { LoadingContext, SelectedRegionContext } from "../../../context/context"
+import { LoadingContext, SelectedRegionContext, SelectedAccountContext } from "../../../context/context"
 import { AdminService } from "../../../services/admin.service";
 import VolumesTable from "../../../Table/Volumes.table";
 import { FaHdd, FaSearch } from "react-icons/fa";
@@ -11,6 +11,7 @@ import "../SharedPage.css";
 
 export default function VolumesIndex() {
     const { selectedRegion }: any = useContext(SelectedRegionContext);
+    const { selectedAccount }: any = useContext(SelectedAccountContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
     const [volumesData, setVolumesData] = useState<any>([]);
@@ -18,21 +19,46 @@ export default function VolumesIndex() {
     const [searchText, setSearchText] = useState<string>('');
     const [refreshing, setRefreshing] = useState(false);
 
-    const getVolumes = async (showRefreshing = false) => {
+    const fetchCredentialsAndData = async (showRefreshing = false) => {
+        if (!selectedAccount?.value || !selectedRegion?.value) {
+            return;
+        }
+
         if (showRefreshing) {
             setRefreshing(true);
         } else {
             setLoading(true);
         }
+
         try {
-            const res = await AdminService.getAllVolumesData(selectedRegion.value);
-            if (res.status === 200) {
-                setVolumesData(res.data);
-                setFilteredData(res.data);
+            // Get credentials for selected account and region
+            const credsRes = await AdminService.getCredentialsByAccountAndRegion(
+                selectedAccount.value,
+                selectedRegion.value
+            );
+
+            if (credsRes.status === 200 && credsRes.data._id) {
+                // Fetch Volumes data using the credentials ID and region
+                const res = await AdminService.getAllVolumesData(credsRes.data._id, selectedRegion.value);
+                if (res.status === 200) {
+                    // Add region and environment info to each volume
+                    const volumesWithContext = res.data.map((volume: any) => ({
+                        ...volume,
+                        region: selectedRegion.value,
+                        Region: selectedRegion.value,
+                        environment: selectedAccount.value,
+                        Environment: selectedAccount.value,
+                    }));
+                    setVolumesData(volumesWithContext);
+                    setFilteredData(volumesWithContext);
+                }
             }
         } catch (error) {
             console.error("Error fetching Volumes data", error);
+            setVolumesData([]);
+            setFilteredData([]);
         }
+
         if (showRefreshing) {
             setRefreshing(false);
         } else {
@@ -41,7 +67,7 @@ export default function VolumesIndex() {
     };
 
     const handleRefresh = () => {
-        getVolumes(true);
+        fetchCredentialsAndData(true);
     };
 
     useEffect(() => {
@@ -57,12 +83,16 @@ export default function VolumesIndex() {
     }, [searchText, volumesData]);
 
     useEffect(() => {
-        if (selectedRegion?.value) {
+        if (selectedAccount?.value && selectedRegion?.value) {
             setSearchText("");
-            getVolumes();
+            fetchCredentialsAndData();
+        } else {
+            // Clear data if account or region is not selected
+            setVolumesData([]);
+            setFilteredData([]);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedRegion?.value]);
+    }, [selectedAccount?.value, selectedRegion?.value]);
 
     // Calculate total size
     const totalSize = filteredData.reduce((acc: number, volume: any) => {
@@ -120,7 +150,7 @@ export default function VolumesIndex() {
                     </Box>
                     <IconButton
                         onClick={handleRefresh}
-                        disabled={refreshing}
+                        disabled={refreshing || !selectedAccount || !selectedRegion}
                         sx={{
                             background: 'linear-gradient(135deg, #ff9900 0%, #ffb84d 100%)',
                             color: 'white',

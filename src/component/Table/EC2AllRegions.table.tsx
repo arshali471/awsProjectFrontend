@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Paper from '@mui/material/Paper';
 import { Button, Box, Chip } from '@mui/material';
@@ -12,6 +13,7 @@ interface IEC2AllRegionsTable {
 }
 
 export default function EC2AllRegionsTable({ tableData, loading }: IEC2AllRegionsTable) {
+    const navigate = useNavigate();
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 25 });
 
     const columns: GridColDef[] = [
@@ -142,6 +144,11 @@ export default function EC2AllRegionsTable({ tableData, loading }: IEC2AllRegion
                     onPaginationModelChange={(newModel) => setPaginationModel(newModel)}
                     pageSizeOptions={[10, 25, 50, 100]}
                     autoHeight
+                    onRowClick={(params) => {
+                        navigate(`/platform/ec2-all-regions/instance/${params.row.InstanceId}`, {
+                            state: { instance: tableData.find(item => item.InstanceId === params.row.InstanceId) }
+                        });
+                    }}
                     sx={{
                         border: 0,
                         '& .MuiDataGrid-cell': {
@@ -151,6 +158,12 @@ export default function EC2AllRegionsTable({ tableData, loading }: IEC2AllRegion
                             backgroundColor: '#f8f9fa',
                             borderBottom: '2px solid #e0e0e0',
                             fontWeight: 'bold',
+                        },
+                        '& .MuiDataGrid-row': {
+                            cursor: 'pointer',
+                            '&:hover': {
+                                backgroundColor: '#f5f5f5',
+                            },
                         },
                     }}
                 />

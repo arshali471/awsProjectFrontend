@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react"
-import { LoadingContext, SelectedRegionContext } from "../../../context/context"
+import { useNavigate } from "react-router-dom"
+import { LoadingContext, SelectedRegionContext, SelectedAccountContext } from "../../../context/context"
 import { AdminService } from "../../../services/admin.service";
 import S3Table from "../../../Table/S3.table";
 import { FaDatabase, FaSearch } from "react-icons/fa";
@@ -10,7 +11,9 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import "../SharedPage.css";
 
 export default function S3Index() {
+    const navigate = useNavigate();
     const { selectedRegion }: any = useContext(SelectedRegionContext);
+    const { selectedAccount }: any = useContext(SelectedAccountContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
     const [s3Data, setS3Data] = useState<any>([]);
@@ -18,21 +21,38 @@ export default function S3Index() {
     const [searchText, setSearchText] = useState<string>('');
     const [refreshing, setRefreshing] = useState(false);
 
-    const getAllS3Data = async (showRefreshing = false) => {
+    const fetchCredentialsAndData = async (showRefreshing = false) => {
+        if (!selectedAccount?.value || !selectedRegion?.value) {
+            return;
+        }
+
         if (showRefreshing) {
             setRefreshing(true);
         } else {
             setLoading(true);
         }
+
         try {
-            const res = await AdminService.getAllS3Data(selectedRegion.value);
-            if (res.status === 200) {
-                setS3Data(res.data);
-                setFilteredData(res.data);
+            // Get credentials for selected account and region
+            const credsRes = await AdminService.getCredentialsByAccountAndRegion(
+                selectedAccount.value,
+                selectedRegion.value
+            );
+
+            if (credsRes.status === 200 && credsRes.data._id) {
+                // Fetch S3 data using the credentials ID and region
+                const res = await AdminService.getAllS3Data(credsRes.data._id, selectedRegion.value);
+                if (res.status === 200) {
+                    setS3Data(res.data);
+                    setFilteredData(res.data);
+                }
             }
         } catch (error) {
             console.error("Error fetching S3 data", error);
+            setS3Data([]);
+            setFilteredData([]);
         }
+
         if (showRefreshing) {
             setRefreshing(false);
         } else {
@@ -41,7 +61,11 @@ export default function S3Index() {
     };
 
     const handleRefresh = () => {
-        getAllS3Data(true);
+        fetchCredentialsAndData(true);
+    };
+
+    const handleBucketClick = (bucket: any) => {
+        navigate("/platform/s3/objects", { state: { bucket } });
     };
 
     useEffect(() => {
@@ -57,12 +81,16 @@ export default function S3Index() {
     }, [searchText, s3Data]);
 
     useEffect(() => {
-        if (selectedRegion?.value) {
+        if (selectedAccount?.value && selectedRegion?.value) {
             setSearchText("");
-            getAllS3Data();
+            fetchCredentialsAndData();
+        } else {
+            // Clear data if account or region is not selected
+            setS3Data([]);
+            setFilteredData([]);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedRegion?.value]);
+    }, [selectedAccount?.value, selectedRegion?.value]);
 
     // Calculate total size
     const totalSize = filteredData.reduce((acc: number, bucket: any) => {
@@ -120,7 +148,7 @@ export default function S3Index() {
                     </Box>
                     <IconButton
                         onClick={handleRefresh}
-                        disabled={refreshing}
+                        disabled={refreshing || !selectedAccount || !selectedRegion}
                         sx={{
                             background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
                             color: 'white',
@@ -192,7 +220,11 @@ export default function S3Index() {
 
             {/* Table */}
             <div className="table-container">
-                <S3Table tableData={filteredData} loading={loading} />
+                <S3Table 
+                    tableData={filteredData} 
+                    loading={loading}
+                    onBucketClick={handleBucketClick}
+                />
             </div>
         </div>
     )

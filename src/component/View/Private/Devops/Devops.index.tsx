@@ -275,69 +275,6 @@ export default function DevopsIndex() {
                         </Grid>
                     ))}
                 </Grid>
-
-                {/* Stats Section */}
-                <Box sx={{ mt: 5 }}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={4}>
-                            <Card
-                                elevation={2}
-                                sx={{
-                                    borderRadius: 3,
-                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                    color: 'white',
-                                }}
-                            >
-                                <CardContent sx={{ p: 3 }}>
-                                    <Typography variant="h3" fontWeight={700}>
-                                        {apps.length}
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, opacity: 0.9 }}>
-                                        Available Tools
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Card
-                                elevation={2}
-                                sx={{
-                                    borderRadius: 3,
-                                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                                    color: 'white',
-                                }}
-                            >
-                                <CardContent sx={{ p: 3 }}>
-                                    <Typography variant="h3" fontWeight={700}>
-                                        24/7
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, opacity: 0.9 }}>
-                                        System Availability
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Card
-                                elevation={2}
-                                sx={{
-                                    borderRadius: 3,
-                                    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                                    color: 'white',
-                                }}
-                            >
-                                <CardContent sx={{ p: 3 }}>
-                                    <Typography variant="h3" fontWeight={700}>
-                                        100%
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, opacity: 0.9 }}>
-                                        Cloud Native
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    </Grid>
-                </Box>
             </Container>
         </Box>
     );

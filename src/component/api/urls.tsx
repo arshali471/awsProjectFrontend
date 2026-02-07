@@ -6,7 +6,12 @@ const url = {
     azureConfig: '/auth/azure/config',
     getAllAwsKey: "/awsKey/getAllAWSKey",
     getAwsKeyById: "/awsKey/getAWSKeyById",
+    getAccountsAndRegions: "/awsKey/getAccountsAndRegions",
+    getCredentials: "/awsKey/getCredentials",
     getAllS3Data: "/aws/getS3Bucket",
+    getS3Objects: "/aws/getS3Objects",
+    getS3ObjectsPaginated: "/aws/getS3ObjectsPaginated",
+    getS3BucketConfiguration: "/aws/getS3BucketConfiguration",
     getUserData: "/user/getUserById",
     getAllUsers: "/user/getAllUser",
     getUsersWithSessionStatus: "/sessions/users-with-status",
@@ -24,7 +29,10 @@ const url = {
     instance: {
         getAllInstance: "/aws/getAllInstance",
         getAllVolumesData: "/aws/getVolumes",
+        getVolumeById: "/aws/getVolumeById",
+        getSnapshotsByVolumeId: "/aws/getSnapshotsByVolumeId",
         getGlobalInstance: "/aws/getInstanceDetailsByGlobalSearch",
+        getInstanceDetails: "/aws/getInstanceDetailsByInstanceId",
         getAllInstancesFromAllRegions: "/aws/getAllInstancesFromAllRegions",
         exportAllInstancesToExcel: "/aws/exportAllInstancesToExcel",
         getAllEKSEC2InstancesFromAllRegions: "/aws/getAllEKSEC2InstancesFromAllRegions",
@@ -111,7 +119,9 @@ const url = {
         listFiles: "/terminal/list-files",
         transferFile: "/terminal/transfer-file",
         deleteFile: "/terminal/delete-file",
-        createFolder: "/terminal/create-folder"
+        createFolder: "/terminal/create-folder",
+        readFile: "/terminal/read-file",
+        writeFile: "/terminal/write-file"
     }
 
 };
@@ -125,6 +135,8 @@ export const URLS = {
         LIST_FILES: "/terminal/list-files",
         TRANSFER_FILE: "/terminal/transfer-file",
         DELETE_FILE: "/terminal/delete-file",
-        CREATE_FOLDER: "/terminal/create-folder"
+        CREATE_FOLDER: "/terminal/create-folder",
+        READ_FILE: "/terminal/read-file",
+        WRITE_FILE: "/terminal/write-file"
     }
 };

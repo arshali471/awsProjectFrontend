@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from "react"
-import { LoadingContext, SelectedRegionContext } from "../../../context/context"
+import { LoadingContext, SelectedRegionContext, SelectedAccountContext } from "../../../context/context"
 import { AdminService } from "../../../services/admin.service";
 import RDSTable from "../../../Table/RDS.table";
+import RDSDetailModal from "../../../modal/RDSDetailModal";
 import { FaDatabase, FaSearch } from "react-icons/fa";
 import { MdCloudQueue } from "react-icons/md";
 import { Box, Typography, IconButton, CircularProgress } from "@mui/material";
@@ -11,28 +12,51 @@ import "../SharedPage.css";
 
 export default function RDSIndex() {
     const { selectedRegion }: any = useContext(SelectedRegionContext);
+    const { selectedAccount }: any = useContext(SelectedAccountContext);
     const { loading, setLoading }: any = useContext(LoadingContext);
 
     const [rdsData, setRdsData] = useState<any>([]);
     const [filteredData, setFilteredData] = useState<any>([]);
     const [searchText, setSearchText] = useState<string>('');
     const [refreshing, setRefreshing] = useState(false);
+    const [credentialsId, setCredentialsId] = useState<string | null>(null);
+    const [selectedInstance, setSelectedInstance] = useState<any>(null);
+    const [modalOpen, setModalOpen] = useState(false);
 
-    const getAllRDSData = async (showRefreshing = false) => {
+    const fetchCredentialsAndData = async (showRefreshing = false) => {
+        if (!selectedAccount?.value || !selectedRegion?.value) {
+            return;
+        }
+
         if (showRefreshing) {
             setRefreshing(true);
         } else {
             setLoading(true);
         }
+
         try {
-            const res = await AdminService.getAllRDSData(selectedRegion.value);
-            if (res.status === 200) {
-                setRdsData(res.data);
-                setFilteredData(res.data);
+            // Get credentials for selected account and region
+            const credsRes = await AdminService.getCredentialsByAccountAndRegion(
+                selectedAccount.value,
+                selectedRegion.value
+            );
+
+            if (credsRes.status === 200 && credsRes.data._id) {
+                setCredentialsId(credsRes.data._id);
+
+                // Fetch RDS data using the credentials ID and region
+                const res = await AdminService.getAllRDSData(credsRes.data._id, selectedRegion.value);
+                if (res.status === 200) {
+                    setRdsData(res.data);
+                    setFilteredData(res.data);
+                }
             }
         } catch (error) {
             console.error("Error fetching RDS data", error);
+            setRdsData([]);
+            setFilteredData([]);
         }
+
         if (showRefreshing) {
             setRefreshing(false);
         } else {
@@ -41,7 +65,17 @@ export default function RDSIndex() {
     };
 
     const handleRefresh = () => {
-        getAllRDSData(true);
+        fetchCredentialsAndData(true);
+    };
+
+    const handleRowClick = (instance: any) => {
+        setSelectedInstance(instance);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setSelectedInstance(null);
     };
 
     useEffect(() => {
@@ -57,12 +91,17 @@ export default function RDSIndex() {
     }, [searchText, rdsData]);
 
     useEffect(() => {
-        if (selectedRegion?.value) {
+        if (selectedAccount?.value && selectedRegion?.value) {
             setSearchText("");
-            getAllRDSData();
+            fetchCredentialsAndData();
+        } else {
+            // Clear data if account or region is not selected
+            setRdsData([]);
+            setFilteredData([]);
+            setCredentialsId(null);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedRegion?.value]);
+    }, [selectedAccount?.value, selectedRegion?.value]);
 
     // Calculate total storage
     const totalStorage = filteredData.reduce((acc: number, db: any) => {
@@ -101,8 +140,10 @@ export default function RDSIndex() {
                                 variant="h4"
                                 sx={{
                                     fontWeight: 700,
-                                    color: '#232f3e',
-                                    letterSpacing: '-0.5px',
+                                    background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    mb: 0.5
                                 }}
                             >
                                 RDS Instances
@@ -110,8 +151,8 @@ export default function RDSIndex() {
                             <Typography
                                 variant="body2"
                                 sx={{
-                                    color: '#6c757d',
-                                    mt: 0.5,
+                                    color: 'text.secondary',
+                                    fontSize: '0.9rem'
                                 }}
                             >
                                 Manage and monitor your Amazon RDS database instances
@@ -120,22 +161,21 @@ export default function RDSIndex() {
                     </Box>
                     <IconButton
                         onClick={handleRefresh}
-                        disabled={refreshing}
+                        disabled={refreshing || !selectedAccount || !selectedRegion}
                         sx={{
-                            background: 'linear-gradient(135deg, #527fff 0%, #1a8cd8 100%)',
+                            background: 'linear-gradient(135deg, #0073bb 0%, #1a8cd8 100%)',
                             color: 'white',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #005a94 0%, #0073bb 100%)',
+                                transform: 'scale(1.05)',
+                            },
+                            '&:disabled': {
+                                background: '#e0e0e0',
+                                color: '#9e9e9e',
+                            },
                             width: 48,
                             height: 48,
-                            '&:hover': {
-                                background: 'linear-gradient(135deg, #3d5fd9 0%, #0073bb 100%)',
-                                transform: 'rotate(180deg)',
-                            },
-                            transition: 'all 0.3s ease',
-                            '&.Mui-disabled': {
-                                background: 'linear-gradient(135deg, #527fff 0%, #1a8cd8 100%)',
-                                color: 'white',
-                                opacity: 0.7,
-                            }
+                            transition: 'all 0.2s ease',
                         }}
                     >
                         {refreshing ? <CircularProgress size={24} sx={{ color: 'white' }} /> : <RefreshIcon />}
@@ -143,57 +183,55 @@ export default function RDSIndex() {
                 </Box>
             </Box>
 
-            {/* Stats Cards */}
+            {/* Info Cards */}
             <div className="stats-container">
                 <div className="stat-card">
-                    <div className="stat-card-header">
-                        <span className="stat-card-title">Total Databases</span>
-                        <div className="stat-card-icon">
-                            <MdCloudQueue />
-                        </div>
+                    <div className="stat-icon">
+                        <FaDatabase />
                     </div>
-                    <h2 className="stat-card-value">{rdsData.length}</h2>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-card-header">
-                        <span className="stat-card-title">Total Storage</span>
-                        <div className="stat-card-icon">
-                            <FaDatabase />
-                        </div>
+                    <div className="stat-content">
+                        <div className="stat-label">TOTAL DATABASES</div>
+                        <div className="stat-value">{rdsData.length}</div>
                     </div>
-                    <h2 className="stat-card-value">{totalStorage} GB</h2>
                 </div>
-                <div className="stat-card">
-                    <div className="stat-card-header">
-                        <span className="stat-card-title">Filtered Results</span>
-                        <div className="stat-card-icon">
-                            <FaSearch />
-                        </div>
-                    </div>
-                    <h2 className="stat-card-value">{filteredData.length}</h2>
-                </div>
-            </div>
 
-            {/* Search Bar */}
-            <div className="action-bar">
-                <div className="action-bar-left">
-                    <div className="search-box">
-                        <FaSearch className="search-icon" />
-                        <input
-                            type="text"
-                            className="search-input"
-                            placeholder="Search databases by ID, status, engine, zone..."
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                        />
+                <div className="stat-card">
+                    <div className="stat-icon">
+                        <MdCloudQueue />
+                    </div>
+                    <div className="stat-content">
+                        <div className="stat-label">TOTAL STORAGE</div>
+                        <div className="stat-value">{totalStorage} GB</div>
+                    </div>
+                </div>
+
+                <div className="stat-card">
+                    <div className="stat-icon">
+                        <FaSearch />
+                    </div>
+                    <div className="stat-content">
+                        <div className="stat-label">FILTERED RESULTS</div>
+                        <div className="stat-value">{filteredData.length}</div>
                     </div>
                 </div>
             </div>
 
             {/* Table */}
             <div className="table-container">
-                <RDSTable tableData={filteredData} loading={loading} />
+                <RDSTable
+                    data={filteredData}
+                    searchText={searchText}
+                    setSearchText={setSearchText}
+                    onRowClick={handleRowClick}
+                />
             </div>
+
+            {/* RDS Detail Modal */}
+            <RDSDetailModal
+                open={modalOpen}
+                onClose={handleCloseModal}
+                instance={selectedInstance}
+            />
         </div>
     )
 }

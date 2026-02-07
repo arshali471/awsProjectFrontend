@@ -148,6 +148,7 @@ const COMMAND_DATABASE: CommandSuggestion[] = [
     { command: 'history', description: 'Show command history', category: 'Misc' },
     { command: 'clear', description: 'Clear terminal screen', category: 'Misc' },
     { command: 'echo', description: 'Display text', category: 'Misc' },
+    { command: 'edit', description: 'Edit file in browser (e.g., edit /path/to/file)', category: 'Misc' },
     { command: 'date', description: 'Display current date/time', category: 'Misc' },
     { command: 'cal', description: 'Display calendar', category: 'Misc' },
     { command: 'man', description: 'Display manual pages', category: 'Misc' },
@@ -193,25 +194,8 @@ const CommandAutoComplete: React.FC<Props> = ({ input, onSelect, visible, positi
         setSelectedIndex(0);
     }, [input, visible, commandHistory]);
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (!visible || suggestions.length === 0) return;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSelectedIndex(prev => (prev + 1) % suggestions.length);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-            } else if (e.key === 'Tab' && suggestions.length > 0) {
-                e.preventDefault();
-                onSelect(suggestions[selectedIndex].command);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [visible, suggestions, selectedIndex, onSelect]);
+    // No window-level keyboard listener - let terminal handle all keys
+    // Autocomplete selection is done via mouse click only
 
     if (!visible || suggestions.length === 0) {
         return null;
@@ -219,6 +203,14 @@ const CommandAutoComplete: React.FC<Props> = ({ input, onSelect, visible, positi
 
     return (
         <Paper
+            onMouseDown={(e) => {
+                // Prevent any interference with terminal focus
+                e.stopPropagation();
+            }}
+            onKeyDown={(e) => {
+                // Don't let autocomplete consume any keyboard events
+                e.stopPropagation();
+            }}
             sx={{
                 position: 'fixed',
                 left: Math.max(10, position.x),
@@ -231,7 +223,10 @@ const CommandAutoComplete: React.FC<Props> = ({ input, onSelect, visible, positi
                 borderRadius: 1,
                 zIndex: 10000,
                 boxShadow: '0 4px 20px rgba(33, 150, 243, 0.3)',
+                // Explicitly allow pointer events only on this element
+                pointerEvents: 'auto',
             }}
+            onClick={(e) => e.stopPropagation()} // Prevent click from reaching terminal
         >
             <Box sx={{ p: 1, borderBottom: '1px solid #333', background: '#2a2a2a' }}>
                 <Typography variant="caption" sx={{ color: '#2196f3', fontWeight: 600 }}>

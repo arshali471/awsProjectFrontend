@@ -9,13 +9,17 @@ import TableViewIcon from '@mui/icons-material/TableView';
 import * as XLSX from 'xlsx';
 
 interface IS3Table {
-    tableData: any[];
+    tableData?: any[];
     loading?: boolean;
+    onBucketClick?: (bucket: any) => void;
 }
 
-export default function S3Table({ tableData, loading = false }: IS3Table) {
+export default function S3Table({ tableData, loading = false, onBucketClick }: IS3Table) {
     const apiRef = useGridApiRef();
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
+
+    // Handle undefined tableData
+    const actualData = tableData || [];
 
     const columns: GridColDef[] = [
         {
@@ -50,7 +54,7 @@ export default function S3Table({ tableData, loading = false }: IS3Table) {
         },
     ];
 
-    const rows = tableData.map((data, index) => ({
+    const rows = actualData.map((data, index) => ({
         id: data?.Name || index,
         serialNo: index + 1,
         bucketName: data?.Name || data?.bucketName || "N/A",
@@ -188,6 +192,11 @@ export default function S3Table({ tableData, loading = false }: IS3Table) {
                     onPaginationModelChange={setPaginationModel}
                     pageSizeOptions={[10, 25, 50, 100]}
                     autoHeight
+                    onRowClick={(params) => {
+                        if (onBucketClick) {
+                            onBucketClick(actualData[params.row.serialNo - 1]);
+                        }
+                    }}
                     sx={{
                         border: 'none',
                         '& .MuiDataGrid-cell:focus': {
@@ -195,6 +204,7 @@ export default function S3Table({ tableData, loading = false }: IS3Table) {
                         },
                         '& .MuiDataGrid-row:hover': {
                             backgroundColor: 'rgba(0, 115, 187, 0.04)',
+                            cursor: onBucketClick ? 'pointer' : 'default',
                         },
                     }}
                 />
